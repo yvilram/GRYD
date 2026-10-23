@@ -18,34 +18,19 @@ async function igdbRequest(endpoint, body){
         body: body
     });
 
-    return await response.json();
-}
+    if (!response.ok) {
+        const error = await response.text();
+        console.error("Error IGDB:", error);
 
-async function RequestItem(endpoint, body, item){
-    const response = await fetch(`https://api.igdb.com/v4/${endpoint}`, {
-        method: 'POST',
-        headers:{
-            "Client-ID": `${CLIENT_ID}`,
-            "Authorization": `Bearer ${ACCESS_TOKEN}`
-        },
-
-        body: body
-    });
+        throw new Error(`IGDB error: ${response.status}`);
+    }
 
     return await response.json();
 }
 
 app.use(express.static("."));
 
-app.get("/api/games", async (req, res) => {
-
-    const games = await igdbRequest(
-        "games",
-        "fields name, cover.url, cover.image_id; limit 5;"
-    );
-
-    res.json(games);
-});
+require("./js/api")(app, igdbRequest);
 
 app.listen(3000, () => {
     console.log("Server Start")
