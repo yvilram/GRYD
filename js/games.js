@@ -1,4 +1,4 @@
-const LIMIT = 24;
+const LIMIT = 20;
 
 let offset = 0;
 let isLoading = false;
@@ -8,7 +8,19 @@ let hasMoreGames = true;
 // Obtener juegos del backend
 async function getGames() {
 
-    const response = await fetch(`/api/games?offset=${offset}`);
+    const response = await fetch(`/api/games?offset=${offset}&limit=${LIMIT}`);
+
+    if (!response.ok) {
+        throw new Error("No se pudieron obtener los juegos");
+    }
+
+    return await response.json();
+}
+
+// Obtener plataformas del backend
+async function getPlatforms() {
+
+    const response = await fetch(`/api/platforms?platform=${platform}`);
 
     if (!response.ok) {
         throw new Error("No se pudieron obtener los juegos");
@@ -20,32 +32,51 @@ async function getGames() {
 
 // Crear una card
 function createGameCard(game) {
-    console.log(game);
     const card = document.createElement("div");
     const cover = document.createElement("img");
-    const platforms_cover = document.createElement("div");
-    const name = document.createElement("p");
+
+    const title = document.createElement("div");
+    const name = document.createElement("span");
+    const rating = document.createElement("span");
 
     card.classList.add("game-card");
     cover.classList.add("game-cover");
-    platforms_cover.classList.add("game-platforms");
+    title.classList.add("game-title");
+    rating.classList.add("game-rating");
+    
 
     name.textContent = game.name;
     cover.alt = `Portada de ${game.name}`;
-
-    game.platforms.forEach(element => {
-        console.log(element);
-    });
+    rating.textContent = Math.round(`${game.total_rating}`);
+    
+    if(Math.round(`${game.total_rating}`) >= 80){
+        rating.style.color = "green";
+        rating.style.border = "1px solid green";
+    }else if (Math.round(`${game.total_rating}`) < 80){
+        rating.style.color = "yellow";
+        rating.style.border = "1px solid yellow";
+    }else if(Math.round(`${game.total_rating}`) < 60){
+        rating.style.color = "orange";
+        rating.style.border = "1px solid orange";
+    }else{
+        rating.style.color = "red";
+        rating.style.border = "1px solid red";
+    }
 
     if (game.cover?.image_id) {
         cover.src =`https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.png`;
     }else {
-        image.src = "/assets/no-cover.png";
+        cover.src = "/assets/no-cover.png";
     }
 
+    title.appendChild(name);
+    title.appendChild(rating);
+
     card.appendChild(cover);
-    card.appendChild(platforms_cover);
-    card.appendChild(name);
+    card.appendChild(title);
+
+    
+    
 
     return card;
 }

@@ -1,0 +1,48 @@
+.game-card {
+    flex: 1 1 250px;
+    max-width: 280px;
+
+    background-color: #202020;
+    border-radius: 15px;
+    overflow: hidden;
+    box-sizing: border-box;
+    font-weight: bold;
+}
+
+.game-card p {
+    padding: 12px 12px;
+    font-size: 1.2rem;
+}
+
+.game-cover {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+
+    object-fit: cover;
+    display: block;
+}
+
+.game-platforms{
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 10px 12px;
+    box-sizing: border-box;
+}
+
+
+.game-title{
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    align-content: center;
+}
+
+.game-rating{
+    border-radius: 5px;
+    padding: 4px;
+}
+
+
