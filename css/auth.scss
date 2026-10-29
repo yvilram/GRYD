@@ -1,0 +1,117 @@
+#login-section, #register-section { 
+    width: 100%;
+    display: flex;
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    padding: 48px 16px;
+    gap: 32px;
+
+h2 {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    text-align: center;
+    color: white;
+    
+}
+
+
+}
+
+#login-form, #register-form { 
+    width: 100%; 
+    max-width: 420px;
+    margin: 0 auto;
+    
+    display: flex; 
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px; 
+
+    padding: 40px 36px; 
+    background: rgba(20, 23, 35, 0.88); 
+    border: 1px solid rgba(255, 255, 255, 0.12); 
+    border-radius: 16px; 
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); 
+    backdrop-filter: blur(12px);
+
+input {
+    width: 100%;
+    height: 52px;
+    padding: 0 14px;
+    border: 1px solid #414454;
+    border-radius: 8px;
+    outline: none;
+    background: #252936;
+    color: white;
+    font: inherit;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &::placeholder {
+        color: #a1a1aa;
+    }
+
+    &:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+}
+
+button {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 8px;
+    background: #6366f1;
+    color: white;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+
+    &:hover {
+        background: #4f46e5;
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    &:focus-visible {
+        outline: 2px solid white;
+        outline-offset: 3px;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+}
+
+
+}
+
+#login-error, #register-error { color: #f87171; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+
+@media (max-width: 480px) { #login-section, #register-section { gap: 28px; padding: 36px 16px;
+
+    h2 {
+        font-size: 27px;
+    }
+}
+
+#login-form,
+#register-form {
+    padding: 28px 22px;
+    gap: 18px;
+}
+
+
+}

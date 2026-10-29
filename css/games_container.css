@@ -1,0 +1,73 @@
+#games-container {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 220px);
+  justify-content: center;
+  gap: 20px;
+  padding: 0 32px;
+}
+#games-container .game-card {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(20, 23, 35, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+#games-container .game-card:hover {
+  transform: translateY(-4px);
+  border-color: #6366f1;
+}
+#games-container .game-card .game-cover {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3/4;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 8px;
+}
+#games-container .game-card .game-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: white;
+}
+#games-container .game-card .game-title span:first-child {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+#games-container .game-card .game-title .game-rating {
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+#games-container .game-card select {
+  width: -moz-min-content;
+  width: min-content;
+  padding: 6px 8px;
+  color: white;
+  background: #252936;
+  border: 1px solid #414454;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+#games-container .game-card select:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+#games-container .game-card select option {
+  color: white;
+  background: #252936;
+  font-weight: bold;
+}/*# sourceMappingURL=games_container.css.map */

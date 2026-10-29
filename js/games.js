@@ -1,5 +1,5 @@
-const LIMIT = 20;
-
+const LIMIT = 40;
+let userGames = [];
 let offset = 0;
 let isLoading = false;
 let hasMoreGames = true;
@@ -30,23 +30,65 @@ async function getPlatforms() {
 }
 
 
+async function loadGameStates() {
+    const response = await fetch("/api/game_state_user");
+    if (!response.ok) {
+        throw new Error("Could not load user game states");
+    }
+    return await response.json();
+}
+
 // Crear una card
-function createGameCard(game) {
+function createGameCard(game, savedStatus = "select") {
+
     const card = document.createElement("div");
+    card.classList.add("game-card");
+    card.id = game.id;
+
     const cover = document.createElement("img");
+    cover.classList.add("game-cover");
+    cover.alt = `Portada de ${game.name}`;
 
     const title = document.createElement("div");
-    const name = document.createElement("span");
-    const rating = document.createElement("span");
-
-    card.classList.add("game-card");
-    cover.classList.add("game-cover");
     title.classList.add("game-title");
-    rating.classList.add("game-rating");
-    
 
+    const name = document.createElement("span");
     name.textContent = game.name;
-    cover.alt = `Portada de ${game.name}`;
+
+    const rating = document.createElement("span");
+    rating.classList.add("game-rating");
+
+    const input = document.createElement("select");
+    input.id = `state-${game.id}`;
+
+    const option_none = document.createElement("option");
+    option_none.textContent = "Select";
+    option_none.value = "select";
+
+    const backlog = document.createElement("option");
+    backlog.value = "backlog";  
+    backlog.textContent = "Backlog";
+
+    const play = document.createElement("option");  
+    play.value = "play";    
+    play.textContent = "Playing";
+
+    const pause = document.createElement("option"); 
+    pause.value = "pause";  
+    pause.textContent = "Pause";
+
+    const completed = document.createElement("option"); 
+    completed.value = "completed";  
+    completed.textContent = "Completed";
+
+    const drop = document.createElement("option");  
+    drop.value = "drop";    
+    drop.textContent = "Drop";
+
+    input.append(option_none, backlog, play, pause, completed, drop);
+    input.value = savedStatus || "select";
+
+
     rating.textContent = Math.round(`${game.total_rating}`);
     
     if(Math.round(`${game.total_rating}`) >= 80){
@@ -73,11 +115,10 @@ function createGameCard(game) {
     title.appendChild(rating);
 
     card.appendChild(cover);
+    card.appendChild(input);
     card.appendChild(title);
 
-    
-    
-
+ 
     return card;
 }
 
@@ -95,13 +136,17 @@ async function showGames() {
 
         const games = await getGames();
 
-        const container =
-            document.getElementById("games-container");
+        const container = document.getElementById("games-container");
+
+        userGames = await loadGameStates();
+        console.log(userGames);
+
 
         games.forEach(game => {
-
-            const card = createGameCard(game);
-
+            const savedGame  = userGames.find(
+                userGame => Number(userGame.id) === Number(game.id)
+            );
+            const card = createGameCard(game, savedGame ?.status);
             container.appendChild(card);
 
         });
@@ -122,6 +167,13 @@ async function showGames() {
 
     }
 }
+
+document.getElementById("explore").addEventListener("click", () => {
+    document.getElementById("games-container").style.display = "grid";
+    document.getElementById("home").style.display = "none";
+    showGames();
+});
+
 
 
 // Scroll infinito

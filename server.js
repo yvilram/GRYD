@@ -1,5 +1,5 @@
 const express = require("express");
-
+const cookieParser = require("cookie-parser");
 const app = express();
 
 app.set("json spaces", 2);
@@ -29,6 +29,8 @@ async function igdbRequest(endpoint, body){
 }
 
 app.use(express.static("."));
+app.use(express.json());
+app.use(cookieParser());
 
 require("./js/api")(app, igdbRequest);
 
