@@ -9,7 +9,7 @@ let explorerLoaded = false;
 // Obtener juegos del backend
 async function getGames() {
 
-    const response = await fetch(`/api/games?offset=${offset}&limit=${LIMIT}`);
+    const response = await fetch(`${API_URL}/api/games?offset=${offset}&limit=${LIMIT}`);
     if (!response.ok) {
         throw new Error("No se pudieron obtener los juegos");
     }
@@ -19,7 +19,7 @@ async function getGames() {
 
 async function getLibraryGames(ids) {
 
-    const response = await fetch(`/api/library?ids=${ids.join(",")}`);
+    const response = await fetch(`${API_URL}/api/library?ids=${ids.join(",")}`);
 
     if (!response.ok) {
         throw new Error("No se pudieron obtener los juegos");
@@ -31,7 +31,7 @@ async function getLibraryGames(ids) {
 // Obtener plataformas del backend
 async function getPlatforms() {
 
-    const response = await fetch(`/api/platforms?platform=${platform}`);
+    const response = await fetch(`${API_URL}/api/platforms?platform=${platform}`);
 
     if (!response.ok) {
         throw new Error("No se pudieron obtener los juegos");
@@ -42,7 +42,7 @@ async function getPlatforms() {
 
 
 async function loadGameStates() {
-    const response = await fetch("/api/game_state_user");
+    const response = await fetch(`${API_URL}/api/game_state_user`, {credentials: "include"});
     
     if (!response.ok) {
         throw new Error("Could not load user game states");

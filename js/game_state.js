@@ -10,8 +10,9 @@
             const status = event.target.value;
 
             try {
-                const response = await fetch("/api/game_state", {
+                const response = await fetch(`${API_URL}/api/game_state`, {
                     method: "POST",
+                    credentials: "include",
                     headers: {
                         "Content-Type": "application/json"
                     },
@@ -27,7 +28,6 @@
                 }
 
                 const data = await response.json();
-                console.log(data);
 
             } catch (error) {
                 console.error("Fail connection server:", error);

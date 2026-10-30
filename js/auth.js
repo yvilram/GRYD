@@ -2,7 +2,9 @@ const avatarButton = document.getElementById("avatar-button");
 const avatarMenu = document.getElementById("avatar-menu");
 
 async function checkSession() {
-    const response = await fetch("/api/session");
+    const response = await fetch(`${API_URL}/api/session`, {
+        credentials: "include"
+    });
     const session = await response.json();
 
     if (session.loggedIn) {
@@ -38,8 +40,9 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 
 
     try {
-        const response = await fetch("/api/login", {
+        const response = await fetch(`${API_URL}/api/login`, {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password })
         });
@@ -73,8 +76,9 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
     }
 
     try {
-        const response = await fetch("/api/register", {
+        const response = await fetch(`${API_URL}/api/register`, {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password1, password2 })
         });
@@ -82,7 +86,9 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
         const result = await response.json();
 
         if (response.ok) {
-            const sessionResponse = await fetch("/api/session");
+            const sessionResponse = await fetch(`${API_URL}/api/session`, {
+                credentials: "include"
+            });
             const session = await sessionResponse.json();
 
             if (session.loggedIn) {
@@ -120,7 +126,10 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
 
 //LOGOUT
 document.getElementById("logout").addEventListener("click", async () => {
-    await fetch("/api/logout", { method: "POST" });
+    await fetch(`${API_URL}/api/logout`, {
+        method: "POST",
+        credentials: "include"
+    });
     window.location.href = "/index.html";
     document.getElementById("session").style.display = "block";
     document.getElementById("user-avatar").style.display = "none";

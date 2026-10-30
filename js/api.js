@@ -1,7 +1,9 @@
-const supabase = require('./supabase');
+/* const supabase = require('./supabase'); */
+const getSupabase = require('./supabase');
 module.exports = function(app, igdbRequest) {
 
     app.get("/api/games", async (req, res) => {
+        
         const requestedLimit = Number(req.query.limit);
         const limit = Number.isInteger(requestedLimit) && requestedLimit > 0
             ? Math.min(requestedLimit, 50)
@@ -38,6 +40,7 @@ module.exports = function(app, igdbRequest) {
     });
 
     app.post("/api/register", async (req, res) => {
+        const supabase = getSupabase(req.env);
         const { email, password1, password2 } = req.body;
 
         if (password1 !== password2)
@@ -64,8 +67,8 @@ module.exports = function(app, igdbRequest) {
 
         res.cookie("session", data.session.access_token, {
             httpOnly: true,
+            sameSite: "none",
             secure: true,
-            sameSite: "lax",
             maxAge: 60 * 60 * 1000
         });
 
@@ -75,6 +78,7 @@ module.exports = function(app, igdbRequest) {
     });
 
     app.post("/api/login", async (req, res) => {
+        const supabase = getSupabase(req.env);
         const { email, password } = req.body;
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -88,8 +92,8 @@ module.exports = function(app, igdbRequest) {
 
         res.cookie("session", data.session.access_token, {
             httpOnly: true,
+            sameSite: "none",
             secure: true,
-            sameSite: "lax",
             maxAge: 60 * 60 * 1000
         });
 
@@ -97,6 +101,7 @@ module.exports = function(app, igdbRequest) {
     });
 
     app.get("/api/session", async (req, res) => {
+        const supabase = getSupabase(req.env);
         const token = req.cookies.session;
 
         if (!token) {
@@ -116,11 +121,17 @@ module.exports = function(app, igdbRequest) {
     });
 
     app.post("/api/logout", (req, res) => {
-        res.clearCookie("session");
+        res.clearCookie("session", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none"
+        });
+
         res.json({ message: "Logged out successfully" });
     });
 
     app.post("/api/game_state", async (req, res) => {
+        const supabase = getSupabase(req.env);
         const { gameId, gameName, status } = req.body;
         const token = req.cookies.session;
 
@@ -152,6 +163,7 @@ module.exports = function(app, igdbRequest) {
     });
 
     app.get("/api/game_state_user", async (req, res) => {
+        const supabase = getSupabase(req.env);
         const token = req.cookies.session;
 
         if (!token) return res.status(401).json({ error: "Not logged in" });
