@@ -152,25 +152,47 @@ module.exports = function(app, igdbRequest) {
     });
 
     app.get("/api/game_state_user", async (req, res) => {
-    const token = req.cookies.session;
+        const token = req.cookies.session;
 
-    if (!token) return res.status(401).json({ error: "Not logged in" });
+        if (!token) return res.status(401).json({ error: "Not logged in" });
 
-    const { data: { user }, error: authError } =
-        await supabase.auth.getUser(token);
+        const { data: { user }, error: authError } =
+            await supabase.auth.getUser(token);
 
-    if (authError || !user) {
-        return res.status(401).json({ error: "Invalid session" });
-    }
+        if (authError || !user) {
+            return res.status(401).json({ error: "Invalid session" });
+        }
 
-    const { data, error } = await supabase
-        .from("user_game_list")
-        .select("id, game_name, status")
-        .eq("user_id", user.id);
+        const { data, error } = await supabase
+            .from("user_game_list")
+            .select("id, game_name, status")
+            .eq("user_id", user.id);
 
-    if (error) return res.status(500).json({ error: error.message });
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    });
 
-    res.json(data);
-});
+    app.get("/api/library", async (req, res) => {
+        try {
+        const ids = req.query.ids;
+
+        if (!ids) return res.json([]);
+
+        const games = await igdbRequest(
+            "games",
+            `
+            fields name, cover.image_id, total_rating, platforms, platforms.name, platforms.platform_logo.image_id;
+            where id = (${ids});
+            `
+        );
+
+        res.json(games);
+
+        } catch (error) {
+            console.error("Error obteniendo juegos:", error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
 
 }

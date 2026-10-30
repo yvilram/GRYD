@@ -1,14 +1,25 @@
-const LIMIT = 40;
+const LIMIT = 24;
 let userGames = [];
 let offset = 0;
 let isLoading = false;
 let hasMoreGames = true;
+let explorerLoaded = false;
 
 
 // Obtener juegos del backend
 async function getGames() {
 
     const response = await fetch(`/api/games?offset=${offset}&limit=${LIMIT}`);
+    if (!response.ok) {
+        throw new Error("No se pudieron obtener los juegos");
+    }
+
+    return await response.json();
+}
+
+async function getLibraryGames(ids) {
+
+    const response = await fetch(`/api/library?ids=${ids.join(",")}`);
 
     if (!response.ok) {
         throw new Error("No se pudieron obtener los juegos");
@@ -32,10 +43,14 @@ async function getPlatforms() {
 
 async function loadGameStates() {
     const response = await fetch("/api/game_state_user");
+    
     if (!response.ok) {
         throw new Error("Could not load user game states");
     }
-    return await response.json();
+
+    const data = await response.json();
+
+    return data;
 }
 
 // Crear una card
@@ -44,6 +59,13 @@ function createGameCard(game, savedStatus = "select") {
     const card = document.createElement("div");
     card.classList.add("game-card");
     card.id = game.id;
+
+    /* const trash = document.createElement("i");
+    input.add.classList("bi bi-trash");  */
+
+    const remove = document.createElement("button");
+    remove.textContent = "";
+    remove.id = "trash"
 
     const cover = document.createElement("img");
     cover.classList.add("game-cover");
@@ -64,6 +86,7 @@ function createGameCard(game, savedStatus = "select") {
     const option_none = document.createElement("option");
     option_none.textContent = "Select";
     option_none.value = "select";
+    option_none.disabled  = true;
 
     const backlog = document.createElement("option");
     backlog.value = "backlog";  
@@ -113,9 +136,10 @@ function createGameCard(game, savedStatus = "select") {
 
     title.appendChild(name);
     title.appendChild(rating);
-
+    
     card.appendChild(cover);
     card.appendChild(input);
+    card.appendChild(remove);
     card.appendChild(title);
 
  
@@ -126,21 +150,14 @@ function createGameCard(game, savedStatus = "select") {
 // Mostrar juegos
 async function showGames() {
 
-    if (isLoading || !hasMoreGames) {
-        return;
-    }
+    if (isLoading || !hasMoreGames) return;
 
     isLoading = true;
 
     try {
-
         const games = await getGames();
-
         const container = document.getElementById("games-container");
-
         userGames = await loadGameStates();
-        console.log(userGames);
-
 
         games.forEach(game => {
             const savedGame  = userGames.find(
@@ -168,12 +185,72 @@ async function showGames() {
     }
 }
 
-document.getElementById("explore").addEventListener("click", () => {
+async function updateGameStates() {
+
+    userGames = await loadGameStates();
+
+    const container = document.getElementById("games-container");
+
+    container.querySelectorAll(".game-card").forEach(card => {
+
+        const savedGame = userGames.find(
+            game => Number(game.id) === Number(card.id)
+        );
+
+        card.querySelector("select").value = savedGame?.status || "select";
+
+    });
+}
+
+document.getElementById("explore").addEventListener("click", async () => {
     document.getElementById("games-container").style.display = "grid";
+    document.getElementById("games-library").style.display = "none";
     document.getElementById("home").style.display = "none";
-    showGames();
+
+    if (!explorerLoaded) {
+        explorerLoaded = true;
+        await showGames();
+    } else {
+        await updateGameStates();
+    }
 });
 
+async function showLibrary(){
+    /* if (isLoading || !hasMoreGames) { return; } isLoading = true; */
+
+    try {
+        userGames = await loadGameStates();
+
+        const ids = userGames.map(game => game.id);
+
+        const games = await getLibraryGames(ids);
+
+        const container = document.getElementById("games-library");
+        container.innerHTML = "";
+
+
+        games.forEach(game => {
+            const savedGame  = userGames.find(
+                userGame => Number(userGame.id) === Number(game.id)
+            );
+
+                const card = createGameCard(game, savedGame ?.status);
+                container.appendChild(card);
+        });
+
+    } catch (error) {
+
+        console.error("Error:", error);
+
+    }
+}
+
+document.getElementById("library").addEventListener("click", () => {
+    document.getElementById("games-container").style.display = "none";
+    document.getElementById("games-library").style.display = "grid";
+    document.getElementById("home").style.display = "none";
+    showLibrary();
+});
 
 
 // Scroll infinito

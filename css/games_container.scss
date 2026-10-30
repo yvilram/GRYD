@@ -1,14 +1,13 @@
-#games-container {
+#games-library, #games-container {
     width: 100%;
-
+    box-sizing: border-box;
     display: grid;
-    grid-template-columns: repeat(auto-fit, 220px);
-    justify-content: center;
     gap: 20px;
     padding: 0 32px;
 
     .game-card {
-        width: 220px;
+        width: 100%;
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -72,13 +71,70 @@
                 outline-offset: 2px;
             }
 
-            option {
-                color: white;
-                background: #252936;
-                font-weight: bold;
+            option[value="select"] {
+                color: #9CA3AF;
+            }
+
+            option[value="backlog"] {
+                color: #60A5FA;
+            }
+
+            option[value="play"] {
+                color: #4ADE80;
+            }
+
+            option[value="pause"] {
+                color: #FBBF24;
+            }
+
+            option[value="completed"] {
+                color: #A78BFA;
+            }
+
+            option[value="drop"] {
+                color: #F87171;
+            }
+
+            &:has(option[value="select"]:checked) {
+                background: #374151;
+                color: #9CA3AF;
+            }
+
+            &:has(option[value="backlog"]:checked) {
+                background: #1E3A5F;
+                color: #60A5FA;
+            }
+
+            &:has(option[value="play"]:checked) {
+                background: #14532D;
+                color: #4ADE80;
+            }
+
+            &:has(option[value="pause"]:checked) {
+                background: #713F12;
+                color: #FBBF24;
+            }
+
+            &:has(option[value="completed"]:checked) {
+                background: #4C1D95;
+                color: #A78BFA;
+            }
+
+            &:has(option[value="drop"]:checked) {
+                background: #7F1D1D;
+                color: #F87171;
             }
         }
     }
-    }
+}
+
+#games-container {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+#games-library {
+    grid-template-columns: repeat(auto-fill, 220px);
+    justify-content: start;
+}
 
 
