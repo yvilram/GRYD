@@ -129,13 +129,7 @@
     }
 }
 
-#games-container {
+#games-container, #games-library {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
-
-#games-library {
-    grid-template-columns: repeat(auto-fill, 220px);
-    justify-content: start;
-}
-
 
