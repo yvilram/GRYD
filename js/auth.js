@@ -2,16 +2,27 @@ const avatarButton = document.getElementById("avatar-button");
 const avatarMenu = document.getElementById("avatar-menu");
 
 async function checkSession() {
-    const response = await fetch(`${API_URL}/api/session`, {
-        credentials: "include"
-    });
-    const session = await response.json();
+    try {
+        const response = await fetch(`${API_URL}/api/session`, {
+            credentials: "include"
+        });
 
-    if (session.loggedIn) {
-        document.getElementById("user-email").textContent = session.email;
-        document.getElementById("avatar-button").textContent = session.email.charAt(0).toUpperCase();
-        document.getElementById("session").style.display = "none";
-        document.getElementById("user-avatar").style.display = "block";
+        // Si no está autenticado o hay error, salimos limpiamente
+        if (!response.ok) {
+            return;
+        }
+
+        const session = await response.json();
+
+        if (session && session.loggedIn) {
+            document.getElementById("user-email").textContent = session.email;
+            document.getElementById("avatar-button").textContent = session.email.charAt(0).toUpperCase();
+            document.getElementById("session").style.display = "none";
+            document.getElementById("user-avatar").style.display = "block";
+        }
+    } catch (error) {
+        // Ignoramos errores de red o parsing si el usuario es anónimo
+        console.warn("No active session or server offline.");
     }
 }
 
