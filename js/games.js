@@ -42,19 +42,21 @@ async function getPlatforms() {
 
 
 async function loadGameStates() {
-    const response = await fetch(`${API_URL}/api/game_state_user`, {credentials: "include"});
+    try {
+        const response = await fetch(`${API_URL}/api/game_state_user`, { credentials: "include" });
+        
+        // Si no está autorizado o hay error, devolvemos un array vacío []
+        if (response.status === 401 || !response.ok) {
+            return [];
+        }
 
-    if (response.status === 401) {
-        return {};
+        const data = await response.json();
+        
+        // Nos aseguramos de que lo devuelto sea un array
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        return [];
     }
-    
-    if (!response.ok) {
-        throw new Error("Could not load user game states");
-    }
-
-    const data = await response.json();
-
-    return data;
 }
 
 // Crear una card
