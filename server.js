@@ -1,7 +1,8 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const app = express();
 const cors = require("cors");
+
+const app = express();
 
 app.use(cors({
     origin: "https://gryd.pages.dev",
@@ -13,25 +14,18 @@ app.set("json spaces", 2);
 app.use(express.json());
 app.use(cookieParser());
 
-// Variables de entorno
-const CLIENT_ID = process.env.IGDB_CLIENT_ID;
-const ACCESS_TOKEN = process.env.IGDB_ACCESS_TOKEN;
-
-// Pasar variables de entorno a las rutas
-app.use((req, res, next) => {
-    req.env = process.env;
-    next();
-});
-
-// Peticiones a IGDB
+// Peticiones a IGDB (leyendo las variables en tiempo de ejecución)
 async function igdbRequest(endpoint, body) {
+    const clientId = process.env.IGDB_CLIENT_ID;
+    const accessToken = process.env.IGDB_ACCESS_TOKEN;
+
     const response = await fetch(
         `https://api.igdb.com/v4/${endpoint}`,
         {
             method: "POST",
             headers: {
-                "Client-ID": CLIENT_ID,
-                "Authorization": `Bearer ${ACCESS_TOKEN}`
+                "Client-ID": clientId,
+                "Authorization": `Bearer ${accessToken}`
             },
             body
         }
