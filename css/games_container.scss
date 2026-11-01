@@ -5,6 +5,8 @@
     display: grid;
     gap: 20px;
     padding: 0 32px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    justify-content: start;
 
     .game-card {
         width: 100%;
@@ -129,7 +131,4 @@
     }
 }
 
-#games-container, #games-library {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-}
 
