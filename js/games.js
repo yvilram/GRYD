@@ -43,6 +43,10 @@ async function getPlatforms() {
 
 async function loadGameStates() {
     const response = await fetch(`${API_URL}/api/game_state_user`, {credentials: "include"});
+
+    if (response.status === 401) {
+        return {};
+    }
     
     if (!response.ok) {
         throw new Error("Could not load user game states");
