@@ -1,4 +1,5 @@
-#games-library, #games-container {
+#games-container,
+#games-library {
     width: 100%;
     flex: 1;
     box-sizing: border-box;
@@ -6,7 +7,7 @@
     gap: 20px;
     padding: 0 32px;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    justify-content: start;
+    justify-content: center; // <-- Cambiado de 'start' a 'center'
 
     .game-card {
         width: 100%;
@@ -74,61 +75,19 @@
                 outline-offset: 2px;
             }
 
-            option[value="select"] {
-                color: #9CA3AF;
-            }
+            option[value="select"] { color: #9CA3AF; }
+            option[value="backlog"] { color: #60A5FA; }
+            option[value="play"] { color: #4ADE80; }
+            option[value="pause"] { color: #FBBF24; }
+            option[value="completed"] { color: #A78BFA; }
+            option[value="drop"] { color: #F87171; }
 
-            option[value="backlog"] {
-                color: #60A5FA;
-            }
-
-            option[value="play"] {
-                color: #4ADE80;
-            }
-
-            option[value="pause"] {
-                color: #FBBF24;
-            }
-
-            option[value="completed"] {
-                color: #A78BFA;
-            }
-
-            option[value="drop"] {
-                color: #F87171;
-            }
-
-            &:has(option[value="select"]:checked) {
-                background: #374151;
-                color: #9CA3AF;
-            }
-
-            &:has(option[value="backlog"]:checked) {
-                background: #1E3A5F;
-                color: #60A5FA;
-            }
-
-            &:has(option[value="play"]:checked) {
-                background: #14532D;
-                color: #4ADE80;
-            }
-
-            &:has(option[value="pause"]:checked) {
-                background: #713F12;
-                color: #FBBF24;
-            }
-
-            &:has(option[value="completed"]:checked) {
-                background: #4C1D95;
-                color: #A78BFA;
-            }
-
-            &:has(option[value="drop"]:checked) {
-                background: #7F1D1D;
-                color: #F87171;
-            }
+            &:has(option[value="select"]:checked) { background: #374151; color: #9CA3AF; }
+            &:has(option[value="backlog"]:checked) { background: #1E3A5F; color: #60A5FA; }
+            &:has(option[value="play"]:checked) { background: #14532D; color: #4ADE80; }
+            &:has(option[value="pause"]:checked) { background: #713F12; color: #FBBF24; }
+            &:has(option[value="completed"]:checked) { background: #4C1D95; color: #A78BFA; }
+            &:has(option[value="drop"]:checked) { background: #7F1D1D; color: #F87171; }
         }
     }
 }
-
-
