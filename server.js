@@ -42,6 +42,6 @@ async function igdbRequest(endpoint, body) {
 }
 
 // Registrar rutas
-require("./js/api")(app, igdbRequest);
+require("./public/js/api")(app, igdbRequest);
 
 module.exports = app;
