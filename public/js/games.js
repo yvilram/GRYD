@@ -66,12 +66,14 @@ function createGameCard(game, savedStatus = "select") {
     card.classList.add("game-card");
     card.id = game.id;
 
-    /* const trash = document.createElement("i");
-    input.add.classList("bi bi-trash");  */
+    const trash = document.createElement("i");
+    input.add.classList("bi bi-trash");
 
     const remove = document.createElement("button");
     remove.textContent = "";
-    remove.id = "trash"
+    remove.id = "trash";
+
+    remove.appendChild(trash);
 
     const cover = document.createElement("img");
     cover.classList.add("game-cover");
