@@ -67,7 +67,7 @@ function createGameCard(game, savedStatus = "select") {
     card.id = game.id;
 
     const trash = document.createElement("i");
-    trash.add.classList("bi bi-trash");
+    trash.add.classList("bi ,bi-trash");
 
     const remove = document.createElement("button");
     remove.setAttribute("type", "button");
@@ -224,7 +224,6 @@ document.getElementById("explore").addEventListener("click", async () => {
 });
 
 async function showLibrary(){
-    /* if (isLoading || !hasMoreGames) { return; } isLoading = true; */
 
     try {
         userGames = await loadGameStates();
