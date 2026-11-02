@@ -1,3 +1,6 @@
+$trash-red: #ef4444;
+$trash-red-dark: #dc2626;
+
 #games-container,
 #games-library {
     width: 100%;
@@ -8,6 +11,7 @@
     padding: 0 32px;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     justify-content: center; // <-- Cambiado de 'start' a 'center'
+    align-content: start;
 
     .game-card {
         width: 100%;
@@ -35,6 +39,82 @@
             border-radius: 8px;
         }
 
+        .select_remove{
+            display: flex;
+            justify-content: space-between;
+
+            .trash {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 30px;
+                height: 30px;
+                padding: 0;
+                border: 1px solid rgba($trash-red, 0.4);
+                border-radius: 8px;
+                background: rgba($trash-red, 0.08);
+                cursor: pointer;
+                transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+
+                i.bi-trash {
+                    font-size: 1.05rem;
+                    color: $trash-red !important; // sobrescribe el style.color = "red" del JS
+                    transition: color 0.2s ease, transform 0.2s ease;
+                }
+
+                &:hover {
+                    background: $trash-red;
+                    border-color: $trash-red;
+                    transform: translateY(-1px);
+
+                    i.bi-trash {
+                    color: #fff !important;
+                    transform: scale(1.1);
+                    }
+                }
+
+                &:active {
+                    background: $trash-red-dark;
+                    transform: translateY(0) scale(0.95);
+                }
+
+                &:focus-visible {
+                    outline: 2px solid $trash-red;
+                    outline-offset: 2px;
+                }
+                }
+            select {
+                width: min-content;
+                padding: 6px 8px;
+                color: white;
+                background: #252936;
+                border: 1px solid #414454;
+                border-radius: 4px;
+                font: inherit;
+                font-size: 13px;
+                cursor: pointer;
+
+                &:focus {
+                    outline: 2px solid #6366f1;
+                    outline-offset: 2px;
+                }
+
+                option[value="select"] { color: #9CA3AF; }
+                option[value="backlog"] { color: #60A5FA; }
+                option[value="play"] { color: #4ADE80; }
+                option[value="pause"] { color: #FBBF24; }
+                option[value="completed"] { color: #A78BFA; }
+                option[value="drop"] { color: #F87171; }
+
+                &:has(option[value="select"]:checked) { background: #374151; color: #9CA3AF; }
+                &:has(option[value="backlog"]:checked) { background: #1E3A5F; color: #60A5FA; }
+                &:has(option[value="play"]:checked) { background: #14532D; color: #4ADE80; }
+                &:has(option[value="pause"]:checked) { background: #713F12; color: #FBBF24; }
+                &:has(option[value="completed"]:checked) { background: #4C1D95; color: #A78BFA; }
+                &:has(option[value="drop"]:checked) { background: #7F1D1D; color: #F87171; }
+            }
+        }
+
         .game-title {
             display: flex;
             justify-content: space-between;
@@ -59,35 +139,6 @@
             }
         }
 
-        select {
-            width: min-content;
-            padding: 6px 8px;
-            color: white;
-            background: #252936;
-            border: 1px solid #414454;
-            border-radius: 4px;
-            font: inherit;
-            font-size: 13px;
-            cursor: pointer;
-
-            &:focus {
-                outline: 2px solid #6366f1;
-                outline-offset: 2px;
-            }
-
-            option[value="select"] { color: #9CA3AF; }
-            option[value="backlog"] { color: #60A5FA; }
-            option[value="play"] { color: #4ADE80; }
-            option[value="pause"] { color: #FBBF24; }
-            option[value="completed"] { color: #A78BFA; }
-            option[value="drop"] { color: #F87171; }
-
-            &:has(option[value="select"]:checked) { background: #374151; color: #9CA3AF; }
-            &:has(option[value="backlog"]:checked) { background: #1E3A5F; color: #60A5FA; }
-            &:has(option[value="play"]:checked) { background: #14532D; color: #4ADE80; }
-            &:has(option[value="pause"]:checked) { background: #713F12; color: #FBBF24; }
-            &:has(option[value="completed"]:checked) { background: #4C1D95; color: #A78BFA; }
-            &:has(option[value="drop"]:checked) { background: #7F1D1D; color: #F87171; }
-        }
+        
     }
 }

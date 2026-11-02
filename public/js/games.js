@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function initAuth() {
     isLogged = await checkAuth();
+    if(isLogged)document.getElementById("library").style.display = "block";
 }
 
 
@@ -52,18 +53,23 @@ async function getPlatforms() {
 
 async function loadGameStates() {
     try {
-        const response = await fetch(`${API_URL}/api/game_state_user`, { credentials: "include" });
-        
-        // Si no está autorizado o hay error, devolvemos un array vacío []
-        if (response.status === 401 || !response.ok) {
+        const response = await fetch(`${API_URL}/api/game_state_user`, {
+            credentials: "include"
+        });
+
+        if (response.status === 401) {
+            isLogged = false;
             return [];
         }
 
+        if (!response.ok) {
+            throw new Error(`No se pudieron cargar los estados (${response.status})`);
+        }
+
         const data = await response.json();
-        
-        // Nos aseguramos de que lo devuelto sea un array
         return Array.isArray(data) ? data : [];
     } catch (error) {
+        isLogged = false;
         return [];
     }
 }
@@ -75,16 +81,38 @@ function createGameCard(game, savedStatus = "select") {
     card.classList.add("game-card");
     card.id = game.id;
 
-    const trash = document.createElement("i");
-    trash.classList.add("bi" ,"bi-trash");
-    trash.style.color = "red";
-    
-
+    const select_remove = document.createElement("div");
     const remove = document.createElement("button");
+    const trash = document.createElement("i");
+    select_remove.classList.add("select_remove");
     remove.setAttribute("type", "button");
-    remove.id = "trash";
+    remove.classList.add("trash");
+    trash.classList.add("bi" ,"bi-trash");
 
-    remove.appendChild(trash);
+    remove.addEventListener("click", async () => {
+        const response = await fetch(`${API_URL}/api/remove-item?id=${game.id}`, {
+            credentials: "include"
+        });
+
+        if (!response.ok) {
+            console.error("No se pudo eliminar");
+            return;
+        }
+
+        userGames = userGames.filter(g => Number(g.id) !== Number(game.id));
+
+        if (card.parentElement.id === "games-library") {
+            card.remove();
+        } else {
+            input.value = "select";
+            remove.style.display = "none";
+        }
+    });
+
+    
+    if(!isLogged)select_remove.style.display = "none";
+    
+    
 
     const cover = document.createElement("img");
     cover.classList.add("game-cover");
@@ -129,7 +157,14 @@ function createGameCard(game, savedStatus = "select") {
 
     input.append(option_none, backlog, play, pause, completed, drop);
     input.value = savedStatus || "select";
+    
+    if (isLogged) {
+        remove.style.display = input.value === "select" ? "none" : "inline-block";
 
+        input.addEventListener("change", () => {
+        remove.style.display = input.value === "select" ? "none" : "inline-block";
+    });
+}
 
     rating.textContent = Math.round(`${game.total_rating}`);
     
@@ -156,9 +191,13 @@ function createGameCard(game, savedStatus = "select") {
     title.appendChild(name);
     title.appendChild(rating);
     
+    remove.appendChild(trash);
+
+    select_remove.appendChild(input)
+    select_remove.appendChild(remove);
+
     card.appendChild(cover);
-    card.appendChild(input);
-    card.appendChild(remove);
+    card.appendChild(select_remove);
     card.appendChild(title);
 
  
@@ -176,14 +215,13 @@ async function showGames() {
     try {
         const games = await getGames();
         const container = document.getElementById("games-container");
-        userGames = await loadGameStates();
+        userGames = isLogged ? await loadGameStates() : [];
 
         games.forEach(game => {
             const savedGame  = userGames.find(
                 userGame => Number(userGame.id) === Number(game.id)
             );
-            const card = createGameCard(game, savedGame ?.status);
-            container.appendChild(card);
+            container.appendChild(createGameCard(game, savedGame ?.status));
 
         });
 
@@ -218,6 +256,7 @@ async function updateGameStates() {
 
         card.querySelector("select").value = savedGame?.status || "select";
 
+
     });
 }
 
@@ -225,6 +264,7 @@ document.getElementById("explore").addEventListener("click", async () => {
     document.getElementById("games-container").style.display = "grid";
     document.getElementById("games-library").style.display = "none";
     document.getElementById("home").style.display = "none";
+    document.querySelector(".legal-content")?.style.setProperty("display", "none");
 
     if (!explorerLoaded) {
         explorerLoaded = true;
@@ -263,12 +303,15 @@ async function showLibrary(){
     }
 }
 
-document.getElementById("library").addEventListener("click", () => {
+document.getElementById("library").addEventListener("click", async () => {
     document.getElementById("games-container").style.display = "none";
     document.getElementById("games-library").style.display = "grid";
     document.getElementById("home").style.display = "none";
+    document.querySelector(".legal-content").style.display = "none";
     showLibrary();
 });
+
+
 
 
 // Scroll infinito

@@ -8,6 +8,7 @@
   padding: 0 32px;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   justify-content: center;
+  align-content: start;
 }
 #games-container .game-card,
 #games-library .game-card {
@@ -36,6 +37,124 @@
      object-fit: cover;
   border-radius: 8px;
 }
+#games-container .game-card .select_remove,
+#games-library .game-card .select_remove {
+  display: flex;
+  justify-content: space-between;
+}
+#games-container .game-card .select_remove .trash,
+#games-library .game-card .select_remove .trash {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+#games-container .game-card .select_remove .trash i.bi-trash,
+#games-library .game-card .select_remove .trash i.bi-trash {
+  font-size: 1.05rem;
+  color: #ef4444 !important;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+#games-container .game-card .select_remove .trash:hover,
+#games-library .game-card .select_remove .trash:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  transform: translateY(-1px);
+}
+#games-container .game-card .select_remove .trash:hover i.bi-trash,
+#games-library .game-card .select_remove .trash:hover i.bi-trash {
+  color: #fff !important;
+  transform: scale(1.1);
+}
+#games-container .game-card .select_remove .trash:active,
+#games-library .game-card .select_remove .trash:active {
+  background: #dc2626;
+  transform: translateY(0) scale(0.95);
+}
+#games-container .game-card .select_remove .trash:focus-visible,
+#games-library .game-card .select_remove .trash:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+#games-container .game-card .select_remove select,
+#games-library .game-card .select_remove select {
+  width: -moz-min-content;
+  width: min-content;
+  padding: 6px 8px;
+  color: white;
+  background: #252936;
+  border: 1px solid #414454;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+#games-container .game-card .select_remove select:focus,
+#games-library .game-card .select_remove select:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+#games-container .game-card .select_remove select option[value=select],
+#games-library .game-card .select_remove select option[value=select] {
+  color: #9CA3AF;
+}
+#games-container .game-card .select_remove select option[value=backlog],
+#games-library .game-card .select_remove select option[value=backlog] {
+  color: #60A5FA;
+}
+#games-container .game-card .select_remove select option[value=play],
+#games-library .game-card .select_remove select option[value=play] {
+  color: #4ADE80;
+}
+#games-container .game-card .select_remove select option[value=pause],
+#games-library .game-card .select_remove select option[value=pause] {
+  color: #FBBF24;
+}
+#games-container .game-card .select_remove select option[value=completed],
+#games-library .game-card .select_remove select option[value=completed] {
+  color: #A78BFA;
+}
+#games-container .game-card .select_remove select option[value=drop],
+#games-library .game-card .select_remove select option[value=drop] {
+  color: #F87171;
+}
+#games-container .game-card .select_remove select:has(option[value=select]:checked),
+#games-library .game-card .select_remove select:has(option[value=select]:checked) {
+  background: #374151;
+  color: #9CA3AF;
+}
+#games-container .game-card .select_remove select:has(option[value=backlog]:checked),
+#games-library .game-card .select_remove select:has(option[value=backlog]:checked) {
+  background: #1E3A5F;
+  color: #60A5FA;
+}
+#games-container .game-card .select_remove select:has(option[value=play]:checked),
+#games-library .game-card .select_remove select:has(option[value=play]:checked) {
+  background: #14532D;
+  color: #4ADE80;
+}
+#games-container .game-card .select_remove select:has(option[value=pause]:checked),
+#games-library .game-card .select_remove select:has(option[value=pause]:checked) {
+  background: #713F12;
+  color: #FBBF24;
+}
+#games-container .game-card .select_remove select:has(option[value=completed]:checked),
+#games-library .game-card .select_remove select:has(option[value=completed]:checked) {
+  background: #4C1D95;
+  color: #A78BFA;
+}
+#games-container .game-card .select_remove select:has(option[value=drop]:checked),
+#games-library .game-card .select_remove select:has(option[value=drop]:checked) {
+  background: #7F1D1D;
+  color: #F87171;
+}
 #games-container .game-card .game-title,
 #games-library .game-card .game-title {
   display: flex;
@@ -59,76 +178,4 @@
   border-radius: 6px;
   font-size: 12px;
   font-weight: 700;
-}
-#games-container .game-card select,
-#games-library .game-card select {
-  width: -moz-min-content;
-  width: min-content;
-  padding: 6px 8px;
-  color: white;
-  background: #252936;
-  border: 1px solid #414454;
-  border-radius: 4px;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-#games-container .game-card select:focus,
-#games-library .game-card select:focus {
-  outline: 2px solid #6366f1;
-  outline-offset: 2px;
-}
-#games-container .game-card select option[value=select],
-#games-library .game-card select option[value=select] {
-  color: #9CA3AF;
-}
-#games-container .game-card select option[value=backlog],
-#games-library .game-card select option[value=backlog] {
-  color: #60A5FA;
-}
-#games-container .game-card select option[value=play],
-#games-library .game-card select option[value=play] {
-  color: #4ADE80;
-}
-#games-container .game-card select option[value=pause],
-#games-library .game-card select option[value=pause] {
-  color: #FBBF24;
-}
-#games-container .game-card select option[value=completed],
-#games-library .game-card select option[value=completed] {
-  color: #A78BFA;
-}
-#games-container .game-card select option[value=drop],
-#games-library .game-card select option[value=drop] {
-  color: #F87171;
-}
-#games-container .game-card select:has(option[value=select]:checked),
-#games-library .game-card select:has(option[value=select]:checked) {
-  background: #374151;
-  color: #9CA3AF;
-}
-#games-container .game-card select:has(option[value=backlog]:checked),
-#games-library .game-card select:has(option[value=backlog]:checked) {
-  background: #1E3A5F;
-  color: #60A5FA;
-}
-#games-container .game-card select:has(option[value=play]:checked),
-#games-library .game-card select:has(option[value=play]:checked) {
-  background: #14532D;
-  color: #4ADE80;
-}
-#games-container .game-card select:has(option[value=pause]:checked),
-#games-library .game-card select:has(option[value=pause]:checked) {
-  background: #713F12;
-  color: #FBBF24;
-}
-#games-container .game-card select:has(option[value=completed]:checked),
-#games-library .game-card select:has(option[value=completed]:checked) {
-  background: #4C1D95;
-  color: #A78BFA;
-}
-#games-container .game-card select:has(option[value=drop]:checked),
-#games-library .game-card select:has(option[value=drop]:checked) {
-  background: #7F1D1D;
-  color: #F87171;
 }/*# sourceMappingURL=games_container.css.map */

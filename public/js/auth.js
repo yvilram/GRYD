@@ -16,7 +16,6 @@ async function checkSession() {
 
         if (session && session.loggedIn) {
             document.getElementById("user-email").textContent = session.email;
-            document.getElementById("avatar-button").textContent = session.email.charAt(0).toUpperCase();
             document.getElementById("session").style.display = "none";
             document.getElementById("user-avatar").style.display = "block";
             return true;
@@ -117,8 +116,6 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
 
                 // Show the user's email and avatar initial
                 document.getElementById("user-email").textContent = session.email;
-                document.getElementById("avatar-button").textContent =
-                    session.email.charAt(0).toUpperCase();
 
                 // Clear the registration form
                 document.getElementById("register-form").reset();

@@ -242,32 +242,59 @@ module.exports = function(app, igdbRequest) {
     });
 
     app.get("/api/check-auth", async (req, res) => {
-    try {
-        const supabase = getSupabase(req.env);
-        const token = req.cookies?.session;
+        try {
+            const supabase = getSupabase(req.env);
+            const token = req.cookies?.session;
 
-        if (!token) {
-            return res.json({ authenticated: false });
-        }
-
-        const { data: { user }, error } =
-            await supabase.auth.getUser(token);
-
-        if (error || !user) {
-            return res.json({ authenticated: false });
-        }
-
-        return res.json({
-            authenticated: true,
-            user: {
-                id: user.id,
-                email: user.email
+            if (!token) {
+                return res.json({ authenticated: false });
             }
-        });
 
-    } catch (error) {
-        console.error("Error comprobando sesión:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
+            const { data: { user }, error } =
+                await supabase.auth.getUser(token);
+
+            if (error || !user) {
+                return res.json({ authenticated: false });
+            }
+
+            return res.json({
+                authenticated: true,
+                user: {
+                    id: user.id,
+                    email: user.email
+                }
+            });
+
+        } catch (error) {
+            console.error("Error comprobando sesión:", error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    app.get("/api/remove-item", async (req, res) => {
+        try {
+            const token = req.cookies?.session;
+            if (!token) return res.status(401).json({ error: "Not logged in" });
+
+            const supabase = getSupabase(req.env);
+
+            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+            if (authError || !user) return res.status(401).json({ error: "Invalid session" });
+
+            const gameId = Number(req.query.id);
+            if (!Number.isFinite(gameId)) return res.status(400).json({ error: "Invalid id" });
+
+            const { error } = await supabase
+                .from("user_game_list")
+                .delete()
+                .eq("id", gameId)
+                .eq("user_id", user.id);
+
+            if (error) return res.status(500).json({ error: error.message });
+
+            res.json({ success: true });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
 };
