@@ -19,6 +19,9 @@ async function checkSession() {
             document.getElementById("avatar-button").textContent = session.email.charAt(0).toUpperCase();
             document.getElementById("session").style.display = "none";
             document.getElementById("user-avatar").style.display = "block";
+            return true;
+        }else{
+            return false;
         }
     } catch (error) {
         // Ignoramos errores de red o parsing si el usuario es anónimo
@@ -158,3 +161,21 @@ document.addEventListener("click", (e) => {
         avatarMenu.style.display = "none";
     }
 });
+
+async function checkAuth() {
+    try {
+        const response = await fetch(`${API_URL}/api/check-auth`, {
+            credentials: "include"
+        });
+
+        if (!response.ok) return false;
+
+        const data = await response.json();
+
+        return data.authenticated;
+
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}

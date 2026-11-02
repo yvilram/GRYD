@@ -240,4 +240,34 @@ module.exports = function(app, igdbRequest) {
             res.status(500).json({ error: error.message });
         }
     });
+
+    app.get("/api/check-auth", async (req, res) => {
+    try {
+        const supabase = getSupabase(req.env);
+        const token = req.cookies?.session;
+
+        if (!token) {
+            return res.json({ authenticated: false });
+        }
+
+        const { data: { user }, error } =
+            await supabase.auth.getUser(token);
+
+        if (error || !user) {
+            return res.json({ authenticated: false });
+        }
+
+        return res.json({
+            authenticated: true,
+            user: {
+                id: user.id,
+                email: user.email
+            }
+        });
+
+    } catch (error) {
+        console.error("Error comprobando sesión:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
 };

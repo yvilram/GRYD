@@ -6,7 +6,7 @@ const app = express();
 
 
 app.use(cors({
-    origin: "https://gryd.pages.dev",
+    origin: ["https://gryd.pages.dev", "https://crispy-dollop-pjrxw6g59jvp3r4r5-3000.app.github.dev"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]

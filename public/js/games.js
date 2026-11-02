@@ -4,6 +4,15 @@ let offset = 0;
 let isLoading = false;
 let hasMoreGames = true;
 let explorerLoaded = false;
+let isLogged = false;
+
+document.addEventListener("DOMContentLoaded", async () => {
+    await initAuth();
+});
+
+async function initAuth() {
+    isLogged = await checkAuth();
+}
 
 
 // Obtener juegos del backend
@@ -68,6 +77,7 @@ function createGameCard(game, savedStatus = "select") {
 
     const trash = document.createElement("i");
     trash.classList.add("bi" ,"bi-trash");
+    trash.style.color = "red";
     
 
     const remove = document.createElement("button");
