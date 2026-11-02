@@ -71,6 +71,7 @@ function createGameCard(game, savedStatus = "select") {
 
     const remove = document.createElement("button");
     remove.textContent = "";
+    remove.type = "button";
     remove.id = "trash";
 
     remove.appendChild(trash);
