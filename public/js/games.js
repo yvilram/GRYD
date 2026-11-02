@@ -67,11 +67,10 @@ function createGameCard(game, savedStatus = "select") {
     card.id = game.id;
 
     const trash = document.createElement("i");
-    input.add.classList("bi bi-trash");
+    trash.add.classList("bi bi-trash");
 
     const remove = document.createElement("button");
-    remove.textContent = "";
-    remove.type = "button";
+    remove.setAttribute("type", "button");
     remove.id = "trash";
 
     remove.appendChild(trash);
