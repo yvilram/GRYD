@@ -61,7 +61,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
         const result = await response.json();
 
         if (response.ok) {
-            window.location.href = "/index.html";
+            window.location.href = "/public/index.html";
         } else {
             errorMessage.textContent = result.error;
         }
@@ -141,7 +141,7 @@ document.getElementById("logout").addEventListener("click", async () => {
         method: "POST",
         credentials: "include"
     });
-    window.location.href = "/index.html";
+    window.location.href = "/public/index.html";
     document.getElementById("session").style.display = "block";
     document.getElementById("user-avatar").style.display = "none";
 });
