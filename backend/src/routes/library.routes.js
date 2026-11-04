@@ -6,10 +6,23 @@ module.exports = function registerLibraryRoutes(app, requestIgdb) {
         try {
             const ids = req.query.ids;
             if (!ids) return res.json([]);
+            if (typeof ids !== "string" || !/^\d+(,\d+)*$/.test(ids)) {
+                return res.status(400).json({
+                    error: "IDs must be comma-separated positive integers."
+                });
+            }
+
+            const gameIds = [...new Set(ids.split(",").map(Number))];
+            if (gameIds.length > 500 ||
+                gameIds.some(id => !Number.isSafeInteger(id) || id < 1)) {
+                return res.status(400).json({
+                    error: "A maximum of 500 valid IDs is allowed."
+                });
+            }
 
             const games = await requestIgdb(
                 "games",
-                `fields ${GAME_DETAILS_FIELDS}; where id = (${ids});`
+                `fields ${GAME_DETAILS_FIELDS}; where id = (${gameIds.join(",")}); limit 500;`
             );
             res.json(games);
         } catch (error) {
