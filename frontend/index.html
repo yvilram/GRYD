@@ -547,12 +547,76 @@
             </section>
 
             <section class="view collection-view game-route-view" id="view-game" data-view hidden>
-                <a class="game-route-view__back" href="#explore">Back to Explore</a>
-                <p class="eyebrow">Game</p>
-                <h1 id="game-route-title"></h1>
-                <p class="collection-view__description">
-                    This shareable game page is ready for its detailed information view.
-                </p>
+                <a class="game-route-view__back" id="game-detail-back" href="#explore">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                    <span id="game-detail-back-label">Back to Explore</span>
+                </a>
+                <p class="game-detail-message" id="game-detail-message" role="status" aria-live="polite"></p>
+                <div id="game-detail-content" hidden>
+                    <header class="game-detail-heading">
+                        <h1 id="game-route-title"></h1>
+                        <p class="game-detail-release" id="game-detail-release"></p>
+                    </header>
+                    <section class="game-detail-hero" aria-label="Game cover and media">
+                        <div class="game-detail-cover-column">
+                            <img class="game-detail-cover" id="game-detail-cover" alt="" hidden>
+                            <div
+                                class="game-detail-library-controls"
+                                id="game-detail-library-controls"
+                                data-game-id=""
+                                data-game-name=""
+                                hidden
+                            >
+                                <label class="game-detail-library-controls__status">
+                                    <span>My library</span>
+                                    <select
+                                        class="game-detail-library-status"
+                                        id="game-detail-library-status"
+                                        aria-label="Game status in your library"
+                                    >
+                                        <option value="select">Add to library…</option>
+                                        <option value="backlog">Backlog</option>
+                                        <option value="play">Playing</option>
+                                        <option value="pause">Paused</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="drop">Dropped</option>
+                                    </select>
+                                </label>
+                                <button
+                                    class="game-detail-library-remove"
+                                    id="game-detail-library-remove"
+                                    type="button"
+                                    aria-label="Remove game from your library"
+                                    hidden
+                                >
+                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                    <span>Remove from library</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="game-detail-gallery" id="game-detail-gallery">
+                            <div
+                                class="game-detail-gallery__featured"
+                                id="game-detail-featured"
+                                tabindex="0"
+                                aria-label="Featured game media"
+                            ></div>
+                            <div
+                                class="game-detail-gallery__thumbnails"
+                                id="game-detail-thumbnails"
+                                aria-label="Choose featured media"
+                            ></div>
+                        </div>
+                    </section>
+                    <nav class="game-detail-tabs" id="game-detail-tabs" role="tablist" aria-label="Game details"></nav>
+                    <section
+                        class="game-detail-panel"
+                        id="game-detail-panel"
+                        role="tabpanel"
+                        aria-live="polite"
+                        tabindex="0"
+                    ></section>
+                </div>
             </section>
 
             <section class="view collection-view" id="view-library" data-view hidden>

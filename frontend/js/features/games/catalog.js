@@ -15,6 +15,17 @@ const LIBRARY_STATUS_FILTERS = [
     ["all", "All"],
     ...GAME_STATUSES.filter(([status]) => status !== DEFAULT_GAME_STATUS)
 ];
+const normalizeGameStatus = status => {
+    const value = String(status || "").trim().toLocaleLowerCase();
+    const normalized = {
+        playing: "play",
+        paused: "pause",
+        dropped: "drop"
+    }[value] || value;
+    return GAME_STATUSES.some(([knownStatus]) => knownStatus === normalized)
+        ? normalized
+        : DEFAULT_GAME_STATUS;
+};
 const PLATFORM_FAMILIES = [
     { id: "windows", label: "Windows", icon: "bi-windows", matches: /windows/i },
     { id: "linux", label: "Linux", icon: "bi-ubuntu", matches: /linux|steamos/i },
@@ -516,17 +527,667 @@ const getPlatformFamilies = platforms => {
     );
 };
 
-const createGameRoute = game => {
+const createGameRoute = (game, returnRoute = "explore") => {
     const slug = game.name.normalize("NFKD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "") || "game";
-    return `#game/${game.id}/${slug}`;
+    return `#game/${game.id}/${slug}?from=${returnRoute}`;
+};
+
+const GAME_DETAIL_TABS = [
+    { id: "overview", label: "Overview" },
+    { id: "story", label: "Story" },
+    { id: "missions", label: "Missions" },
+    { id: "media", label: "Gallery" },
+    { id: "related", label: "Related content" },
+    { id: "platforms", label: "Platforms" }
+];
+let gameDetailController = null;
+let currentGameDetail = null;
+let activeGameDetailTab = "overview";
+
+const gameItemName = item => {
+    if (typeof item === "string") return item;
+    return typeof item?.name === "string" ? item.name : "";
+};
+
+const gameItemId = item => {
+    const id = Number(item?.id);
+    return Number.isSafeInteger(id) && id > 0 ? id : null;
+};
+
+const createDetailHeading = text => {
+    const heading = document.createElement("h2");
+    heading.classList.add("game-detail-section__heading");
+    heading.textContent = text;
+    return heading;
+};
+
+const createDetailSection = (title, content) => {
+    const section = document.createElement("section");
+    section.classList.add("game-detail-section");
+    section.append(createDetailHeading(title), content);
+    return section;
+};
+
+const createNameList = items => {
+    const list = document.createElement("ul");
+    list.classList.add("game-detail-name-list");
+    const names = (Array.isArray(items) ? items : [])
+        .map(gameItemName)
+        .filter(Boolean);
+
+    if (!names.length) {
+        const empty = document.createElement("li");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "Not available";
+        list.appendChild(empty);
+        return list;
+    }
+
+    names.forEach(name => {
+        const item = document.createElement("li");
+        item.textContent = name;
+        list.appendChild(item);
+    });
+    return list;
+};
+
+const formatGameDate = timestamp => {
+    const value = Number(timestamp);
+    if (!Number.isFinite(value) || value <= 0) return "";
+    return new Intl.DateTimeFormat(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC"
+    }).format(new Date(value * 1000));
+};
+
+const getReleaseRegionName = region => {
+    const regionNames = {
+        1: "Europe",
+        2: "North America",
+        3: "Australia",
+        4: "New Zealand",
+        5: "Japan",
+        6: "China",
+        7: "Asia",
+        8: "Worldwide [WW]",
+        9: "Korea",
+        10: "Brazil"
+    };
+    const id = Number(region);
+    return regionNames[id] || gameItemName(region) || "Region not specified";
+};
+
+const getGameMedia = game => {
+    const media = [];
+    (Array.isArray(game.videos) ? game.videos : []).forEach(video => {
+        if (typeof video.video_id !== "string" || !video.video_id) return;
+        media.push({
+            type: "video",
+            label: video.name || "Game trailer",
+            videoId: video.video_id,
+            thumbnail: `https://img.youtube.com/vi/${encodeURIComponent(video.video_id)}/hqdefault.jpg`
+        });
+    });
+
+    const seenImages = new Set();
+    const appendImages = (items, type, label) => {
+        (Array.isArray(items) ? items : []).forEach(image => {
+            if (typeof image.image_id !== "string" || !image.image_id ||
+                seenImages.has(image.image_id)) return;
+            seenImages.add(image.image_id);
+            media.push({
+                type,
+                label,
+                imageUrl: `https://images.igdb.com/igdb/image/upload/t_1080p/${image.image_id}.jpg`
+            });
+        });
+    };
+
+    appendImages(game.screenshots, "screenshot", "Screenshot");
+    appendImages(game.artworks, "artwork", "Artwork");
+    return media;
+};
+
+let currentGameMediaIndex = 0;
+
+const setFeaturedGameMedia = (media, index = 0, total = 0, scrollThumbnail = true) => {
+    const featured = document.getElementById("game-detail-featured");
+    featured.replaceChildren();
+    if (!media) {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "No images or videos are available yet.";
+        featured.appendChild(empty);
+        return;
+    }
+
+    if (media.type === "video") {
+        const frame = document.createElement("iframe");
+        frame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(media.videoId)}`;
+        frame.title = media.label;
+        frame.loading = "lazy";
+        frame.referrerPolicy = "strict-origin-when-cross-origin";
+        frame.allow =
+            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+        frame.allowFullscreen = true;
+        featured.appendChild(frame);
+    } else {
+        const image = document.createElement("img");
+        image.src = media.imageUrl;
+        image.alt = media.label;
+        image.loading = "lazy";
+        featured.appendChild(image);
+    }
+
+    if (total > 1) {
+        const previous = document.createElement("button");
+        previous.classList.add("game-detail-gallery__arrow", "game-detail-gallery__arrow--previous");
+        previous.type = "button";
+        previous.dataset.galleryDirection = "-1";
+        previous.setAttribute("aria-label", "Previous gallery item");
+        const previousIcon = document.createElement("i");
+        previousIcon.classList.add("bi", "bi-chevron-left");
+        previousIcon.setAttribute("aria-hidden", "true");
+        previous.appendChild(previousIcon);
+
+        const next = document.createElement("button");
+        next.classList.add("game-detail-gallery__arrow", "game-detail-gallery__arrow--next");
+        next.type = "button";
+        next.dataset.galleryDirection = "1";
+        next.setAttribute("aria-label", "Next gallery item");
+        const nextIcon = document.createElement("i");
+        nextIcon.classList.add("bi", "bi-chevron-right");
+        nextIcon.setAttribute("aria-hidden", "true");
+        next.appendChild(nextIcon);
+
+        const counter = document.createElement("span");
+        counter.classList.add("game-detail-gallery__counter");
+        counter.setAttribute("aria-live", "polite");
+        counter.textContent = `${index + 1} / ${total}`;
+        featured.append(previous, next, counter);
+    }
+
+    document.querySelectorAll("#game-detail-thumbnails [data-media-index]")
+        .forEach(thumbnail => {
+            const selected = Number(thumbnail.dataset.mediaIndex) === index;
+            thumbnail.setAttribute("aria-pressed", String(selected));
+            if (selected && scrollThumbnail) {
+                thumbnail.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "center"
+                });
+            }
+        });
+};
+
+const renderGameMedia = game => {
+    const media = getGameMedia(game);
+    const featured = document.getElementById("game-detail-featured");
+    const thumbnails = document.getElementById("game-detail-thumbnails");
+    currentGameMediaIndex = 0;
+    thumbnails.replaceChildren();
+    media.forEach((item, index) => {
+        item.index = index;
+        const button = document.createElement("button");
+        button.classList.add("game-detail-thumbnail");
+        button.type = "button";
+        button.dataset.mediaIndex = String(index);
+        button.setAttribute("aria-label", `Show ${item.label}`);
+        button.setAttribute("aria-pressed", String(index === 0));
+
+        const image = document.createElement("img");
+        image.src = item.type === "video" ? item.thumbnail : item.imageUrl;
+        image.alt = "";
+        image.loading = "lazy";
+        button.appendChild(image);
+
+        if (item.type === "video") {
+            const play = document.createElement("span");
+            play.classList.add("game-detail-thumbnail__play");
+            play.setAttribute("aria-hidden", "true");
+            play.textContent = "▶";
+            button.appendChild(play);
+        }
+
+        const label = document.createElement("span");
+        label.classList.add("visually-hidden");
+        label.textContent = item.label;
+        button.appendChild(label);
+        thumbnails.appendChild(button);
+    });
+    featured.replaceChildren();
+    setFeaturedGameMedia(media[0], 0, media.length, false);
+
+    return media;
+};
+
+const renderOverviewTab = game => {
+    const details = document.createElement("div");
+    details.classList.add("game-detail-overview");
+    const companies = Array.isArray(game.involved_companies)
+        ? game.involved_companies
+        : [];
+    const namesForRole = role => companies
+        .filter(item => item[role])
+        .map(item => item.company)
+        .filter(Boolean);
+    const fields = [
+        ["Developed by", namesForRole("developer")],
+        ["Published by", namesForRole("publisher")],
+        ["Supporting studios", namesForRole("supporting")],
+        ["Genres", game.genres],
+        ["Game modes", game.game_modes],
+        ["Themes", game.themes],
+        ["Player perspective", game.player_perspectives],
+        ["Series", game.collections],
+        ["Franchise", game.franchises],
+        ["Game engine", game.game_engines]
+    ];
+
+    let visibleRows = 0;
+    fields.forEach(([label, items]) => {
+        const values = (Array.isArray(items) ? items : [])
+            .map(gameItemName)
+            .filter(Boolean);
+        if (!values.length) return;
+        visibleRows += 1;
+        const row = document.createElement("div");
+        row.classList.add("game-detail-overview__row");
+        const term = document.createElement("h3");
+        term.textContent = label;
+        row.append(term, createNameList(items));
+        details.appendChild(row);
+    });
+    if (game.parent_game) {
+        details.appendChild(createDetailSection(
+            "Related game",
+            createNameList([game.parent_game])
+        ));
+    }
+    if (!visibleRows && !game.parent_game) {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "No overview information is available for this game yet.";
+        details.appendChild(empty);
+    }
+    return details;
+};
+
+const renderStoryTab = game => {
+    const story = document.createElement("div");
+    story.classList.add("game-detail-story");
+    const synopsis = game.storyline || game.summary || "";
+    if (synopsis) {
+        const paragraph = document.createElement("p");
+        paragraph.textContent = synopsis;
+        story.appendChild(paragraph);
+    } else {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "No synopsis is available for this game yet.";
+        story.appendChild(empty);
+    }
+    if (game.storyline && game.summary && game.storyline !== game.summary) {
+        story.appendChild(createDetailSection("At a glance", createNameList([game.summary])));
+    }
+    return story;
+};
+
+const appendMediaGrid = (container, media) => {
+    if (!media.length) {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "No media is available in this category yet.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const grid = document.createElement("div");
+    grid.classList.add("game-detail-media-grid");
+    media.forEach(item => {
+        const button = document.createElement("button");
+        button.classList.add("game-detail-media-card");
+        button.type = "button";
+        button.dataset.mediaIndex = String(item.index);
+        button.setAttribute("aria-label", `Show ${item.label} in featured media`);
+        const image = document.createElement("img");
+        image.src = item.type === "video" ? item.thumbnail : item.imageUrl;
+        image.alt = "";
+        image.loading = "lazy";
+        button.appendChild(image);
+        if (item.type === "video") {
+            const play = document.createElement("span");
+            play.classList.add("game-detail-thumbnail__play");
+            play.setAttribute("aria-hidden", "true");
+            play.textContent = "▶";
+            button.appendChild(play);
+        }
+        const caption = document.createElement("span");
+        caption.textContent = item.label;
+        button.appendChild(caption);
+        grid.appendChild(button);
+    });
+    container.appendChild(grid);
+};
+
+const renderMediaTab = (game, media) => {
+    const content = document.createElement("div");
+    content.classList.add("game-detail-media");
+    const coverMedia = game.cover?.image_id
+        ? [{
+            type: "cover",
+            label: "Cover",
+            imageUrl: `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`
+        }]
+        : [];
+    [
+        ["Videos", media.filter(item => item.type === "video")],
+        ["Screenshots", media.filter(item => item.type === "screenshot")],
+        ["Artwork", media.filter(item => item.type === "artwork")],
+        ["Cover", coverMedia]
+    ].forEach(([title, items]) => {
+        if (items.length) {
+            const section = document.createElement("section");
+            section.classList.add("game-detail-section");
+            section.appendChild(createDetailHeading(title));
+            appendMediaGrid(section, items);
+            content.appendChild(section);
+        }
+    });
+    if (!content.childElementCount) {
+        appendMediaGrid(content, media);
+    }
+    return content;
+};
+
+const renderRelatedTab = game => {
+    const groups = [
+        ["Expansions", game.expansions],
+        ["Additional content", game.dlcs],
+        ["Bundles and editions", [
+            ...(Array.isArray(game.bundles) ? game.bundles : []),
+            ...(Array.isArray(game.editions) ? game.editions : [])
+        ]],
+        ["Ports and remasters", [
+            ...(Array.isArray(game.ports) ? game.ports : []),
+            ...(Array.isArray(game.remasters) ? game.remasters : [])
+        ]],
+        ["Remakes and standalone expansions", [
+            ...(Array.isArray(game.remakes) ? game.remakes : []),
+            ...(Array.isArray(game.standalone_expansions)
+                ? game.standalone_expansions
+                : [])
+        ]]
+    ];
+    const content = document.createElement("div");
+    content.classList.add("game-detail-related");
+    let hasRelatedContent = false;
+    groups.forEach(([title, items]) => {
+        if (!Array.isArray(items) || !items.length) return;
+        hasRelatedContent = true;
+        const section = document.createElement("section");
+        section.classList.add("game-detail-related__group");
+        section.appendChild(createDetailHeading(title));
+        const cards = document.createElement("div");
+        cards.classList.add("game-detail-related__cards");
+        items.forEach(item => {
+            const name = gameItemName(item);
+            if (!name) return;
+            const card = document.createElement("article");
+            card.classList.add("game-detail-related-card");
+            const cover = document.createElement("img");
+            cover.alt = "";
+            cover.loading = "lazy";
+            cover.src = item.cover?.image_id
+                ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.jpg`
+                : "/assets/no-cover.png";
+            const titleElement = document.createElement("h3");
+            titleElement.textContent = name;
+            card.append(cover, titleElement);
+            cards.appendChild(card);
+        });
+        section.appendChild(cards);
+        content.appendChild(section);
+    });
+    if (!hasRelatedContent) {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "No related content is listed for this game yet.";
+        content.appendChild(empty);
+    }
+    return content;
+};
+
+const renderPlatformsTab = game => {
+    const platforms = Array.isArray(game.platforms) ? game.platforms : [];
+    const releases = Array.isArray(game.release_dates) ? game.release_dates : [];
+    const companies = Array.isArray(game.involved_companies)
+        ? game.involved_companies
+        : [];
+    const content = document.createElement("div");
+    content.classList.add("game-detail-platforms");
+    if (!platforms.length) {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "Platform information is not available yet.";
+        content.appendChild(empty);
+        return content;
+    }
+
+    platforms.forEach(platform => {
+        const platformName = gameItemName(platform);
+        if (!platformName) return;
+        const platformId = gameItemId(platform);
+        const platformReleases = releases.filter(release =>
+            platformId && gameItemId(release.platform) === platformId ||
+            gameItemName(release.platform) === platformName
+        );
+        const card = document.createElement("article");
+        card.classList.add("game-detail-platform-card");
+        const heading = document.createElement("h3");
+        heading.textContent = platformName;
+        card.appendChild(heading);
+
+        const releaseList = document.createElement("ul");
+        releaseList.classList.add("game-detail-platform-card__releases");
+        platformReleases.forEach(release => {
+            const item = document.createElement("li");
+            const region = getReleaseRegionName(release.region);
+            const date = release.human || formatGameDate(release.date) || "Release date TBA";
+            const status = gameItemName(release.status);
+            const description = [date, status].filter(Boolean).join(" · ");
+            item.textContent = `${region} — ${description}`;
+            releaseList.appendChild(item);
+        });
+        if (!releaseList.childElementCount) {
+            const item = document.createElement("li");
+            item.textContent = "Platform release date not listed";
+            releaseList.appendChild(item);
+        }
+        card.appendChild(releaseList);
+
+        [
+            ["Main developer(s)", "developer"],
+            ["Publisher(s)", "publisher"],
+            ["Supporting developer(s)", "supporting"]
+        ].forEach(([label, role]) => {
+            const names = companies
+                .filter(company => company[role])
+                .map(company => company.company)
+                .filter(Boolean);
+            if (!names.length) return;
+            const group = document.createElement("div");
+            group.classList.add("game-detail-platform-card__companies");
+            const groupTitle = document.createElement("h4");
+            groupTitle.textContent = label;
+            group.append(groupTitle, createNameList(names));
+            card.appendChild(group);
+        });
+        content.appendChild(card);
+    });
+    return content;
+};
+
+const renderGameDetailTab = tabId => {
+    if (!currentGameDetail) return;
+    const game = currentGameDetail.game;
+    const media = currentGameDetail.media;
+    const panel = document.getElementById("game-detail-panel");
+    panel.setAttribute("aria-labelledby", `game-tab-${tabId}`);
+    panel.replaceChildren();
+
+    if (tabId === "overview") {
+        panel.appendChild(renderOverviewTab(game));
+    } else if (tabId === "story") {
+        panel.appendChild(renderStoryTab(game));
+    } else if (tabId === "missions") {
+        const empty = document.createElement("div");
+        empty.classList.add("game-detail-empty");
+        empty.textContent =
+            "Missions and quests will appear here when guide data becomes available.";
+        panel.appendChild(empty);
+    } else if (tabId === "media") {
+        panel.appendChild(renderMediaTab(game, media));
+    } else if (tabId === "related") {
+        panel.appendChild(renderRelatedTab(game));
+    } else if (tabId === "platforms") {
+        panel.appendChild(renderPlatformsTab(game));
+    }
+
+    document.querySelectorAll("#game-detail-tabs [role='tab']").forEach(tab => {
+        const selected = tab.dataset.gameTab === tabId;
+        tab.setAttribute("aria-selected", String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+    });
+}
+
+const renderGameDetailTabs = () => {
+    const tabs = document.getElementById("game-detail-tabs");
+    tabs.replaceChildren();
+    GAME_DETAIL_TABS.forEach(({ id, label }) => {
+        const tab = document.createElement("button");
+        tab.classList.add("game-detail-tab");
+        tab.type = "button";
+        tab.id = `game-tab-${id}`;
+        tab.dataset.gameTab = id;
+        tab.setAttribute("role", "tab");
+        tab.setAttribute("aria-controls", "game-detail-panel");
+        tab.textContent = label;
+        tabs.appendChild(tab);
+    });
+};
+
+const showGameDetailMessage = (message, isError = false) => {
+    const messageElement = document.getElementById("game-detail-message");
+    messageElement.replaceChildren();
+    messageElement.dataset.type = isError ? "error" : "status";
+    const text = document.createElement("span");
+    text.textContent = message;
+    messageElement.appendChild(text);
+};
+
+const updateGameDetailLibraryControls = status => {
+    const controls = document.getElementById("game-detail-library-controls");
+    const statusSelect = document.getElementById("game-detail-library-status");
+    const removeButton = document.getElementById("game-detail-library-remove");
+    const normalizedStatus = normalizeGameStatus(status);
+
+    controls.hidden = !isAuthenticated;
+    statusSelect.value = normalizedStatus;
+    statusSelect.dataset.savedStatus = normalizedStatus;
+    statusSelect.querySelector('option[value="select"]').disabled =
+        normalizedStatus !== DEFAULT_GAME_STATUS;
+    removeButton.hidden = normalizedStatus === DEFAULT_GAME_STATUS;
+};
+
+const loadGameDetail = async gameId => {
+    gameDetailController?.abort();
+    const controller = new AbortController();
+    gameDetailController = controller;
+    currentGameDetail = null;
+    document.getElementById("game-detail-content").hidden = true;
+    showGameDetailMessage("Loading game details…");
+
+    try {
+        const game = await requestJson(`${API_URL}/api/games/${gameId}`, {
+            signal: controller.signal
+        });
+        if (controller.signal.aborted) return;
+
+        currentGameDetail = { game, media: renderGameMedia(game) };
+        const libraryControls = document.getElementById("game-detail-library-controls");
+        libraryControls.dataset.gameId = String(game.id);
+        libraryControls.dataset.gameName = game.name;
+        updateGameDetailLibraryControls(DEFAULT_GAME_STATUS);
+
+        if (isAuthenticated) {
+            try {
+                savedGames = await fetchSavedGames();
+                if (controller.signal.aborted) return;
+                const savedGame = savedGames.find(
+                    item => Number(item.id) === Number(game.id)
+                );
+                updateGameDetailLibraryControls(
+                    savedGame?.status || DEFAULT_GAME_STATUS
+                );
+            } catch (error) {
+                console.error(`Could not load library status for ${game.name}:`, error);
+                window.showAppNotice(
+                    "Could not load your library status. Please try again.",
+                    "error"
+                );
+            }
+        }
+
+        const title = document.getElementById("game-route-title");
+        title.textContent = game.name;
+        const release = document.getElementById("game-detail-release");
+        release.textContent = formatGameDate(game.first_release_date) || "Release date TBA";
+
+        const cover = document.getElementById("game-detail-cover");
+        cover.src = game.cover?.image_id
+            ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`
+            : "/assets/no-cover.png";
+        cover.alt = `${game.name} cover`;
+        cover.hidden = false;
+
+        activeGameDetailTab = "overview";
+        renderGameDetailTabs();
+        renderGameDetailTab(activeGameDetailTab);
+        document.getElementById("game-detail-content").hidden = false;
+        showGameDetailMessage("");
+    } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(`Could not load game ${gameId}:`, error);
+        showGameDetailMessage(
+            error.status === 404
+                ? "This game could not be found."
+                : "Could not load this game's details. Please try again.",
+            true
+        );
+        const retry = document.createElement("button");
+        retry.classList.add("game-detail-retry");
+        retry.type = "button";
+        retry.textContent = "Try again";
+        retry.addEventListener("click", () => loadGameDetail(gameId), { once: true });
+        document.getElementById("game-detail-message").appendChild(retry);
+    }
 };
 
 // Create a game card and wire its status and remove controls.
-const createGameCard = (game, savedStatus = DEFAULT_GAME_STATUS, addedAt = "") => {
+const createGameCard = (
+    game,
+    savedStatus = DEFAULT_GAME_STATUS,
+    addedAt = "",
+    returnRoute = "explore"
+) => {
     const card = document.createElement("article");
     card.classList.add("game-card");
     card.dataset.gameId = String(game.id);
@@ -581,7 +1242,7 @@ const createGameCard = (game, savedStatus = DEFAULT_GAME_STATUS, addedAt = "") =
     media.classList.add("game-card__media");
     const coverLink = document.createElement("a");
     coverLink.classList.add("game-card__cover-link");
-    coverLink.href = createGameRoute(game);
+    coverLink.href = createGameRoute(game, returnRoute);
     coverLink.setAttribute("aria-label", `View details for ${game.name}`);
     coverLink.appendChild(cover);
     media.append(coverLink, rating);
@@ -600,7 +1261,7 @@ const createGameCard = (game, savedStatus = DEFAULT_GAME_STATUS, addedAt = "") =
         option.disabled = value === DEFAULT_GAME_STATUS;
         statusSelect.appendChild(option);
     });
-    statusSelect.value = savedStatus || DEFAULT_GAME_STATUS;
+    statusSelect.value = normalizeGameStatus(savedStatus);
     statusSelect.dataset.savedStatus = statusSelect.value;
 
     const removeButton = document.createElement("button");
@@ -625,21 +1286,13 @@ const createGameCard = (game, savedStatus = DEFAULT_GAME_STATUS, addedAt = "") =
                 credentials: "include"
             });
 
-            savedGames = savedGames.filter(
-                savedGame => Number(savedGame.id) !== Number(game.id)
-            );
-
-            if (card.parentElement?.id === "game-library") {
-                card.remove();
-                refreshLibraryView();
-                window.showAppNotice(`${game.name} was removed from your library.`);
-                return;
-            }
-
-            statusSelect.value = DEFAULT_GAME_STATUS;
-            statusSelect.dataset.savedStatus = DEFAULT_GAME_STATUS;
-            removeButton.hidden = true;
-            refreshCatalogVisibility();
+            document.dispatchEvent(new CustomEvent("app:library-state-changed", {
+                detail: {
+                    gameId: game.id,
+                    gameName: game.name,
+                    status: DEFAULT_GAME_STATUS
+                }
+            }));
             window.showAppNotice(`${game.name} was removed from your library.`);
         } catch (error) {
             console.error(`Could not remove ${game.name} from the library:`, error);
@@ -664,7 +1317,7 @@ const createGameCard = (game, savedStatus = DEFAULT_GAME_STATUS, addedAt = "") =
     name.textContent = game.name;
     const gameLink = document.createElement("a");
     gameLink.classList.add("game-card__link");
-    gameLink.href = createGameRoute(game);
+    gameLink.href = createGameRoute(game, returnRoute);
     gameLink.setAttribute("aria-label", `View details for ${game.name}`);
     gameLink.appendChild(name);
     title.appendChild(gameLink);
@@ -755,7 +1408,9 @@ const loadCatalogPage = async () => {
         games.forEach(game => {
             const card = createGameCard(
                 game,
-                savedGamesById.get(Number(game.id))?.status
+                savedGamesById.get(Number(game.id))?.status,
+                "",
+                "explore"
             );
             card.hidden = explorerFilters.hideOwned && savedGamesById.has(Number(game.id));
             catalog.appendChild(card);
@@ -801,7 +1456,7 @@ const syncCatalogWithSavedGames = async () => {
         const statusSelect = card.querySelector(".game-card__status");
 
         card.querySelector(".game-card__controls").hidden = !isAuthenticated;
-        statusSelect.value = savedGame?.status || DEFAULT_GAME_STATUS;
+        statusSelect.value = normalizeGameStatus(savedGame?.status);
         statusSelect.dataset.savedStatus = statusSelect.value;
         card.querySelector(".game-card__remove").hidden = !savedGame;
         card.hidden = explorerFilters.hideOwned && Boolean(savedGame);
@@ -860,17 +1515,33 @@ const openLibrary = async () => {
             return;
         }
 
-        const games = await requestJson(
-            `${API_URL}/api/library?ids=${savedGames.map(game => game.id).join(",")}`
-        );
-        const savedGamesById = new Map(
-            savedGames.map(game => [Number(game.id), game])
-        );
+        let gamesById = new Map();
+        try {
+            const games = await requestJson(
+                `${API_URL}/api/library?ids=${savedGames.map(game => game.id).join(",")}`
+            );
+            if (!Array.isArray(games)) {
+                throw new Error("The server returned an invalid game details response.");
+            }
+            gamesById = new Map(games.map(game => [Number(game.id), game]));
+        } catch (error) {
+            console.error("Could not load catalog details for saved games:", error);
+        }
 
-        games.forEach(game => {
-            const savedGame = savedGamesById.get(Number(game.id));
+        savedGames.forEach(savedGame => {
+            const details = gamesById.get(Number(savedGame.id));
+            const game = {
+                ...details,
+                id: Number(savedGame.id),
+                name: details?.name || savedGame.game_name || `Game ${savedGame.id}`
+            };
             library.appendChild(
-                createGameCard(game, savedGame?.status, savedGame?.created_at)
+                createGameCard(
+                    game,
+                    normalizeGameStatus(savedGame.status),
+                    savedGame.created_at,
+                    "library"
+                )
             );
         });
         refreshLibraryView();
@@ -986,6 +1657,111 @@ const initializeCatalog = async () => {
         loadCatalogPage();
     });
 
+    const gameDetailTabs = document.getElementById("game-detail-tabs");
+    gameDetailTabs.addEventListener("click", event => {
+        const tab = event.target.closest("[data-game-tab]");
+        if (!tab) return;
+        activeGameDetailTab = tab.dataset.gameTab;
+        renderGameDetailTab(activeGameDetailTab);
+    });
+    gameDetailTabs.addEventListener("keydown", event => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+        const tabs = [...gameDetailTabs.querySelectorAll("[role='tab']")];
+        const currentIndex = tabs.indexOf(document.activeElement);
+        if (currentIndex < 0) return;
+        event.preventDefault();
+        const nextIndex = event.key === "Home"
+            ? 0
+            : event.key === "End"
+                ? tabs.length - 1
+                : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
+                    tabs.length;
+        tabs[nextIndex].focus();
+        tabs[nextIndex].click();
+    });
+
+    const gameDetailGallery = document.getElementById("game-detail-gallery");
+    const selectGameMedia = index => {
+        const media = currentGameDetail?.media;
+        if (!media?.length) return;
+        currentGameMediaIndex = (index + media.length) % media.length;
+        setFeaturedGameMedia(
+            media[currentGameMediaIndex],
+            currentGameMediaIndex,
+            media.length
+        );
+    };
+    gameDetailGallery.addEventListener("click", event => {
+        const thumbnail = event.target.closest("[data-media-index]");
+        if (thumbnail) {
+            selectGameMedia(Number(thumbnail.dataset.mediaIndex));
+            return;
+        }
+        const button = event.target.closest("[data-gallery-direction]");
+        if (button) {
+            selectGameMedia(
+                currentGameMediaIndex + Number(button.dataset.galleryDirection)
+            );
+            document.getElementById("game-detail-featured").focus({
+                preventScroll: true
+            });
+            return;
+        }
+        if (event.target.closest("#game-detail-featured img")) {
+            document.getElementById("game-detail-featured").focus({
+                preventScroll: true
+            });
+        }
+    });
+    gameDetailGallery.addEventListener("keydown", event => {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+        if (!currentGameDetail?.media.length) return;
+        event.preventDefault();
+        selectGameMedia(currentGameMediaIndex + (event.key === "ArrowRight" ? 1 : -1));
+    });
+    document.getElementById("game-detail-library-remove").addEventListener(
+        "click",
+        async event => {
+            const button = event.currentTarget;
+            const game = currentGameDetail?.game;
+            if (!game) return;
+            button.disabled = true;
+            try {
+                await requestJson(`${API_URL}/api/remove-item?id=${game.id}`, {
+                    credentials: "include"
+                });
+                document.dispatchEvent(new CustomEvent("app:library-state-changed", {
+                    detail: {
+                        gameId: game.id,
+                        gameName: game.name,
+                        status: DEFAULT_GAME_STATUS
+                    }
+                }));
+                window.showAppNotice(`${game.name} was removed from your library.`);
+            } catch (error) {
+                console.error(`Could not remove ${game.name} from the library:`, error);
+                window.showAppNotice(
+                    error.status === 401
+                        ? "Your session has expired. Log in again to manage your library."
+                        : `Could not remove ${game.name}. Check your connection and try again.`,
+                    "error"
+                );
+            } finally {
+                button.disabled = false;
+            }
+        }
+    );
+    document.getElementById("game-detail-panel").addEventListener("click", event => {
+        const button = event.target.closest("[data-media-index]");
+        if (!button || !currentGameDetail) return;
+        const index = Number(button.dataset.mediaIndex);
+        selectGameMedia(index);
+        document.getElementById("game-detail-featured").scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    });
+
     document.getElementById("library-content-menu").addEventListener("click", event => {
         const button = event.target.closest("[data-library-content]");
         if (!button) return;
@@ -1030,6 +1806,26 @@ const initializeCatalog = async () => {
 
     document.addEventListener("app:library-state-changed", ({ detail }) => {
         const gameId = Number(detail.gameId);
+        const detailGame = currentGameDetail?.game;
+        if (detailGame && Number(detailGame.id) === gameId) {
+            updateGameDetailLibraryControls(detail.status);
+        }
+        document.querySelectorAll(
+            `#game-catalog .game-card[data-game-id="${gameId}"], ` +
+            `#game-library .game-card[data-game-id="${gameId}"]`
+        ).forEach(card => {
+            const statusSelect = card.querySelector(".game-card__status");
+            const nextStatus = normalizeGameStatus(detail.status);
+            if (card.parentElement?.id === "game-library" &&
+                nextStatus === DEFAULT_GAME_STATUS) {
+                card.remove();
+                return;
+            }
+            statusSelect.value = nextStatus;
+            statusSelect.dataset.savedStatus = nextStatus;
+            card.querySelector(".game-card__remove").hidden =
+                nextStatus === DEFAULT_GAME_STATUS;
+        });
         const savedGame = savedGames.find(game => Number(game.id) === gameId);
         if (detail.status === DEFAULT_GAME_STATUS) {
             savedGames = savedGames.filter(game => Number(game.id) !== gameId);
@@ -1047,13 +1843,16 @@ const initializeCatalog = async () => {
         refreshLibraryView();
     });
 
-    document.addEventListener("app:navigate", async ({ detail: { route } }) => {
+    document.addEventListener("app:navigate", async ({ detail: { route, gameId } }) => {
         setCatalogFiltersOpen(false);
         setLibraryFiltersOpen(false);
+        if (route !== "game") gameDetailController?.abort();
         if (!isAuthenticationResolved) return;
 
         if (route === "explore") {
             await openExplorer();
+        } else if (route === "game" && gameId) {
+            await loadGameDetail(gameId);
         } else if (route === "library") {
             if (!isAuthenticated) {
                 navigateToRoute("login", { replace: true });
@@ -1069,6 +1868,11 @@ const initializeCatalog = async () => {
         isAuthenticated = event.detail.authenticated;
         isAuthenticationResolved = true;
         updateAuthenticationControls();
+        if (!isAuthenticated) {
+            updateGameDetailLibraryControls(DEFAULT_GAME_STATUS);
+        } else if (currentGameDetail) {
+            loadGameDetail(currentGameDetail.game.id);
+        }
     });
 
     isAuthenticated = await window.authStateReady;

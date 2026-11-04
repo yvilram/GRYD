@@ -31,6 +31,70 @@ const parseYear = (value, label) => {
 };
 
 module.exports = function registerCatalogRoutes(app, requestIgdb) {
+    app.get("/api/games/:id", async (req, res) => {
+        try {
+            if (!/^[1-9]\d*$/.test(req.params.id) ||
+                !Number.isSafeInteger(Number(req.params.id))) {
+                throw invalidInput("Game ID must be a positive integer.");
+            }
+
+            const games = await requestIgdb(
+                "games",
+                `
+                fields
+                    id, name, slug, summary, storyline, first_release_date,
+                    cover.image_id, screenshots.image_id, artworks.image_id,
+                    videos.name, videos.video_id,
+                    genres.name, game_modes.name, themes.name,
+                    player_perspectives.name, franchises.name, collections.name,
+                    game_engines.name, parent_game.name,
+                    expansions.id, expansions.name, expansions.cover.image_id,
+                    dlcs.id, dlcs.name, dlcs.cover.image_id,
+                    bundles.id, bundles.name, bundles.cover.image_id,
+                    standalone_expansions.id, standalone_expansions.name,
+                    standalone_expansions.cover.image_id,
+                    ports.id, ports.name, ports.cover.image_id,
+                    remakes.id, remakes.name, remakes.cover.image_id,
+                    remasters.id, remasters.name, remasters.cover.image_id,
+                    platforms.name,
+                    release_dates.date, release_dates.human,
+                    release_dates.region, release_dates.status.name,
+                    release_dates.platform.name,
+                    involved_companies.company.name, involved_companies.developer,
+                    involved_companies.publisher, involved_companies.supporting;
+                where id = ${Number(req.params.id)};
+                limit 1;
+                `
+            );
+
+            if (!games.length) {
+                return res.status(404).json({ error: "Game not found." });
+            }
+
+            const versions = await requestIgdb(
+                "game_versions",
+                `
+                fields games.id, games.name, games.cover.image_id;
+                where game = ${Number(req.params.id)};
+                limit 50;
+                `
+            );
+            games[0].editions = versions.flatMap(version =>
+                Array.isArray(version.games) ? version.games : []
+            );
+            res.json(games[0]);
+        } catch (error) {
+            if (error.status === 400) {
+                return res.status(400).json({ error: error.message });
+            }
+            console.error(`Could not load game ${req.params.id}:`, error);
+            if (error.upstream) {
+                return res.status(502).json({ error: error.message });
+            }
+            res.status(500).json({ error: "Could not load game details." });
+        }
+    });
+
     app.get("/api/games", async (req, res) => {
         try {
             const requestedLimit = Number(req.query.limit);
