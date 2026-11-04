@@ -58,10 +58,11 @@ const renderRoute = (route, game = null) => {
     });
 
     if (activeRoute === "game") {
-        document.getElementById("game-route-title").textContent = game.slug
-            .split("-")
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ");
+        const backLink = document.getElementById("game-detail-back");
+        const returnRoute = game.returnRoute === "library" ? "library" : "explore";
+        backLink.href = `#${returnRoute}`;
+        document.getElementById("game-detail-back-label").textContent =
+            returnRoute === "library" ? "Back to Library" : "Back to Explore";
     }
 
     document.querySelectorAll(".primary-nav [data-view-target]").forEach(button => {
@@ -103,9 +104,13 @@ const navigateToRoute = (route, { replace = false } = {}) => {
 // Restore the current route when browser history changes.
 const restoreRouteFromUrl = () => {
     const route = window.location.hash.slice(1);
-    const gameMatch = /^game\/([1-9]\d*)\/([a-z0-9]+(?:-[a-z0-9]+)*)$/.exec(route);
+    const gameMatch = /^game\/([1-9]\d*)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?:\?from=(explore|library))?$/.exec(route);
     if (gameMatch) {
-        renderRoute("game", { id: gameMatch[1], slug: gameMatch[2] });
+        renderRoute("game", {
+            id: gameMatch[1],
+            slug: gameMatch[2],
+            returnRoute: gameMatch[3] || "explore"
+        });
         return;
     }
 
