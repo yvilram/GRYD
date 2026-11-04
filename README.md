@@ -27,6 +27,7 @@ GRYD/
 │           ├── games/
 │           ├── library/
 │           └── legal/
+├── functions/                # Pages Functions que reenvían solicitudes /api/...
 ├── backend/
 │   ├── worker.mjs             # Entrada de Cloudflare Workers
 │   └── src/
@@ -40,7 +41,7 @@ GRYD/
 └── wrangler.jsonc
 ```
 
-El frontend se sirve como contenido estático desde `frontend/`. El backend es código de servidor: registra endpoints `/api/...` y mantiene las credenciales de IGDB y Supabase fuera del navegador.
+El frontend se sirve desde `frontend/`; sus Pages Functions reenvían las solicitudes `/api/...` al Worker para que las cookies de sesión sean del mismo sitio que la aplicación. El backend registra los endpoints `/api/...` y mantiene las credenciales de IGDB y Supabase fuera del navegador.
 
 ## Desarrollo local
 
