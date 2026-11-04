@@ -1,98 +1,143 @@
 # GRYD
 
-A **Letterboxd / Trakt-style app for video games**: a single place to catalog, organize and get oriented in games without having to check several websites.
+GRYD es una aplicación para descubrir videojuegos y organizar una biblioteca personal.
 
-> Status: in development.
+## Tecnologías
 
-## Idea
+- **Frontend:** HTML, SCSS/CSS y JavaScript sin framework.
+- **Backend:** Express ejecutado en Cloudflare Workers.
+- **Autenticación y datos:** Supabase.
+- **Catálogo de videojuegos:** IGDB.
 
-- Unify external APIs, starting with **IGDB**, to catalog games.
-- Let each user organize their games (lists, statuses, ratings).
-- Integrate content from other websites, such as quests and guides.
-- Expand in the future to **movies, TV series, anime and books**, so the data model should be generic ("media" rather than "game").
+## Estructura
 
-## Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | HTML, CSS (SCSS source) and vanilla JavaScript |
-| Backend | Node.js (`server.js`) |
-| Deployment | Cloudflare (`worker.mjs`, `wrangler.jsonc`) |
-| Auth and database | Supabase |
-| Game data | IGDB |
-
-## Project structure
-
-```
+```text
 GRYD/
-├── index.html          # Main page
-├── server.js           # Node server
-├── worker.mjs          # Cloudflare Worker
-├── wrangler.jsonc      # Cloudflare configuration
+├── frontend/                 # Archivos públicos que carga el navegador
+│   ├── index.html
+│   ├── assets/
+│   ├── legal/
+│   ├── styles/
+│   │   ├── css/               # CSS servido por el sitio
+│   │   └── scss/              # Fuentes SCSS
+│   └── js/
+│       ├── config.js
+│       └── features/
+│           ├── auth/
+│           ├── games/
+│           ├── library/
+│           └── legal/
+├── backend/
+│   ├── worker.mjs             # Entrada de Cloudflare Workers
+│   └── src/
+│       ├── app.js             # Configura Express y registra las rutas
+│       ├── constants/         # Campos compartidos para consultas a IGDB
+│       ├── routes/            # auth.routes.js, catalog.routes.js, library.routes.js
+│       └── services/          # Sesión, cliente de Supabase y cliente de IGDB
+├── docs/                      # Documentación del proyecto y la base de datos
+├── scripts/
 ├── package.json
-├── assets/             # Images (background, default cover)
-├── css/
-│   ├── auth.scss
-│   ├── games_container.scss
-│   └── styles.scss     # .css and .css.map files are generated on compile
-└── js/
-    ├── api.js          # API calls
-    ├── auth.js         # Sign up and login
-    ├── config.js       # Client configuration
-    ├── games.js        # Game listing and logic
-    ├── game_state.js   # User game state
-    └── supabase.js     # Supabase client
+└── wrangler.jsonc
 ```
 
-## Getting started
+El frontend se sirve como contenido estático desde `frontend/`. El backend es código de servidor: registra endpoints `/api/...` y mantiene las credenciales de IGDB y Supabase fuera del navegador.
 
-### Requirements
+## Desarrollo local
 
-- Node.js [version]
-- A Supabase account and project
-- IGDB API credentials (Twitch Developers)
+Requisitos: Node.js y npm, además de credenciales para Supabase e IGDB.
 
-### Installation
+1. Instala dependencias:
 
-```bash
-git clone [repository URL]
-cd GRYD
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-### Environment variables
+   Genera el CSS con `npm run build:css`; `npm run dev` también lo compila antes de iniciar los servidores locales.
 
-Create a `.env` file in the project root. **Never commit it to the repository.**
+2. Crea `.dev.vars` en la raíz (Wrangler la usa localmente) con las variables necesarias:
 
-```
-SUPABASE_URL=
-SUPABASE_ANON_KEY=
-IGDB_CLIENT_ID=
-IGDB_CLIENT_SECRET=
-```
+   ```text
+   SUPABASE_URL=
+   SUPABASE_PUBLISHABLE_KEY=
+   SUPABASE_SECRET_KEY=
+   IGDB_CLIENT_ID=
+   IGDB_ACCESS_TOKEN=
+   ```
 
-> Adjust the names to match what your code actually uses. Secret keys (such as Supabase's `service_role` or the IGDB secret) must only be used on the server, never in the frontend.
+   `SUPABASE_SECRET_KEY` solo se usa en el backend para operaciones administrativas de eliminación de cuentas. No la expongas al frontend ni subas `.dev.vars` u otros archivos con credenciales al repositorio.
 
-### Running
+3. Inicia el frontend y el Worker:
 
-```bash
-npm start
-```
+   ```bash
+   npm run dev
+   ```
 
-> Check the actual command in the `scripts` section of `package.json`.
+   `serve` imprimirá la dirección del frontend (normalmente `http://localhost:3000`) y Wrangler escuchará en `http://localhost:8787`.
 
-## Roadmap
+4. Para comprobar qué procesos están usando esos puertos y liberarlos al detener el entorno:
 
-- [x] Base project structure
-- [x] Authentication with Supabase
-- [ ] Search and catalog with IGDB
-- [ ] Per-user lists and game statuses (playing, backlog, completed)
-- [ ] Ratings and reviews
-- [ ] Integration of quests and guides from other websites
-- [ ] Expansion to movies, TV series, anime and books
+   ```bash
+   sudo ss -lptn '( sport = :3000 or sport = :8787 )'
+   fuser -k 3000/tcp 8787/tcp
+   ```
 
-> Tick what you have already done and adjust the order to your plan.
+   `fuser` forma parte del paquete `psmisc`. Si no está instalado en Ubuntu o Debian, puedes instalarlo con `sudo apt install psmisc`. El comando para liberar los puertos termina los procesos que los estén usando.
 
-## License
+## Producción
 
-[To be decided]
+Requisitos: una cuenta de Cloudflare, acceso al proyecto de Supabase y credenciales de IGDB. Los comandos de Wrangler se ejecutan desde la raíz del repositorio.
+
+1. Instala dependencias y autentícate en Cloudflare:
+
+   ```bash
+   npm install
+   npx wrangler login
+   ```
+
+2. Configura los secretos del Worker. Wrangler solicitará cada valor de forma interactiva; no los incluyas en comandos, archivos del frontend ni en el repositorio:
+
+   ```bash
+   npx wrangler secret put SUPABASE_URL
+   npx wrangler secret put SUPABASE_PUBLISHABLE_KEY
+   npx wrangler secret put SUPABASE_SECRET_KEY
+   npx wrangler secret put IGDB_CLIENT_ID
+   npx wrangler secret put IGDB_ACCESS_TOKEN
+   ```
+
+   `SUPABASE_SECRET_KEY` es necesaria para la eliminación administrativa de cuentas. El token de IGDB debe mantenerse vigente; si caduca o se renueva, actualízalo con el último comando.
+
+3. Despliega el backend como Cloudflare Worker:
+
+   ```bash
+   npx wrangler deploy
+   ```
+
+   Wrangler mostrará la URL desplegada del Worker. Comprueba que coincide con la URL de producción configurada en `API_URL` dentro de [frontend/js/config.js](./frontend/js/config.js). Si usas otra URL, actualiza esa configuración y añade el origen exacto de la web a `allowedOrigins` en [backend/src/app.js](./backend/src/app.js) antes de desplegar de nuevo.
+
+4. Compila el CSS y publica el frontend en Cloudflare Pages. Si el proyecto Pages `gryd` aún no existe, ejecuta también el comando para crearlo:
+
+   ```bash
+   npx wrangler pages project create gryd --production-branch main
+   ```
+
+   Después, compila y despliega el frontend:
+
+   ```bash
+   npm run build:css
+   npx wrangler pages deploy frontend --project-name=gryd
+   ```
+
+   El proyecto `gryd` usa normalmente `https://gryd.pages.dev`, que ya está permitido por el backend. Si eliges otro nombre o dominio, actualiza `allowedOrigins` en el backend para permitir el origen de producción.
+
+5. En la configuración de autenticación de Supabase, añade el dominio de Pages a los sitios permitidos (Site URL y Redirect URLs, cuando corresponda). Después, prueba el registro e inicio de sesión, la biblioteca, la carga de avatares y la eliminación de cuenta en la URL de producción.
+
+   Para futuras publicaciones del frontend, vuelve a ejecutar `npm run build:css` y el comando `wrangler pages deploy`. Los secretos del Worker se gestionan por separado y no se suben con el código.
+
+## Configuración de despliegue
+
+El Worker se configura en [wrangler.jsonc](./wrangler.jsonc) y utiliza `backend/worker.mjs` como entrada. Para ver los comandos de publicación y configuración de secretos, sigue la sección [Producción](#producción).
+
+## Documentación
+
+- [Esquema de Supabase](./docs/SCHEMA.md)
+- [Roadmap](./docs/ROADMAP.md)

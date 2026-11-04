@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta
+            name="description"
+            content="Discover video games and build a library that is truly yours."
+        >
+        <meta name="theme-color" content="#090b12">
+        <title>GRYD — Discover your next game</title>
+        <script src="/js/app/theme.js"></script>
+        <link rel="icon" href="/assets/favicon.ico">
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        >
+        <link rel="stylesheet" href="/styles/css/main.css">
+        <script src="/js/config.js"></script>
+        <script src="/js/app/views.js" defer></script>
+        <script src="/js/features/auth/auth.js" defer></script>
+        <script src="/js/features/games/catalog.js" defer></script>
+        <script src="/js/features/library/game-state.js" defer></script>
+        <script src="/js/features/legal/privacy-terms.js" defer></script>
+    </head>
+
+    <body>
+        <header class="site-header">
+            <a class="brand" href="/" aria-label="GRYD home">GRYD</a>
+
+            <button
+                class="site-header__toggle"
+                id="site-header-toggle"
+                type="button"
+                aria-label="Open navigation menu"
+                aria-expanded="false"
+                aria-controls="site-header-menu"
+            >
+                <i class="bi bi-list" aria-hidden="true"></i>
+            </button>
+
+            <div class="site-header__menu" id="site-header-menu">
+                <nav class="primary-nav" aria-label="Main navigation">
+                    <button
+                        class="button button--nav"
+                        id="navigation-explore"
+                        type="button"
+                        data-view-target="explore"
+                    >
+                        <i class="bi bi-compass" aria-hidden="true"></i>
+                        <span>Explore</span>
+                    </button>
+                    <button
+                        class="button button--nav"
+                        id="navigation-library"
+                        type="button"
+                        data-view-target="library"
+                        hidden
+                    >
+                        <i class="bi bi-collection" aria-hidden="true"></i>
+                        <span>Library</span>
+                    </button>
+                </nav>
+
+                <div class="header-account">
+                    <div class="auth-actions" id="auth-actions">
+                        <button class="button button--quiet" id="auth-login-trigger" type="button">
+                            Log in
+                        </button>
+                        <button class="button button--primary" id="auth-register-trigger" type="button">
+                            Create account
+                        </button>
+                    </div>
+
+                    <div class="account-menu" id="account-menu" hidden>
+                        <button
+                            class="account-menu__trigger"
+                            id="account-menu-trigger"
+                            type="button"
+                            aria-label="Open account menu"
+                            aria-expanded="false"
+                            aria-controls="account-menu-panel"
+                        >
+                            <img id="account-avatar" alt="" hidden>
+                            <i class="bi bi-person-circle" aria-hidden="true"></i>
+                        </button>
+                        <div class="account-menu__panel" id="account-menu-panel" hidden>
+                            <span class="account-menu__email" id="account-email"></span>
+                            <button
+                                class="account-menu__action"
+                                id="account-profile"
+                                type="button"
+                                data-view-target="profile"
+                            >
+                                Profile
+                            </button>
+                            <button class="account-menu__action" id="auth-logout" type="button">
+                                Log out
+                            </button>
+                            <button
+                                class="account-menu__action account-menu__theme"
+                                id="theme-toggle"
+                                type="button"
+                                data-theme-toggle
+                                aria-pressed="false"
+                            >
+                                <i class="bi bi-sun" aria-hidden="true"></i>
+                                <span id="theme-toggle-label">Light theme</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="site-main" id="main-content">
+            <section class="view home-view" id="view-home" data-view>
+                <div class="home-view__content">
+                    <p class="eyebrow">Your next favorite game starts here</p>
+                    <h1>Discover games.<br><span>Make them yours.</span></h1>
+                    <p class="home-view__description">
+                        Explore a world of games and keep your personal collection in one place.
+                    </p>
+                    <div class="home-view__actions">
+                        <button
+                            class="button button--primary button--large"
+                            id="home-explore"
+                            type="button"
+                            data-view-target="explore"
+                        >
+                            Explore games
+                            <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                        </button>
+                        <button
+                            class="button button--quiet button--large"
+                            id="home-register"
+                            type="button"
+                        >
+                            Create your free account
+                        </button>
+                    </div>
+                    <p class="home-view__credit">Game data provided by IGDB</p>
+                </div>
+                <div class="home-view__art" aria-hidden="true">
+                    <span class="home-view__orb home-view__orb--one"></span>
+                    <span class="home-view__orb home-view__orb--two"></span>
+                    <i class="bi bi-controller"></i>
+                </div>
+            </section>
+
+            <section class="view auth-view" id="view-login" data-view hidden>
+                <div class="auth-panel">
+                    <p class="eyebrow">Welcome back</p>
+                    <h1>Log in to GRYD</h1>
+                    <p class="auth-panel__description">Pick up where your gaming journey left off.</p>
+                    <form id="login-form" class="auth-form">
+                        <div class="form-field">
+                            <label for="login-email">Email address</label>
+                            <input
+                                type="email"
+                                id="login-email"
+                                name="email"
+                                autocomplete="email"
+                                placeholder="you@example.com"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="login-password">Password</label>
+                            <input
+                                type="password"
+                                id="login-password"
+                                name="password"
+                                autocomplete="current-password"
+                                placeholder="Enter your password"
+                                required
+                            >
+                        </div>
+                        <button class="button button--primary button--submit" type="submit">
+                            Log in
+                        </button>
+                        <p class="form-message" id="login-error" aria-live="polite"></p>
+                    </form>
+                    <p class="auth-panel__switch">
+                        New to GRYD?
+                        <button id="login-to-register" type="button">Create an account</button>
+                    </p>
+                </div>
+            </section>
+
+            <section class="view auth-view" id="view-register" data-view hidden>
+                <div class="auth-panel">
+                    <p class="eyebrow">Start your collection</p>
+                    <h1>Create your account</h1>
+                    <p class="auth-panel__description">A home for every game you want to play.</p>
+                    <form id="register-form" class="auth-form">
+                        <div class="form-field">
+                            <label for="register-email">Email address</label>
+                            <input
+                                type="email"
+                                id="register-email"
+                                name="email"
+                                autocomplete="email"
+                                placeholder="you@example.com"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="register-password">Password</label>
+                            <input
+                                type="password"
+                                id="register-password"
+                                name="password"
+                                autocomplete="new-password"
+                                placeholder="Create a password"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="register-password-confirmation">Confirm password</label>
+                            <input
+                                type="password"
+                                id="register-password-confirmation"
+                                name="passwordConfirmation"
+                                autocomplete="new-password"
+                                placeholder="Enter your password again"
+                                required
+                            >
+                        </div>
+                        <button class="button button--primary button--submit" type="submit">
+                            Create account
+                        </button>
+                        <p class="form-message" id="register-error" aria-live="polite"></p>
+                    </form>
+                    <p class="auth-panel__switch">
+                        Already have an account?
+                        <button id="register-to-login" type="button">Log in</button>
+                    </p>
+                </div>
+            </section>
+
+            <section class="view profile-view" id="view-profile" data-view hidden>
+                <div class="profile-view__header">
+                    <p class="eyebrow">Account settings</p>
+                    <h1>Your profile</h1>
+                    <p>Manage your avatar and the details linked to your account.</p>
+                </div>
+                <section class="profile-avatar auth-panel" aria-labelledby="profile-avatar-title">
+                    <div class="profile-avatar__preview">
+                        <img id="profile-avatar-image" alt="Your profile avatar" hidden>
+                        <i class="bi bi-person-circle" id="profile-avatar-placeholder" aria-hidden="true"></i>
+                    </div>
+                    <div class="profile-avatar__content">
+                        <h2 id="profile-avatar-title">Profile picture</h2>
+                        <p class="auth-panel__description">
+                            Choose a JPG, PNG, or WebP image up to 2 MB.
+                        </p>
+                        <input
+                            class="visually-hidden"
+                            id="profile-avatar-file"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                        >
+                        <button
+                            class="button button--quiet"
+                            id="profile-avatar-change"
+                            type="button"
+                        >
+                            Change avatar
+                        </button>
+                        <p class="form-message profile-message" id="profile-avatar-message" aria-live="polite"></p>
+                    </div>
+                </section>
+                <div class="profile-view__forms">
+                    <section class="auth-panel" aria-labelledby="profile-email-title">
+                        <h2 id="profile-email-title">Email address</h2>
+                        <p class="auth-panel__description">
+                            A confirmation email may be required before the new address takes effect.
+                        </p>
+                        <form id="profile-email-form" class="auth-form">
+                            <div class="form-field">
+                                <label for="profile-email">Email address</label>
+                                <input
+                                    type="email"
+                                    id="profile-email"
+                                    name="email"
+                                    autocomplete="email"
+                                    required
+                                >
+                            </div>
+                            <button class="button button--primary button--submit" type="submit">
+                                Update email
+                            </button>
+                            <p class="form-message profile-message" id="profile-email-message" aria-live="polite"></p>
+                        </form>
+                    </section>
+
+                    <section class="auth-panel" aria-labelledby="profile-password-title">
+                        <h2 id="profile-password-title">Change password</h2>
+                        <p class="auth-panel__description">
+                            Choose a new password for your GRYD account.
+                        </p>
+                        <form id="profile-password-form" class="auth-form">
+                            <div class="form-field">
+                                <label for="profile-password">New password</label>
+                                <input
+                                    type="password"
+                                    id="profile-password"
+                                    name="password"
+                                    autocomplete="new-password"
+                                    required
+                                >
+                            </div>
+                            <div class="form-field">
+                                <label for="profile-password-confirmation">Confirm new password</label>
+                                <input
+                                    type="password"
+                                    id="profile-password-confirmation"
+                                    name="passwordConfirmation"
+                                    autocomplete="new-password"
+                                    required
+                                >
+                            </div>
+                            <button class="button button--primary button--submit" type="submit">
+                                Update password
+                            </button>
+                            <p class="form-message profile-message" id="profile-password-message" aria-live="polite"></p>
+                        </form>
+                    </section>
+                </div>
+                <section class="profile-delete" aria-labelledby="profile-delete-title">
+                    <div>
+                        <h2 id="profile-delete-title">Delete account</h2>
+                        <p>Permanently delete your account, library, and avatar.</p>
+                    </div>
+                    <button
+                        class="button profile-delete__button"
+                        id="profile-delete-trigger"
+                        type="button"
+                    >
+                        Delete Account
+                    </button>
+                </section>
+            </section>
+
+            <section class="view collection-view" id="view-explorer" data-view hidden>
+                <div class="collection-view__header">
+                    <div>
+                        <p class="eyebrow">Find your next favorite</p>
+                        <h1>Explore games</h1>
+                    </div>
+                    <p class="collection-view__description">
+                        Discover highly rated games and add them to your collection.
+                    </p>
+                </div>
+                <p class="catalog-attribution">
+                    Game information and community ratings are provided by IGDB.
+                    Ratings are out of 100; vote counts are shown on each game card.
+                </p>
+                <nav
+                    class="library-content-menu explorer-content-menu"
+                    id="explorer-content-menu"
+                    aria-label="Explore content"
+                ></nav>
+                <div class="catalog-toolbar">
+                    <label class="catalog-toolbar__search">
+                        <span class="visually-hidden">Search games</span>
+                        <input
+                            id="catalog-search"
+                            type="search"
+                            placeholder="Search games"
+                            maxlength="100"
+                            autocomplete="off"
+                        >
+                    </label>
+                    <button
+                        class="catalog-toolbar__filters"
+                        id="catalog-filters-toggle"
+                        type="button"
+                        aria-expanded="false"
+                        aria-controls="catalog-filter-panel"
+                    >
+                        <i class="bi bi-sliders" aria-hidden="true"></i>
+                        <span>Filters</span>
+                        <span class="catalog-toolbar__filter-count" id="catalog-filter-count" hidden></span>
+                    </button>
+                    <label class="catalog-toolbar__sort">
+                        <span>Sort by</span>
+                        <select id="catalog-sort" name="sort">
+                            <option value="rating">Highest rated</option>
+                            <option value="popular">Most popular</option>
+                            <option value="newest">Newest releases</option>
+                        </select>
+                    </label>
+                </div>
+                <div
+                    class="catalog-active-filters"
+                    id="catalog-active-filters"
+                    aria-label="Active search and filters"
+                    hidden
+                ></div>
+                <div class="explorer-layout">
+                    <div class="explorer-results">
+                        <div
+                            class="game-grid"
+                            id="game-catalog"
+                            aria-label="Explore games"
+                            aria-live="polite"
+                        ></div>
+                        <div class="explorer-empty-state" id="catalog-empty-state" role="status" hidden>
+                            <p id="catalog-empty-message">No games match these filters.</p>
+                            <button
+                                class="catalog-empty-state__clear"
+                                id="catalog-clear-filters"
+                                type="button"
+                                hidden
+                            >
+                                Clear search and filters
+                            </button>
+                        </div>
+                        <div class="scroll-sentinel" id="catalog-scroll-sentinel" aria-hidden="true"></div>
+                        <button
+                            class="button button--quiet catalog-load-more"
+                            id="catalog-load-more"
+                            type="button"
+                            hidden
+                        >
+                            Load more games
+                        </button>
+                    </div>
+                    <aside
+                        class="catalog-filter-panel"
+                        id="catalog-filter-panel"
+                        aria-labelledby="catalog-filter-title"
+                    >
+                        <form id="catalog-filters">
+                            <div class="catalog-filter-panel__header">
+                                <h2 id="catalog-filter-title">Filters</h2>
+                                <button class="catalog-filter-panel__reset" type="reset">
+                                    Reset
+                                </button>
+                            </div>
+
+                            <label
+                                class="catalog-filter-toggle"
+                                id="catalog-hide-owned-control"
+                                hidden
+                            >
+                                <input id="catalog-hide-owned" type="checkbox">
+                                <span>Hide library items</span>
+                            </label>
+
+                            <fieldset class="catalog-filter-group catalog-filter-group--year">
+                                <legend>Release year</legend>
+                                <div class="catalog-year-range">
+                                    <label>
+                                        <span class="visually-hidden">From year</span>
+                                        <input
+                                            id="catalog-year-from"
+                                            type="number"
+                                            min="1950"
+                                            max="2100"
+                                            inputmode="numeric"
+                                            placeholder="From"
+                                        >
+                                    </label>
+                                    <span aria-hidden="true">to</span>
+                                    <label>
+                                        <span class="visually-hidden">To year</span>
+                                        <input
+                                            id="catalog-year-to"
+                                            type="number"
+                                            min="1950"
+                                            max="2100"
+                                            inputmode="numeric"
+                                            placeholder="To"
+                                        >
+                                    </label>
+                                </div>
+                            </fieldset>
+
+                            <details class="catalog-filter-details">
+                                <summary>Genres</summary>
+                                <div
+                                    class="catalog-filter-options"
+                                    id="catalog-genre-options"
+                                    aria-live="polite"
+                                >
+                                    <p class="catalog-filter-hint">Loading genres...</p>
+                                </div>
+                            </details>
+
+                            <details class="catalog-filter-details">
+                                <summary>Themes</summary>
+                                <p class="catalog-filter-hint">
+                                    Includes Sandbox, Survival, and Zombies.
+                                </p>
+                                <div
+                                    class="catalog-filter-options"
+                                    id="catalog-theme-options"
+                                    aria-live="polite"
+                                >
+                                    <p class="catalog-filter-hint">Loading themes...</p>
+                                </div>
+                            </details>
+
+                            <details class="catalog-filter-details">
+                                <summary>Platforms</summary>
+                                <label class="catalog-filter-search">
+                                    <span class="visually-hidden">Search platforms</span>
+                                    <input
+                                        id="catalog-platform-search"
+                                        type="search"
+                                        placeholder="Search platforms"
+                                    >
+                                </label>
+                                <div
+                                    class="catalog-filter-options catalog-filter-options--scroll"
+                                    id="catalog-platform-options"
+                                    aria-live="polite"
+                                >
+                                    <p class="catalog-filter-hint">Loading platforms...</p>
+                                </div>
+                            </details>
+
+                            <p class="catalog-filter-error" id="catalog-filter-error" role="alert" hidden></p>
+                            <p
+                                class="catalog-filter-error"
+                                id="catalog-filter-options-error"
+                                role="alert"
+                                hidden
+                            ></p>
+                            <button
+                                class="catalog-filter-retry"
+                                id="catalog-filter-retry"
+                                type="button"
+                                hidden
+                            >
+                                Retry loading filter options
+                            </button>
+                            <button class="catalog-filter-apply" id="catalog-filter-apply" type="button">
+                                Apply filters
+                            </button>
+                        </form>
+                    </aside>
+                </div>
+            </section>
+
+            <section class="view collection-view game-route-view" id="view-game" data-view hidden>
+                <a class="game-route-view__back" href="#explore">Back to Explore</a>
+                <p class="eyebrow">Game</p>
+                <h1 id="game-route-title"></h1>
+                <p class="collection-view__description">
+                    This shareable game page is ready for its detailed information view.
+                </p>
+            </section>
+
+            <section class="view collection-view" id="view-library" data-view hidden>
+                <div class="collection-view__header">
+                    <div>
+                        <p class="eyebrow">Your personal collection</p>
+                        <h1>Your library</h1>
+                    </div>
+                    <p class="collection-view__description">
+                        Keep track of what you want to play, are playing, and have finished.
+                    </p>
+                </div>
+                <nav
+                    class="library-content-menu"
+                    id="library-content-menu"
+                    aria-label="Library content"
+                ></nav>
+                <div class="library-tools">
+                    <label class="library-tools__search">
+                        <span class="visually-hidden">Search your library</span>
+                        <input
+                            id="library-search"
+                            type="search"
+                            placeholder="Search your library"
+                            autocomplete="off"
+                        >
+                    </label>
+                    <button
+                        class="library-tools__filters"
+                        id="library-filters-toggle"
+                        type="button"
+                        aria-expanded="false"
+                        aria-controls="library-status-filters"
+                    >
+                        <i class="bi bi-sliders" aria-hidden="true"></i>
+                        <span>Filters</span>
+                    </button>
+                    <label class="library-tools__sort">
+                        <span>Sort by</span>
+                        <select id="library-sort">
+                            <option value="added">Recently added</option>
+                            <option value="title-asc">Title (A–Z)</option>
+                            <option value="title-desc">Title (Z–A)</option>
+                            <option value="status">Status</option>
+                        </select>
+                    </label>
+                </div>
+                <nav
+                    class="library-status-filters"
+                    id="library-status-filters"
+                    aria-label="Filter games by status"
+                ></nav>
+                <div
+                    class="game-grid"
+                    id="game-library"
+                    aria-label="Your game library"
+                    aria-live="polite"
+                ></div>
+                <div class="library-empty-state" id="library-empty-state" hidden>
+                    <p id="library-empty-message"></p>
+                    <button
+                        class="button button--primary"
+                        type="button"
+                        data-view-target="explore"
+                    >
+                        Explore games
+                    </button>
+                </div>
+            </section>
+
+            <section class="view legal-content" id="view-legal" data-view hidden></section>
+        </main>
+
+        <footer class="site-footer">
+            <p class="site-footer__copyright">&copy; 2026 GRYD</p>
+            <small class="site-footer__credit">Game data provided by IGDB</small>
+            <nav class="site-footer__legal" aria-label="Legal">
+                <button id="legal-privacy" type="button" data-view-target="privacy">Privacy policy</button>
+                <button id="legal-terms" type="button" data-view-target="terms">Terms of service</button>
+            </nav>
+        </footer>
+
+        <p class="app-notice" id="app-notice" role="status" aria-live="polite" hidden></p>
+
+        <dialog
+            class="avatar-crop-dialog"
+            id="profile-avatar-crop-dialog"
+            aria-labelledby="profile-avatar-crop-title"
+        >
+            <h2 id="profile-avatar-crop-title">Adjust your avatar</h2>
+            <p class="avatar-crop-dialog__hint">
+                Drag the image to reposition it and use the slider to zoom.
+            </p>
+            <div class="avatar-crop-dialog__viewport">
+                <canvas
+                    id="profile-avatar-crop-canvas"
+                    width="512"
+                    height="512"
+                    tabindex="0"
+                    aria-label="Avatar crop preview. Drag to reposition the image."
+                ></canvas>
+            </div>
+            <label class="avatar-crop-dialog__zoom" for="profile-avatar-crop-zoom">
+                Zoom
+                <input
+                    id="profile-avatar-crop-zoom"
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="0.01"
+                    value="1"
+                >
+            </label>
+            <p class="form-message" id="profile-avatar-crop-message" aria-live="polite"></p>
+            <div class="avatar-crop-dialog__actions">
+                <button class="button button--quiet" id="profile-avatar-crop-cancel" type="button">
+                    Cancel
+                </button>
+                <button class="button button--primary" id="profile-avatar-crop-save" type="button">
+                    Use this crop
+                </button>
+            </div>
+        </dialog>
+
+        <dialog
+            class="account-delete-dialog"
+            id="account-delete-dialog"
+            aria-labelledby="account-delete-dialog-title"
+        >
+            <h2 id="account-delete-dialog-title">Delete your account?</h2>
+            <p>
+                This permanently deletes your account, saved games, and avatar. This cannot be undone.
+            </p>
+            <form id="account-delete-form" class="auth-form">
+                <div class="form-field">
+                    <label for="account-delete-password">Current password</label>
+                    <input
+                        id="account-delete-password"
+                        name="password"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+                <div class="form-field">
+                    <label for="account-delete-confirmation">Type DELETE to confirm</label>
+                    <input
+                        id="account-delete-confirmation"
+                        name="confirmation"
+                        type="text"
+                        autocomplete="off"
+                        required
+                    >
+                </div>
+                <p class="form-message" id="account-delete-message" aria-live="polite"></p>
+                <div class="avatar-crop-dialog__actions">
+                    <button
+                        class="button button--quiet"
+                        id="account-delete-cancel"
+                        type="button"
+                    >
+                        Cancel
+                    </button>
+                    <button class="button profile-delete__button" id="account-delete-submit" type="submit">
+                        Delete Account
+                    </button>
+                </div>
+            </form>
+        </dialog>
+    </body>
+</html>

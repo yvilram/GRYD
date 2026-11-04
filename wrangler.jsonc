@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "gryd-api",
-  "main": "worker.mjs",
+  "main": "backend/worker.mjs",
   "compatibility_date": "2026-10-30",
   "compatibility_flags": ["nodejs_compat"]
 }
