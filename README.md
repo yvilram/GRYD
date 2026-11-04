@@ -142,3 +142,14 @@ El Worker se configura en [wrangler.jsonc](./wrangler.jsonc) y utiliza `backend/
 
 - [Esquema de Supabase](./docs/SCHEMA.md)
 - [Roadmap](./docs/ROADMAP.md)
+
+
+## APIs
+
+Games -> [IGDB, RAWG]
+Films -> [TMDB, OMDb, Trakt, Wikidata, TVmaze]
+TV Shows -> [TMDB, TVmaze, Trakt, OMDb, Wikidata]
+Anime -> [AniList, Jikan, Kitsu, Shikimori, MyAnimeList]
+Books -> [ Google Books, Open Library, Gutendex, Internet Archive, Wikidata SPARQL]
+
+

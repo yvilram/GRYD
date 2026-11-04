@@ -6,8 +6,12 @@ const saveGameStatus = async event => {
     if (!(statusSelect instanceof HTMLSelectElement)) return;
 
     const gameCard = statusSelect.closest(".game-card");
-    const gameName = gameCard?.querySelector(".game-card__name")?.textContent.trim();
-    if (!gameCard || !gameName) return;
+    const detailControls = statusSelect.closest(".game-detail-library-controls");
+    const gameId = gameCard?.dataset.gameId || detailControls?.dataset.gameId;
+    const gameName = gameCard?.querySelector(".game-card__name")?.textContent.trim() ||
+        detailControls?.dataset.gameName;
+    if ((!statusSelect.matches(".game-card__status, .game-detail-library-status")) ||
+        !gameId || !gameName) return;
 
     const previousStatus = statusSelect.dataset.savedStatus || "select";
     const status = statusSelect.value;
@@ -18,7 +22,7 @@ const saveGameStatus = async event => {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                gameId: gameCard.dataset.gameId,
+                gameId,
                 gameName,
                 status
             })
@@ -33,13 +37,17 @@ const saveGameStatus = async event => {
             }
         }
         if (!response.ok) {
-            throw new Error(result.error || `Could not update game status (${response.status}).`);
+            const error = new Error(
+                result.error || `Could not update game status (${response.status}).`
+            );
+            error.status = response.status;
+            throw error;
         }
 
         statusSelect.dataset.savedStatus = status;
         document.dispatchEvent(new CustomEvent("app:library-state-changed", {
             detail: {
-                gameId: gameCard.dataset.gameId,
+                gameId,
                 gameName,
                 status,
                 savedAt: new Date().toISOString()
@@ -52,7 +60,7 @@ const saveGameStatus = async event => {
         statusSelect.value = previousStatus;
         document.dispatchEvent(new CustomEvent("app:library-state-changed", {
             detail: {
-                gameId: gameCard.dataset.gameId,
+                gameId,
                 gameName,
                 status: previousStatus
             }
@@ -71,3 +79,5 @@ const saveGameStatus = async event => {
 libraryGridIds.forEach(id => {
     document.getElementById(id).addEventListener("change", saveGameStatus);
 });
+document.getElementById("game-detail-library-controls")
+    .addEventListener("change", saveGameStatus);

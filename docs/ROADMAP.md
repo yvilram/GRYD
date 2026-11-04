@@ -15,15 +15,16 @@
 - [x] Verified RLS is enabled on `user_game_list`, with an `ALL` policy restricting rows to `auth.uid() = user_id`
 - [x] Added personal library search and sorting by title, date added, or status
 - [x] Added Explorer title search and catalog-focused sorting by rating, popularity, and release date
+- [x] Keep the interface and all user-facing messages in English.
+- [x] Show clear success and error feedback for library actions and catalog loading.
+- [x] Explain IGDB rating scores, vote counts, and missing ratings in the catalog.
+- [x] Improve Explorer search and filters with active-filter chips, clear actions, and retry states.
+- [ ] Improve the home page as a product landing page using real catalog content.
+- [x] Establish shareable game URLs in the form `#game/<id>/<slug>` and support direct navigation.
 
 ## Next up
 
-1. [x] Keep the interface and all user-facing messages in English.
-2. [x] Show clear success and error feedback for library actions and catalog loading.
-3. [x] Explain IGDB rating scores, vote counts, and missing ratings in the catalog.
-4. [x] Improve Explorer search and filters with active-filter chips, clear actions, and retry states.
-5. [ ] Improve the home page as a product landing page using real catalog content.
-6. [x] Establish shareable game URLs in the form `#game/<id>/<slug>` and support direct navigation.
+
 
 ## Later ideas
 
