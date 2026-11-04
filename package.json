@@ -1,13 +1,14 @@
 {
   "name": "gryd",
   "version": "1.0.0",
-  "description": "curl -X POST \"https://api.igdb.com/v4/company_logos\" \\ -H \"Client-ID: 51nao0y8eswrbmauu3z3hudjwc3rhq\" \\ -H \"Authorization: Bearer uj9kdekck5duf31sbi43b6xqx9629x\" \\ -d \"fields *; limit 1;\"",
-  "main": "index.js",
-"scripts": {
-  "dev": "concurrently \"npm:dev:worker\" \"npm:dev:public\"",
-  "dev:worker": "wrangler dev --ip 0.0.0.0 --port 8787",
-  "dev:public": "serve public -l 3000"
-},
+  "description": "Game discovery and personal library application",
+  "main": "backend/src/app.js",
+  "scripts": {
+    "build:css": "sass frontend/styles/scss/main.scss frontend/styles/css/main.css --no-source-map",
+    "dev": "npm run build:css && concurrently \"npm:dev:worker\" \"npm:dev:frontend\"",
+    "dev:worker": "wrangler dev --ip 0.0.0.0 --port 8787",
+    "dev:frontend": "serve frontend -l 3000"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yvilram/GRYD.git"
@@ -29,8 +30,9 @@
     "express": "^5.3.0"
   },
   "devDependencies": {
-    "wrangler": "^4.156.0",
     "concurrently": "^9.2.1",
-    "serve": "^14.2.4"
+    "sass": "^1.107.1",
+    "serve": "^14.2.4",
+    "wrangler": "^4.156.0"
   }
 }
