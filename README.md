@@ -1,5 +1,7 @@
 # GRYD
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N8X82A3MND)
+
 GRYD es una aplicación para descubrir videojuegos y organizar una biblioteca personal.
 
 ## Tecnologías
