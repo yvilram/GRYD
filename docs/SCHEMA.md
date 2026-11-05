@@ -18,6 +18,20 @@ Games each user has added to their list, with a status. `user_id` stores the cor
 
 - A game cannot appear twice for the same user (composite primary key: `user_id` + `id`).
 
+## `game_playtime_cache`
+
+Stores HowLongToBeat estimates, keyed by IGDB game ID so all users share the same cached result.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `igdb_game_id` | `int8` | IGDB game ID and primary key. |
+| `game_name` | `text` | Canonical game name returned by IGDB. |
+| `main_story_hours` | `numeric` | Main-story estimate in hours, when available. |
+| `hltb_data` | `jsonb` | Complete estimate data returned by Fous. |
+| `fetched_at` | `timestamptz` | When the estimate was fetched or updated. |
+
+The backend checks this table before querying IGDB and Fous. It uses `SUPABASE_SECRET_KEY` server-side to access the cache; do not expose that key to the frontend.
+
 ## Security (RLS)
 
 - `user_game_list` has RLS enabled. The verified policy applies to `authenticated` for `ALL` commands, with both `USING` and `WITH CHECK` enforcing that `user_id` matches `auth.uid()`:

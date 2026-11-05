@@ -788,24 +788,41 @@ const renderGameStory = game => {
     return story;
 };
 
-const renderPlaytimePlaceholder = () => {
+const formatPlaytimeHours = hours => {
+    const value = Number(hours);
+    if (!Number.isFinite(value) || value < 0) return null;
+    return `${Number.isInteger(value) ? value : value.toFixed(1)} hours`;
+};
+
+const renderPlaytimePlaceholder = (howlongtobeat, loading, failed) => {
     const section = document.createElement("section");
     section.classList.add("game-detail-section", "game-detail-playtime");
     section.appendChild(createDetailHeading("Playtime estimates"));
 
     const estimates = document.createElement("div");
     estimates.classList.add("game-detail-playtime__estimates");
-    ["Main Story", "Main + Extras", "Completionist"].forEach(label => {
+    [
+        ["Main Story", "main_story_hours"],
+        ["Main + Extras", "main_story_plus_extras_hours"],
+        ["Completionist", "completionist_hours"]
+    ].forEach(([label, key]) => {
         const card = document.createElement("article");
         card.classList.add("game-detail-playtime__card");
         const title = document.createElement("h3");
         title.textContent = label;
         const value = document.createElement("p");
         value.classList.add("game-detail-playtime__value");
-        value.textContent = "—";
+        const hours = formatPlaytimeHours(howlongtobeat?.[key]);
+        value.textContent = hours || "—";
         const status = document.createElement("span");
         status.classList.add("game-detail-playtime__status");
-        status.textContent = "Not available yet";
+        status.textContent = loading
+            ? "Loading estimate…"
+            : failed
+                ? "Could not load estimate"
+                : hours
+                    ? "HowLongToBeat estimate"
+                    : "Not available";
         card.append(title, value, status);
         estimates.appendChild(card);
     });
@@ -827,7 +844,11 @@ const getGameCompaniesByRole = (game, role) => {
 const renderOverviewTab = game => {
     const details = document.createElement("div");
     details.classList.add("game-detail-overview");
-    details.appendChild(renderPlaytimePlaceholder());
+    details.appendChild(renderPlaytimePlaceholder(
+        currentGameDetail.playtime,
+        currentGameDetail.playtimeLoading,
+        currentGameDetail.playtimeFailed
+    ));
     details.appendChild(createDetailSection("Story", renderGameStory(game)));
 
     const platformFamilies = getPlatformFamilies(
@@ -1202,7 +1223,13 @@ const loadGameDetail = async gameId => {
         });
         if (controller.signal.aborted) return;
 
-        currentGameDetail = { game, media: renderGameMedia(game) };
+        currentGameDetail = {
+            game,
+            media: renderGameMedia(game),
+            playtime: null,
+            playtimeLoading: true,
+            playtimeFailed: false
+        };
         const libraryControls = document.getElementById("game-detail-library-controls");
         libraryControls.dataset.gameId = String(game.id);
         libraryControls.dataset.gameName = game.name;
@@ -1250,6 +1277,7 @@ const loadGameDetail = async gameId => {
         renderGameDetailTab(activeGameDetailTab);
         document.getElementById("game-detail-content").hidden = false;
         showGameDetailMessage("");
+        loadGamePlaytime(game.id, controller);
     } catch (error) {
         if (error.name === "AbortError") return;
         console.error(`Could not load game ${gameId}:`, error);
@@ -1265,6 +1293,32 @@ const loadGameDetail = async gameId => {
         retry.textContent = "Try again";
         retry.addEventListener("click", () => loadGameDetail(gameId), { once: true });
         document.getElementById("game-detail-message").appendChild(retry);
+    }
+};
+
+const loadGamePlaytime = async (gameId, controller) => {
+    try {
+        const result = await requestJson(`${API_URL}/api/games/${gameId}/playtime`, {
+            signal: controller.signal
+        });
+        if (controller.signal.aborted ||
+            Number(currentGameDetail?.game.id) !== Number(gameId)) return;
+
+        currentGameDetail.playtime = result.howlongtobeat;
+        currentGameDetail.playtimeLoading = false;
+        if (activeGameDetailTab === "overview") {
+            renderGameDetailTab(activeGameDetailTab);
+        }
+    } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(`Could not load playtime for game ${gameId}:`, error);
+        if (Number(currentGameDetail?.game.id) !== Number(gameId)) return;
+
+        currentGameDetail.playtimeLoading = false;
+        currentGameDetail.playtimeFailed = true;
+        if (activeGameDetailTab === "overview") {
+            renderGameDetailTab(activeGameDetailTab);
+        }
     }
 };
 

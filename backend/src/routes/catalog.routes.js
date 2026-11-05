@@ -1,4 +1,6 @@
 const { GAME_DETAILS_FIELDS } = require("../constants/igdb-fields");
+const createSupabaseClient = require("../services/supabase.client");
+const getHowLongToBeatData = require("../services/fous.client");
 
 const invalidInput = message => Object.assign(new Error(message), { status: 400 });
 
@@ -31,6 +33,69 @@ const parseYear = (value, label) => {
 };
 
 module.exports = function registerCatalogRoutes(app, requestIgdb) {
+    app.get("/api/games/:id/playtime", async (req, res) => {
+        try {
+            if (!/^[1-9]\d*$/.test(req.params.id) ||
+                !Number.isSafeInteger(Number(req.params.id))) {
+                throw invalidInput("Game ID must be a positive integer.");
+            }
+
+            const gameId = Number(req.params.id);
+            const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+            const { data: cached, error: cacheError } = await supabase
+                .from("game_playtime_cache")
+                .select("hltb_data")
+                .eq("igdb_game_id", gameId)
+                .maybeSingle();
+
+            if (cacheError) throw cacheError;
+            if (cached) {
+                return res.json({ howlongtobeat: cached.hltb_data, cached: true });
+            }
+
+            const games = await requestIgdb(
+                "games",
+                `fields id,name; where id = ${gameId}; limit 1;`
+            );
+            if (!games.length) {
+                return res.status(404).json({ error: "Game not found." });
+            }
+
+            const hltbData = await getHowLongToBeatData(
+                games[0].name,
+                req.env.FOUS_API_KEY
+            );
+            if (!hltbData) {
+                return res.json({ howlongtobeat: null, cached: false });
+            }
+
+            const mainStoryHours = Number(hltbData.main_story_hours);
+            const { error: saveError } = await supabase
+                .from("game_playtime_cache")
+                .upsert({
+                    igdb_game_id: gameId,
+                    game_name: games[0].name,
+                    main_story_hours: Number.isFinite(mainStoryHours)
+                        ? mainStoryHours
+                        : null,
+                    hltb_data: hltbData,
+                    fetched_at: new Date().toISOString()
+                });
+
+            if (saveError) throw saveError;
+            res.json({ howlongtobeat: hltbData, cached: false });
+        } catch (error) {
+            if (error.status === 400) {
+                return res.status(400).json({ error: error.message });
+            }
+
+            console.error(`Could not load playtime for game ${req.params.id}:`, error);
+            res.status(error.upstream ? 502 : 500).json({
+                error: "Could not load this game's playtime."
+            });
+        }
+    });
+
     app.get("/api/games/:id", async (req, res) => {
         try {
             if (!/^[1-9]\d*$/.test(req.params.id) ||

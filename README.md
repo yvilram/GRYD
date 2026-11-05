@@ -65,9 +65,10 @@ Requisitos: Node.js y npm, además de credenciales para Supabase e IGDB.
    SUPABASE_SECRET_KEY=
    IGDB_CLIENT_ID=
    IGDB_ACCESS_TOKEN=
+   FOUS_API_KEY=
    ```
 
-   `SUPABASE_SECRET_KEY` solo se usa en el backend para operaciones administrativas de eliminación de cuentas. No la expongas al frontend ni subas `.dev.vars` u otros archivos con credenciales al repositorio.
+   `SUPABASE_SECRET_KEY` se usa únicamente en el backend para operaciones administrativas y la caché compartida de horas de juego. No la expongas al frontend ni subas `.dev.vars` u otros archivos con credenciales al repositorio.
 
 3. Inicia el frontend y el Worker:
 
@@ -105,6 +106,7 @@ Requisitos: una cuenta de Cloudflare, acceso al proyecto de Supabase y credencia
    npx wrangler secret put SUPABASE_SECRET_KEY
    npx wrangler secret put IGDB_CLIENT_ID
    npx wrangler secret put IGDB_ACCESS_TOKEN
+   npx wrangler secret put FOUS_API_KEY
    ```
 
    `SUPABASE_SECRET_KEY` es necesaria para la eliminación administrativa de cuentas. El token de IGDB debe mantenerse vigente; si caduca o se renueva, actualízalo con el último comando.
@@ -153,5 +155,3 @@ Films -> [TMDB, OMDb, Trakt, Wikidata, TVmaze]
 TV Shows -> [TMDB, TVmaze, Trakt, OMDb, Wikidata]
 Anime -> [AniList, Jikan, Kitsu, Shikimori, MyAnimeList]
 Books -> [ Google Books, Open Library, Gutendex, Internet Archive, Wikidata SPARQL]
-
-
