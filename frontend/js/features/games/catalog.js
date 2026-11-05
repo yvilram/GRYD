@@ -538,11 +538,11 @@ const createGameRoute = (game, returnRoute = "explore") => {
 
 const GAME_DETAIL_TABS = [
     { id: "overview", label: "Overview" },
-    { id: "story", label: "Story" },
     { id: "missions", label: "Missions" },
     { id: "media", label: "Gallery" },
     { id: "related", label: "Related content" },
-    { id: "platforms", label: "Platforms" }
+    { id: "platforms", label: "Platforms" },
+    { id: "more", label: "More" }
 ];
 let gameDetailController = null;
 let currentGameDetail = null;
@@ -768,59 +768,7 @@ const renderGameMedia = game => {
     return media;
 };
 
-const renderOverviewTab = game => {
-    const details = document.createElement("div");
-    details.classList.add("game-detail-overview");
-    const companies = Array.isArray(game.involved_companies)
-        ? game.involved_companies
-        : [];
-    const namesForRole = role => companies
-        .filter(item => item[role])
-        .map(item => item.company)
-        .filter(Boolean);
-    const fields = [
-        ["Developed by", namesForRole("developer")],
-        ["Published by", namesForRole("publisher")],
-        ["Supporting studios", namesForRole("supporting")],
-        ["Genres", game.genres],
-        ["Game modes", game.game_modes],
-        ["Themes", game.themes],
-        ["Player perspective", game.player_perspectives],
-        ["Series", game.collections],
-        ["Franchise", game.franchises],
-        ["Game engine", game.game_engines]
-    ];
-
-    let visibleRows = 0;
-    fields.forEach(([label, items]) => {
-        const values = (Array.isArray(items) ? items : [])
-            .map(gameItemName)
-            .filter(Boolean);
-        if (!values.length) return;
-        visibleRows += 1;
-        const row = document.createElement("div");
-        row.classList.add("game-detail-overview__row");
-        const term = document.createElement("h3");
-        term.textContent = label;
-        row.append(term, createNameList(items));
-        details.appendChild(row);
-    });
-    if (game.parent_game) {
-        details.appendChild(createDetailSection(
-            "Related game",
-            createNameList([game.parent_game])
-        ));
-    }
-    if (!visibleRows && !game.parent_game) {
-        const empty = document.createElement("p");
-        empty.classList.add("game-detail-muted");
-        empty.textContent = "No overview information is available for this game yet.";
-        details.appendChild(empty);
-    }
-    return details;
-};
-
-const renderStoryTab = game => {
+const renderGameStory = game => {
     const story = document.createElement("div");
     story.classList.add("game-detail-story");
     const synopsis = game.storyline || game.summary || "";
@@ -838,6 +786,139 @@ const renderStoryTab = game => {
         story.appendChild(createDetailSection("At a glance", createNameList([game.summary])));
     }
     return story;
+};
+
+const renderPlaytimePlaceholder = () => {
+    const section = document.createElement("section");
+    section.classList.add("game-detail-section", "game-detail-playtime");
+    section.appendChild(createDetailHeading("Playtime estimates"));
+
+    const estimates = document.createElement("div");
+    estimates.classList.add("game-detail-playtime__estimates");
+    ["Main Story", "Main + Extras", "Completionist"].forEach(label => {
+        const card = document.createElement("article");
+        card.classList.add("game-detail-playtime__card");
+        const title = document.createElement("h3");
+        title.textContent = label;
+        const value = document.createElement("p");
+        value.classList.add("game-detail-playtime__value");
+        value.textContent = "—";
+        const status = document.createElement("span");
+        status.classList.add("game-detail-playtime__status");
+        status.textContent = "Not available yet";
+        card.append(title, value, status);
+        estimates.appendChild(card);
+    });
+
+    section.appendChild(estimates);
+    return section;
+};
+
+const getGameCompaniesByRole = (game, role) => {
+    const companies = Array.isArray(game.involved_companies)
+        ? game.involved_companies
+        : [];
+    return companies
+        .filter(item => item[role])
+        .map(item => gameItemName(item.company))
+        .filter(Boolean);
+};
+
+const renderOverviewTab = game => {
+    const details = document.createElement("div");
+    details.classList.add("game-detail-overview");
+    details.appendChild(renderPlaytimePlaceholder());
+    details.appendChild(createDetailSection("Story", renderGameStory(game)));
+
+    const platformFamilies = getPlatformFamilies(
+        Array.isArray(game.platforms) ? game.platforms : []
+    );
+    const platforms = document.createElement("div");
+    platforms.classList.add("game-detail-overview__platforms");
+    if (platformFamilies.length) {
+        platformFamilies.forEach(({ id, label, icon }) => {
+            const platform = document.createElement("span");
+            platform.classList.add("game-card__platform");
+            platform.dataset.platform = id;
+            platform.title = label;
+            platform.setAttribute("aria-label", label);
+            const platformIcon = document.createElement("i");
+            platformIcon.classList.add("bi", icon);
+            platformIcon.setAttribute("aria-hidden", "true");
+            const platformName = document.createElement("span");
+            platformName.textContent = label;
+            platform.append(platformIcon, platformName);
+            platforms.appendChild(platform);
+        });
+    } else {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "Platform information is not available yet.";
+        platforms.appendChild(empty);
+    }
+    details.appendChild(createDetailSection("Platforms", platforms));
+
+    const fields = [
+        ["Genres", game.genres],
+        ["Developed by", getGameCompaniesByRole(game, "developer")],
+        ["Published by", getGameCompaniesByRole(game, "publisher")]
+    ];
+    fields.forEach(([label, items]) => {
+        const values = (Array.isArray(items) ? items : [])
+            .map(gameItemName)
+            .filter(Boolean);
+        if (!values.length) return;
+        const row = document.createElement("div");
+        row.classList.add("game-detail-overview__row");
+        const term = document.createElement("h3");
+        term.textContent = label;
+        row.append(term, createNameList(items));
+        details.appendChild(row);
+    });
+    return details;
+};
+
+const renderMoreTab = game => {
+    const content = document.createElement("div");
+    content.classList.add("game-detail-overview");
+    const companies = getGameCompaniesByRole(game, "supporting");
+    const fields = [
+        ["Supporting studios", companies],
+        ["Game modes", game.game_modes],
+        ["Themes", game.themes],
+        ["Player perspective", game.player_perspectives],
+        ["Series", game.collections],
+        ["Franchise", game.franchises],
+        ["Game engine", game.game_engines]
+    ];
+    let visibleRows = 0;
+    fields.forEach(([label, items]) => {
+        const values = (Array.isArray(items) ? items : [])
+            .map(gameItemName)
+            .filter(Boolean);
+        if (!values.length) return;
+        visibleRows += 1;
+        const row = document.createElement("div");
+        row.classList.add("game-detail-overview__row");
+        const term = document.createElement("h3");
+        term.textContent = label;
+        row.append(term, createNameList(items));
+        content.appendChild(row);
+    });
+    if (game.parent_game) {
+        content.appendChild(createDetailSection(
+            "Related game",
+            createNameList([game.parent_game])
+        ));
+        visibleRows += 1;
+    }
+    if (!visibleRows) {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "No additional details are available for this game yet.";
+        content.appendChild(empty);
+    }
+    return content;
 };
 
 const appendMediaGrid = (container, media) => {
@@ -1045,8 +1126,6 @@ const renderGameDetailTab = tabId => {
 
     if (tabId === "overview") {
         panel.appendChild(renderOverviewTab(game));
-    } else if (tabId === "story") {
-        panel.appendChild(renderStoryTab(game));
     } else if (tabId === "missions") {
         const empty = document.createElement("div");
         empty.classList.add("game-detail-empty");
@@ -1059,6 +1138,8 @@ const renderGameDetailTab = tabId => {
         panel.appendChild(renderRelatedTab(game));
     } else if (tabId === "platforms") {
         panel.appendChild(renderPlatformsTab(game));
+    } else if (tabId === "more") {
+        panel.appendChild(renderMoreTab(game));
     }
 
     document.querySelectorAll("#game-detail-tabs [role='tab']").forEach(tab => {
@@ -1149,7 +1230,13 @@ const loadGameDetail = async gameId => {
         const title = document.getElementById("game-route-title");
         title.textContent = game.name;
         const release = document.getElementById("game-detail-release");
-        release.textContent = formatGameDate(game.first_release_date) || "Release date TBA";
+        const publishers = getGameCompaniesByRole(game, "publisher");
+        const releaseYear = Number(game.first_release_date) > 0
+            ? new Date(Number(game.first_release_date) * 1000).getUTCFullYear()
+            : null;
+        release.textContent = `${publishers.join(", ") || "Publisher not listed"} - ${
+            releaseYear || "Release date TBA"
+        }`;
 
         const cover = document.getElementById("game-detail-cover");
         cover.src = game.cover?.image_id

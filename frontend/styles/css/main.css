@@ -1969,9 +1969,9 @@ body {
 
 .game-detail-heading {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
   margin-bottom: 16px;
   padding: 14px 18px;
   border: 1px solid var(--color-border);
@@ -1987,15 +1987,10 @@ body {
   overflow-wrap: anywhere;
 }
 
-.game-detail-release {
-  flex: 0 0 auto;
-  margin: 0 0 0 auto;
-  padding: 7px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.045);
+.game-detail-byline {
+  margin: 0;
   color: var(--color-muted);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
 }
 
 .game-detail-hero {
@@ -2276,6 +2271,56 @@ body {
   gap: 12px;
 }
 
+.game-detail-overview > .game-detail-section {
+  grid-column: 1/-1;
+  margin-bottom: 8px;
+}
+
+.game-detail-playtime__estimates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.game-detail-playtime__card {
+  min-width: 0;
+  padding: 15px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: rgba(17, 21, 32, 0.76);
+  text-align: center;
+}
+
+.game-detail-playtime__card h3 {
+  margin: 0 0 7px;
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.game-detail-playtime__value {
+  margin: 0;
+  color: var(--color-subtle);
+  font-size: clamp(1.25rem, 3vw, 1.65rem);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+}
+
+.game-detail-playtime__status {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-subtle);
+  font-size: 0.7rem;
+}
+
+.game-detail-overview__platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
 .game-detail-overview__row {
   min-width: 0;
   padding: 18px;
@@ -2498,9 +2543,6 @@ body {
     gap: 8px;
     padding: 13px 14px;
   }
-  .game-detail-release {
-    margin-left: 0;
-  }
   .game-detail-hero {
     grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
     gap: 10px;
@@ -2554,6 +2596,15 @@ body {
   .game-detail-overview,
   .game-detail-platforms {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .game-detail-playtime__estimates {
+    gap: 7px;
+  }
+  .game-detail-playtime__card {
+    padding: 12px 6px;
+  }
+  .game-detail-playtime__card h3 {
+    font-size: 0.64rem;
   }
   .game-detail-related__cards {
     grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
