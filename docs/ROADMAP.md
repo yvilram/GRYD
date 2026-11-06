@@ -19,16 +19,20 @@
 - [x] Show clear success and error feedback for library actions and catalog loading.
 - [x] Explain IGDB rating scores, vote counts, and missing ratings in the catalog.
 - [x] Improve Explorer search and filters with active-filter chips, clear actions, and retry states.
-- [ ] Improve the home page as a product landing page using real catalog content.
 - [x] Establish shareable game URLs in the form `#game/<id>/<slug>` and support direct navigation.
+- [x] Add full game detail pages with media, release information, related games, platforms, and companies.
+- [x] Add HowLongToBeat estimates to game detail pages.
+- [x] Cache complete IGDB game records and HowLongToBeat estimates in Supabase for reuse across Explorer, Library, and game details.
+- [x] Show IGDB aggregate ratings on cards and game detail pages using a 0–10 display scale.
+- [x] Serve local image assets and preload the Geist Pixel font.
 
 ## Next up
 
-
+- [ ] Improve the home page as a product landing page using real catalog content.
+- [ ] Complete end-to-end testing of email confirmation with production SMTP.
 
 ## Later ideas
 
-- [ ] Build the full game detail page on the established route.
 - [ ] Add personal library statistics, such as games by status and completed games.
 - [ ] Add optional play progress and private notes to saved games.
 - [ ] Custom lists and collections, such as favorites or co-op games

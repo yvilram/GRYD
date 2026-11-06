@@ -1,5 +1,11 @@
 @charset "UTF-8";
-@import url("https://fonts.googleapis.com/css2?family=Geist+Pixel&display=swap");
+@font-face {
+  font-family: "Geist Pixel";
+  src: url("/assets/fonts/GeistPixel-Regular-VariableFont_ELSH.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
 :root {
   color-scheme: dark;
   font-family: "Geist Pixel", sans-serif;
@@ -83,7 +89,7 @@ select:focus-visible {
 body {
   display: flex;
   flex-direction: column;
-  background: radial-gradient(ellipse at 75% -15%, rgba(84, 66, 197, 0.2), transparent 40%), linear-gradient(180deg, rgba(9, 11, 18, 0.72), var(--color-bg) 55%), url("/assets/background.png") center/cover fixed, var(--color-bg);
+  background: radial-gradient(ellipse at 75% -15%, rgba(84, 66, 197, 0.2), transparent 40%), linear-gradient(180deg, rgba(9, 11, 18, 0.72), var(--color-bg) 55%), url("/assets/images/background.png") center/cover fixed, var(--color-bg);
 }
 
 .site-header {

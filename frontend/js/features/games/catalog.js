@@ -1052,7 +1052,7 @@ const renderRelatedTab = game => {
             cover.loading = "lazy";
             cover.src = item.cover?.image_id
                 ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${item.cover.image_id}.jpg`
-                : "/assets/no-cover.png";
+                : "/assets/images/no-cover.png";
             const titleElement = document.createElement("h3");
             titleElement.textContent = name;
             card.append(cover, titleElement);
@@ -1303,7 +1303,7 @@ const loadGameDetail = async gameId => {
         const cover = document.getElementById("game-detail-cover");
         cover.src = game.cover?.image_id
             ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`
-            : "/assets/no-cover.png";
+            : "/assets/images/no-cover.png";
         cover.alt = `${game.name} cover`;
         cover.hidden = false;
 
@@ -1375,7 +1375,7 @@ const createGameCard = (
     cover.alt = `${game.name} cover`;
     cover.src = game.cover?.image_id
         ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.png`
-        : "/assets/no-cover.png";
+        : "/assets/images/no-cover.png";
 
     const rating = document.createElement("span");
     rating.classList.add("game-card__rating");

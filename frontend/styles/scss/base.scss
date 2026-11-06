@@ -1,4 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist+Pixel&display=swap');
+@font-face {
+    font-family: "Geist Pixel";
+    src: url("/assets/fonts/GeistPixel-Regular-VariableFont_ELSH.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
 
 :root {
     color-scheme: dark;
