@@ -4,6 +4,10 @@
 
 GRYD es una aplicación para descubrir videojuegos y organizar una biblioteca personal.
 
+![alt text](docs/images/main.png)
+![alt text](docs/images/explorer.png)
+![alt text](docs/images/library.png)
+
 ## Tecnologías
 
 - **Frontend:** HTML, SCSS/CSS y JavaScript sin framework.
