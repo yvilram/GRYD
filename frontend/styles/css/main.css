@@ -974,7 +974,7 @@ body {
   }
 }
 .collection-view {
-  padding: 42px 0 56px;
+  padding: 0px 0 56px;
 }
 
 .collection-view__header {
@@ -1012,7 +1012,7 @@ body {
 
 .game-route-view {
   min-height: 55vh;
-  padding-top: 20px;
+  padding-top: 0px;
 }
 
 .game-route-view__back {
@@ -1979,12 +1979,61 @@ body {
   background: rgba(17, 21, 32, 0.72);
 }
 
+.game-detail-heading__title-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .game-detail-heading h1 {
   min-width: 0;
   margin: 0;
   font-size: clamp(1.55rem, 4vw, 2.35rem);
   letter-spacing: -0.045em;
   overflow-wrap: anywhere;
+}
+
+.game-detail-heading__rating {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(9, 11, 18, 0.72);
+  color: #d3ceff;
+  font-size: 0.9rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.game-detail-heading__rating[data-rating-level=low] {
+  border-color: rgba(255, 112, 120, 0.55);
+  color: #ff858c;
+}
+
+.game-detail-heading__rating[data-rating-level=fair] {
+  border-color: rgba(255, 173, 92, 0.55);
+  color: #ffb66d;
+}
+
+.game-detail-heading__rating[data-rating-level=good] {
+  border-color: rgba(240, 210, 96, 0.55);
+  color: #f0d260;
+}
+
+.game-detail-heading__rating[data-rating-level=great] {
+  border-color: rgba(103, 217, 161, 0.55);
+  color: #67d9a1;
+}
+
+.game-detail-heading__rating[data-rating-level=perfect] {
+  border-color: rgba(255, 211, 92, 0.75);
+  background: rgba(55, 39, 8, 0.9);
+  color: #ffd35c;
+  box-shadow: 0 0 16px rgba(255, 211, 92, 0.18);
 }
 
 .game-detail-byline {
@@ -2299,6 +2348,39 @@ body {
   text-transform: uppercase;
 }
 
+.game-detail-playtime__card:nth-child(1) {
+  border-color: rgba(181, 173, 255, 0.28);
+  background: linear-gradient(145deg, rgba(139, 123, 255, 0.08), rgba(17, 21, 32, 0.76));
+}
+.game-detail-playtime__card:nth-child(1) h3 {
+  color: #b7adff;
+}
+.game-detail-playtime__card:nth-child(1) .game-detail-playtime__value {
+  color: #d3ccff;
+}
+
+.game-detail-playtime__card:nth-child(2) {
+  border-color: rgba(143, 184, 255, 0.28);
+  background: linear-gradient(145deg, rgba(95, 151, 255, 0.08), rgba(17, 21, 32, 0.76));
+}
+.game-detail-playtime__card:nth-child(2) h3 {
+  color: #8fb8ff;
+}
+.game-detail-playtime__card:nth-child(2) .game-detail-playtime__value {
+  color: #c4d9ff;
+}
+
+.game-detail-playtime__card:nth-child(3) {
+  border-color: rgba(202, 169, 104, 0.3);
+  background: linear-gradient(145deg, rgba(202, 169, 104, 0.08), rgba(17, 21, 32, 0.76));
+}
+.game-detail-playtime__card:nth-child(3) h3 {
+  color: #c9a968;
+}
+.game-detail-playtime__card:nth-child(3) .game-detail-playtime__value {
+  color: #f0d99a;
+}
+
 .game-detail-playtime__value {
   margin: 0;
   color: var(--color-subtle);
@@ -2351,7 +2433,7 @@ body {
 .game-detail-name-list li:not(.game-detail-muted) {
   padding: 6px 10px;
   border: 1px solid rgba(181, 173, 255, 0.17);
-  border-radius: 999px;
+  border-radius: 10px;
   background: rgba(139, 123, 255, 0.08);
   color: var(--color-text);
   font-size: 0.82rem;
@@ -2542,6 +2624,14 @@ body {
     flex-direction: column;
     gap: 8px;
     padding: 13px 14px;
+  }
+  .game-detail-heading__title-row {
+    align-items: center;
+    gap: 8px;
+  }
+  .game-detail-heading__rating {
+    padding: 5px 8px;
+    font-size: 0.82rem;
   }
   .game-detail-hero {
     grid-template-columns: minmax(0, 34%) minmax(0, 1fr);

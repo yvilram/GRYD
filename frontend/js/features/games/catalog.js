@@ -794,6 +794,9 @@ const formatPlaytimeHours = hours => {
     return `${Number.isInteger(value) ? value : value.toFixed(1)} hours`;
 };
 
+const formatRatingOutOfTen = rating =>
+    new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(rating);
+
 const renderPlaytimePlaceholder = (howlongtobeat, loading, failed) => {
     const section = document.createElement("section");
     section.classList.add("game-detail-section", "game-detail-playtime");
@@ -1256,6 +1259,38 @@ const loadGameDetail = async gameId => {
 
         const title = document.getElementById("game-route-title");
         title.textContent = game.name;
+        const detailRating = document.getElementById("game-detail-rating");
+        const totalRating = Number(game.total_rating);
+        const hasRating = game.total_rating !== null &&
+            game.total_rating !== undefined &&
+            Number.isFinite(totalRating);
+        const ratingOutOfTen = hasRating ? totalRating / 10 : null;
+        const formattedRating = hasRating
+            ? formatRatingOutOfTen(ratingOutOfTen)
+            : "—";
+        detailRating.textContent = formattedRating;
+        detailRating.dataset.ratingLevel = !hasRating
+            ? "none"
+            : ratingOutOfTen >= 10
+                ? "perfect"
+                : ratingOutOfTen >= 8
+                    ? "great"
+                    : ratingOutOfTen >= 6
+                        ? "good"
+                        : ratingOutOfTen >= 4
+                            ? "fair"
+                            : "low";
+        const ratingCount = Number(game.total_rating_count);
+        const hasRatingCount = Number.isFinite(ratingCount) && ratingCount > 0;
+        detailRating.setAttribute(
+            "aria-label",
+            hasRating
+                ? `IGDB rating ${formattedRating} out of 10` +
+                    `${hasRatingCount ? ` from ${new Intl.NumberFormat("en").format(ratingCount)} votes` : ""}`
+                : "No IGDB rating available"
+        );
+        detailRating.title = detailRating.getAttribute("aria-label");
+
         const release = document.getElementById("game-detail-release");
         const publishers = getGameCompaniesByRole(game, "publisher");
         const releaseYear = Number(game.first_release_date) > 0
@@ -1348,30 +1383,34 @@ const createGameCard = (
     const hasRating = game.total_rating !== null &&
         game.total_rating !== undefined &&
         Number.isFinite(totalRating);
-    rating.textContent = hasRating ? String(Math.round(totalRating)) : "—";
+    const ratingOutOfTen = hasRating ? totalRating / 10 : null;
+    const formattedRating = hasRating
+        ? formatRatingOutOfTen(ratingOutOfTen)
+        : "—";
+    rating.textContent = formattedRating;
     rating.dataset.ratingLevel = !hasRating
         ? "none"
-        : totalRating >= 100
+        : ratingOutOfTen >= 10
             ? "perfect"
-            : totalRating >= 80
+            : ratingOutOfTen >= 8
                 ? "great"
-                : totalRating >= 60
+                : ratingOutOfTen >= 6
                     ? "good"
-                    : totalRating >= 40
+                    : ratingOutOfTen >= 4
                         ? "fair"
                         : "low";
     rating.setAttribute(
         "aria-label",
         !hasRating
             ? "No IGDB rating available"
-            : `IGDB community rating ${rating.textContent} out of 100`
+            : `IGDB rating ${formattedRating} out of 10`
     );
     const totalRatingCount = Number(game.total_rating_count);
     const hasRatingCount = Number.isFinite(totalRatingCount) && totalRatingCount > 0;
     rating.title = hasRating
-        ? `IGDB community rating: ${rating.textContent}/100` +
+        ? `IGDB rating: ${rating.textContent}` +
             `${hasRatingCount ? ` from ${new Intl.NumberFormat("en").format(totalRatingCount)} votes` : ""}`
-        : "No IGDB community rating available";
+        : "No IGDB rating available";
 
     const ratingMeta = document.createElement("p");
     ratingMeta.classList.add("game-card__rating-meta");
