@@ -1,6 +1,16 @@
+const { createHash } = require("node:crypto");
 const { GAME_DETAILS_FIELDS } = require("../constants/igdb-fields");
 const createSupabaseClient = require("../services/supabase.client");
 const getHowLongToBeatData = require("../services/fous.client");
+const {
+    getRowsByIds,
+    loadFullGames,
+    loadGameVersions,
+    saveGames,
+    toPublicGame
+} = require("../services/game-cache.service");
+
+const CATALOG_PAGE_CACHE_MS = 6 * 60 * 60 * 1000;
 
 const invalidInput = message => Object.assign(new Error(message), { status: 400 });
 
@@ -42,45 +52,33 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
 
             const gameId = Number(req.params.id);
             const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
-            const { data: cached, error: cacheError } = await supabase
-                .from("game_playtime_cache")
-                .select("hltb_data")
-                .eq("igdb_game_id", gameId)
-                .maybeSingle();
-
-            if (cacheError) throw cacheError;
-            if (cached) {
-                return res.json({ howlongtobeat: cached.hltb_data, cached: true });
-            }
-
-            const games = await requestIgdb(
-                "games",
-                `fields id,name; where id = ${gameId}; limit 1;`
-            );
-            if (!games.length) {
+            const rowsById = await loadFullGames(supabase, requestIgdb, [gameId]);
+            const game = rowsById.get(gameId);
+            if (!game) {
                 return res.status(404).json({ error: "Game not found." });
             }
 
-            const hltbData = await getHowLongToBeatData(
-                games[0].name,
-                req.env.FOUS_API_KEY
-            );
-            if (!hltbData) {
-                return res.json({ howlongtobeat: null, cached: false });
+            if (game.hltb_fetched_at) {
+                return res.json({ howlongtobeat: game.hltb_data, cached: true });
             }
 
-            const mainStoryHours = Number(hltbData.main_story_hours);
+            const hltbData = await getHowLongToBeatData(
+                game.igdb_data.name,
+                req.env.FOUS_API_KEY
+            );
+            const mainStoryHours = Number(hltbData?.main_story_hours);
+            const fetchedAt = new Date().toISOString();
             const { error: saveError } = await supabase
-                .from("game_playtime_cache")
-                .upsert({
-                    igdb_game_id: gameId,
-                    game_name: games[0].name,
-                    main_story_hours: Number.isFinite(mainStoryHours)
+                .from("games")
+                .update({
+                    hltb_data: hltbData,
+                    hltb_main_story_hours: Number.isFinite(mainStoryHours)
                         ? mainStoryHours
                         : null,
-                    hltb_data: hltbData,
-                    fetched_at: new Date().toISOString()
-                });
+                    hltb_fetched_at: fetchedAt,
+                    updated_at: fetchedAt
+                })
+                .eq("igdb_game_id", gameId);
 
             if (saveError) throw saveError;
             res.json({ howlongtobeat: hltbData, cached: false });
@@ -104,51 +102,13 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
             }
 
             const gameId = Number(req.params.id);
-            const games = await requestIgdb(
-                "games",
-                `
-                fields
-                    id, name, slug, summary, storyline, first_release_date,
-                    cover.image_id, screenshots.image_id, artworks.image_id,
-                    videos.name, videos.video_id,
-                    genres.name, game_modes.name, themes.name,
-                    player_perspectives.name, franchises.name, collections.name,
-                    game_engines.name, parent_game.name,
-                    expansions.id, expansions.name, expansions.cover.image_id,
-                    dlcs.id, dlcs.name, dlcs.cover.image_id,
-                    bundles.id, bundles.name, bundles.cover.image_id,
-                    standalone_expansions.id, standalone_expansions.name,
-                    standalone_expansions.cover.image_id,
-                    ports.id, ports.name, ports.cover.image_id,
-                    remakes.id, remakes.name, remakes.cover.image_id,
-                    remasters.id, remasters.name, remasters.cover.image_id,
-                    platforms.name,
-                    release_dates.date, release_dates.human,
-                    release_dates.region, release_dates.status.name,
-                    release_dates.platform.name,
-                    involved_companies.company.name, involved_companies.developer,
-                    involved_companies.publisher, involved_companies.supporting;
-                where id = ${gameId};
-                limit 1;
-                `
-            );
-
-            if (!games.length) {
+            const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+            const rowsById = await loadFullGames(supabase, requestIgdb, [gameId]);
+            const game = rowsById.get(gameId);
+            if (!game) {
                 return res.status(404).json({ error: "Game not found." });
             }
-
-            const versions = await requestIgdb(
-                "game_versions",
-                `
-                fields games.id, games.name, games.cover.image_id;
-                where game = ${gameId};
-                limit 50;
-                `
-            );
-            games[0].editions = versions.flatMap(version =>
-                Array.isArray(version.games) ? version.games : []
-            );
-            res.json(games[0]);
+            res.json(toPublicGame(game));
         } catch (error) {
             if (error.status === 400) {
                 return res.status(400).json({ error: error.message });
@@ -204,16 +164,70 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
             if (yearTo) filters.push(`first_release_date < ${Date.UTC(yearTo + 1, 0, 1) / 1000}`);
             const whereClause = filters.length ? `where ${filters.join(" & ")};` : "";
 
-            const games = await requestIgdb(
-                "games",
-                `
-                fields ${GAME_DETAILS_FIELDS};
-                ${whereClause}
-                ${sortOptions[sort]}
-                limit ${limit};
-                offset ${offset};
-                `
-            );
+            const catalogQuery = {
+                limit,
+                offset,
+                search,
+                genreIds: genreIds.slice().sort((a, b) => a - b),
+                themeIds: themeIds.slice().sort((a, b) => a - b),
+                platformIds: platformIds.slice().sort((a, b) => a - b),
+                yearFrom,
+                yearTo,
+                sort
+            };
+            const queryHash = createHash("sha256")
+                .update(JSON.stringify(catalogQuery))
+                .digest("hex");
+            const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+            const { data: cachedPage, error: pageError } = await supabase
+                .from("game_catalog_pages")
+                .select("game_ids, cached_at")
+                .eq("query_hash", queryHash)
+                .maybeSingle();
+            if (pageError) throw pageError;
+
+            let games;
+            if (cachedPage &&
+                Date.now() - new Date(cachedPage.cached_at).getTime() <
+                    CATALOG_PAGE_CACHE_MS) {
+                const rowsById = await getRowsByIds(supabase, cachedPage.game_ids);
+                const cachedGames = cachedPage.game_ids
+                    .map(id => rowsById.get(Number(id)))
+                    .filter(row => row?.details_loaded_at);
+                if (cachedGames.length === cachedPage.game_ids.length) {
+                    games = cachedGames.map(toPublicGame);
+                }
+            }
+
+            if (!games) {
+                const fetchedGames = await requestIgdb(
+                    "games",
+                    `
+                    fields ${GAME_DETAILS_FIELDS};
+                    ${whereClause}
+                    ${sortOptions[sort]}
+                    limit ${limit};
+                    offset ${offset};
+                    `
+                );
+                const fullGames = await loadGameVersions(requestIgdb, fetchedGames);
+                await saveGames(supabase, fullGames);
+                const { error: savePageError } = await supabase
+                    .from("game_catalog_pages")
+                    .upsert({
+                        query_hash: queryHash,
+                        game_ids: fullGames.map(game => Number(game.id)),
+                        cached_at: new Date().toISOString()
+                    }, { onConflict: "query_hash" });
+                if (savePageError) throw savePageError;
+                games = fullGames.map(game => {
+                    const row = {
+                        igdb_data: game,
+                        hltb_data: null
+                    };
+                    return toPublicGame(row);
+                });
+            }
 
             res.json(games);
         } catch (error) {

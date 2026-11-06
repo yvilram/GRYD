@@ -1,5 +1,6 @@
 const { getSessionContext } = require("../services/session.service");
-const { GAME_DETAILS_FIELDS } = require("../constants/igdb-fields");
+const createSupabaseClient = require("../services/supabase.client");
+const { loadFullGames, toPublicGame } = require("../services/game-cache.service");
 
 module.exports = function registerLibraryRoutes(app, requestIgdb) {
     app.get("/api/library", async (req, res) => {
@@ -19,73 +20,15 @@ module.exports = function registerLibraryRoutes(app, requestIgdb) {
                 });
             }
 
-            const gamesById = new Map();
-            let primaryQueryError;
-            try {
-                const games = await requestIgdb(
-                    "games",
-                    `fields ${GAME_DETAILS_FIELDS}; where id = (${gameIds.join(",")}); limit 500;`
-                );
-                games.forEach(game => gamesById.set(Number(game.id), game));
-            } catch (error) {
-                primaryQueryError = error;
-                console.error("Could not load full library game details:", error);
-            }
-
-            const missingDetailsIds = gameIds.filter(id => {
-                const game = gamesById.get(id);
-                return !game?.cover?.image_id ||
-                    game?.total_rating === null ||
-                    game?.total_rating === undefined ||
-                    game?.total_rating_count === null ||
-                    game?.total_rating_count === undefined ||
-                    !Array.isArray(game?.platforms) ||
-                    game.platforms.length === 0;
-            });
-
-            if (missingDetailsIds.length) {
-                try {
-                    const fallbackGames = await requestIgdb(
-                        "games",
-                        "fields id, name, cover.image_id, total_rating, total_rating_count, " +
-                            "platforms.name, platforms.platform_logo.image_id; " +
-                            `where id = (${missingDetailsIds.join(",")}); limit 500;`
-                    );
-                    fallbackGames.forEach(fallback => {
-                        const id = Number(fallback.id);
-                        const existing = gamesById.get(id) || { id };
-                        if (!existing.name && fallback.name) existing.name = fallback.name;
-                        if (!existing.cover?.image_id && fallback.cover?.image_id) {
-                            existing.cover = fallback.cover;
-                        }
-                        if ((existing.total_rating === null ||
-                            existing.total_rating === undefined) &&
-                            fallback.total_rating !== null &&
-                            fallback.total_rating !== undefined) {
-                            existing.total_rating = fallback.total_rating;
-                        }
-                        if ((existing.total_rating_count === null ||
-                            existing.total_rating_count === undefined) &&
-                            fallback.total_rating_count !== null &&
-                            fallback.total_rating_count !== undefined) {
-                            existing.total_rating_count = fallback.total_rating_count;
-                        }
-                        if ((!Array.isArray(existing.platforms) ||
-                            existing.platforms.length === 0) &&
-                            Array.isArray(fallback.platforms)) {
-                            existing.platforms = fallback.platforms;
-                        }
-                        gamesById.set(id, existing);
-                    });
-                } catch (error) {
-                    console.error("Could not load missing library game details:", error);
-                    if (primaryQueryError && gamesById.size === 0) throw primaryQueryError;
-                }
-            }
-            res.json([...gamesById.values()]);
+            const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+            const gamesById = await loadFullGames(supabase, requestIgdb, gameIds);
+            res.json(gameIds
+                .map(id => gamesById.get(id))
+                .filter(Boolean)
+                .map(toPublicGame));
         } catch (error) {
             console.error("Could not load library game details:", error);
-            res.status(500).json({ error: error.message });
+            res.status(error.upstream ? 502 : 500).json({ error: error.message });
         }
     });
 

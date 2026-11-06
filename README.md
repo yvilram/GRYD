@@ -68,7 +68,11 @@ Requisitos: Node.js y npm, además de credenciales para Supabase e IGDB.
    FOUS_API_KEY=
    ```
 
-   `SUPABASE_SECRET_KEY` se usa únicamente en el backend para operaciones administrativas y la caché compartida de horas de juego. No la expongas al frontend ni subas `.dev.vars` u otros archivos con credenciales al repositorio.
+   `SUPABASE_SECRET_KEY` se usa únicamente en el backend para operaciones administrativas y la caché compartida de juegos. No la expongas al frontend ni subas `.dev.vars` u otros archivos con credenciales al repositorio.
+
+   Antes de iniciar la aplicación, ejecuta en el SQL Editor de Supabase
+   [supabase/create_games.sql](./supabase/create_games.sql) para crear las
+   tablas de caché y migrar las horas existentes de `game_playtime_cache`.
 
 3. Inicia el frontend y el Worker:
 

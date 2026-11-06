@@ -18,19 +18,43 @@ Games each user has added to their list, with a status. `user_id` stores the cor
 
 - A game cannot appear twice for the same user (composite primary key: `user_id` + `id`).
 
-## `game_playtime_cache`
+## `games`
 
-Stores HowLongToBeat estimates, keyed by IGDB game ID so all users share the same cached result.
+Central cache for the complete IGDB data used by cards and game detail pages,
+plus shared HowLongToBeat data. The SQL setup is in
+[create_games.sql](../supabase/create_games.sql).
 
 | Column | Type | Notes |
 |--------|------|-------|
 | `igdb_game_id` | `int8` | IGDB game ID and primary key. |
-| `game_name` | `text` | Canonical game name returned by IGDB. |
-| `main_story_hours` | `numeric` | Main-story estimate in hours, when available. |
-| `hltb_data` | `jsonb` | Complete estimate data returned by Fous. |
-| `fetched_at` | `timestamptz` | When the estimate was fetched or updated. |
+| `igdb_data` | `jsonb` | Full IGDB game response, including editions used by the detail page. |
+| `details_loaded_at` | `timestamptz` | Non-null when the complete IGDB record has been cached. |
+| `hltb_data` | `jsonb` | Complete estimate data returned by Fous/HowLongToBeat. |
+| `hltb_main_story_hours` | `numeric` | Main-story estimate in hours, when available. |
+| `hltb_fetched_at` | `timestamptz` | Non-null after a successful lookup, including a lookup with no result. |
+| `updated_at` | `timestamptz` | Last cache write. |
 
-The backend checks this table before querying IGDB and Fous. It uses `SUPABASE_SECRET_KEY` server-side to access the cache; do not expose that key to the frontend.
+Explorer and Library cache complete IGDB records when they first encounter a
+game. Explorer pages are cached by filter/sort/page for six hours. HLTB is
+looked up when a game detail's playtime is requested, then stored in the same
+row for future users. The backend uses `SUPABASE_SECRET_KEY` server-side; never
+expose it to the frontend.
+
+The existing `game_playtime_cache` data is copied into `games` by the SQL
+script. Its rows are marked as partial IGDB records and will be completed on
+their next access. Keep the old table until the migration is verified; it is
+not used by the updated backend.
+
+## `game_catalog_pages`
+
+Stores Explorer result IDs for normalized filter/sort/page combinations so
+repeat requests can be served from `games` without querying IGDB.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `query_hash` | `text` | SHA-256 hash of normalized Explorer query parameters; primary key. |
+| `game_ids` | `int8[]` | Ordered IGDB IDs returned for the page. |
+| `cached_at` | `timestamptz` | Page cache time; entries expire after six hours. |
 
 ## Security (RLS)
 
