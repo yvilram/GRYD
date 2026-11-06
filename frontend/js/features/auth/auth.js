@@ -79,7 +79,53 @@ async function checkSession() {
     }
 }
 
-const sessionReady = checkSession();
+async function confirmEmailFromUrl() {
+    const url = new URL(window.location.href);
+    const tokenHash = url.searchParams.get("token_hash");
+    const type = url.searchParams.get("type");
+    if (!tokenHash && !type) return null;
+
+    url.searchParams.delete("token_hash");
+    url.searchParams.delete("type");
+    window.history.replaceState(null, "", url);
+
+    try {
+        const response = await fetch(`${API_URL}/api/confirm-email`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token_hash: tokenHash, type })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            return {
+                success: false,
+                message: result.error || "Could not confirm your email address."
+            };
+        }
+        return { success: true, message: "Email confirmed. You are now logged in." };
+    } catch (error) {
+        console.error("Email confirmation request failed:", error);
+        return {
+            success: false,
+            message: "Could not connect to confirm your email. Please try again."
+        };
+    }
+}
+
+const sessionReady = (async () => {
+    const confirmation = await confirmEmailFromUrl();
+    const authenticated = await checkSession();
+
+    if (confirmation) {
+        window.showAppNotice(confirmation.message, confirmation.success ? "success" : "error");
+        navigateToRoute(confirmation.success || authenticated ? "home" : "login", {
+            replace: true
+        });
+    }
+
+    return authenticated;
+})();
 window.authStateReady = sessionReady;
 
 window.addEventListener("auth:session-expired", () => {
@@ -457,6 +503,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     const email = document.getElementById("login-email").value;
     const password = document.getElementById("login-password").value;
     const errorMessage = document.getElementById("login-error");
+    errorMessage.classList.remove("form-message--success");
     errorMessage.textContent = "";
 
     try {
@@ -488,6 +535,7 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
     const password1 = document.getElementById("register-password").value;
     const password2 = document.getElementById("register-password-confirmation").value;
     const errorMessage = document.getElementById("register-error");
+    errorMessage.classList.remove("form-message--success");
     errorMessage.textContent = "";
 
     if (password1 !== password2) {
@@ -505,7 +553,12 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
 
         const result = await response.json();
 
-        if (response.ok) {
+        if (response.ok && result.confirmationRequired) {
+            document.getElementById("register-form").reset();
+            errorMessage.classList.add("form-message--success");
+            errorMessage.textContent =
+                "Account created. Check your inbox and confirm your email before logging in.";
+        } else if (response.ok) {
             const sessionResponse = await fetch(`${API_URL}/api/session`, {
                 credentials: "include"
             });

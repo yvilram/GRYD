@@ -75,17 +75,56 @@ module.exports = function registerAuthRoutes(app) {
             if (error) return res.status(400).json({ error: error.message });
 
             if (!data.session) {
-                return res.status(400).json({
-                    error: "Account created, but automatic login failed."
+                return res.json({
+                    confirmationRequired: true,
+                    message: "Account created. Check your email to confirm it."
                 });
             }
 
             res.cookie("session", data.session.access_token, SESSION_COOKIE_OPTIONS);
 
-            res.json({ message: "Account created and logged in successfully." });
+            res.json({
+                confirmationRequired: false,
+                message: "Account created and logged in successfully."
+            });
         } catch (error) {
             console.error("Error en /api/register:", error);
             res.status(500).json({ error: error.message });
+        }
+    });
+
+    app.post("/api/confirm-email", async (req, res) => {
+        try {
+            const tokenHash = typeof req.body?.token_hash === "string"
+                ? req.body.token_hash.trim()
+                : "";
+            if (!tokenHash || tokenHash.length > 512 || req.body?.type !== "email") {
+                return res.status(400).json({
+                    error: "The confirmation link is invalid or incomplete."
+                });
+            }
+
+            const supabase = createSupabaseClient(req.env);
+            const { data, error } = await supabase.auth.verifyOtp({
+                token_hash: tokenHash,
+                type: "email"
+            });
+            if (error) {
+                return res.status(400).json({
+                    error: "The confirmation link is invalid or has expired. Request a new one."
+                });
+            }
+            if (!data.session) {
+                return res.status(400).json({
+                    error: "Email was confirmed, but a session could not be started. Please log in."
+                });
+            }
+
+            res.cookie("session", data.session.access_token, SESSION_COOKIE_OPTIONS);
+            res.json({ message: "Email confirmed successfully." });
+        } catch (error) {
+            console.error("Error en /api/confirm-email:", error);
+            res.status(500).json({ error: "Could not confirm the email address." });
         }
     });
 

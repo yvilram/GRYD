@@ -138,7 +138,21 @@ Requisitos: una cuenta de Cloudflare, acceso al proyecto de Supabase y credencia
 
    El proyecto `gryd` usa normalmente `https://gryd.pages.dev`, que ya está permitido por el backend. Si eliges otro nombre o dominio, actualiza `allowedOrigins` en el backend para permitir el origen de producción.
 
-5. En la configuración de autenticación de Supabase, añade el dominio de Pages a los sitios permitidos (Site URL y Redirect URLs, cuando corresponda). Después, prueba el registro e inicio de sesión, la biblioteca, la carga de avatares y la eliminación de cuenta en la URL de producción.
+5. En **Authentication → URL Configuration** de Supabase, configura la **Site URL** como `https://gryd.pages.dev` y añade el dominio de Pages a las **Redirect URLs** permitidas.
+
+6. En **Authentication → Email Templates → Confirm signup**, usa un enlace que devuelva el hash al endpoint de confirmación de GRYD:
+
+   ```html
+   <a href="{{ .SiteURL }}/?token_hash={{ .TokenHash }}&type=email">
+     Confirm your email
+   </a>
+   ```
+
+   La Site URL debe estar sin `/` al final para que el enlace no tenga una ruta duplicada. La aplicación envía `token_hash` a `/api/confirm-email`, valida el enlace con Supabase y crea la sesión. No uses `{{ .ConfirmationURL }}` en esta plantilla: ese enlace sigue el flujo de callback de Supabase y no el endpoint que implementa GRYD.
+
+7. Para correo de producción, configura un proveedor SMTP propio en **Project Settings → Authentication → SMTP Settings** (o la sección SMTP de Auth del dashboard). Verifica el dominio remitente con el proveedor y usa sus datos SMTP; no compartas ni subas la contraseña SMTP al repositorio.
+
+8. Prueba registro con un correo accesible, recepción del mensaje, confirmación y primer inicio de sesión. Después prueba también la biblioteca, la carga de avatares y la eliminación de cuenta en la URL de producción.
 
    Para futuras publicaciones del frontend, vuelve a ejecutar `npm run build:css` y el comando `wrangler pages deploy`. Los secretos del Worker se gestionan por separado y no se suben con el código.
 
