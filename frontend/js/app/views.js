@@ -60,9 +60,21 @@ const renderRoute = (route, game = null) => {
     if (activeRoute === "game") {
         const backLink = document.getElementById("game-detail-back");
         const returnRoute = game.returnRoute === "library" ? "library" : "explore";
-        backLink.href = `#${returnRoute}`;
+        const hasReturnGame = Boolean(game.returnGameId && game.returnGameSlug);
+        const returnGameRoute = hasReturnGame
+            ? `#game/${game.returnGameId}/${game.returnGameSlug}` +
+                `?from=${returnRoute}&tab=${game.returnTab || "related"}`
+            : `#${returnRoute}`;
+        backLink.hidden = Boolean(game.missionId);
+        backLink.href = returnGameRoute;
         document.getElementById("game-detail-back-label").textContent =
-            returnRoute === "library" ? "Back to Library" : "Back to Explore";
+            hasReturnGame
+                ? `Back to ${game.returnGameName || "previous game"}`
+                : returnRoute === "library" ? "Back to Library" : "Back to Explore";
+        const missionBackLink = document.getElementById("game-mission-page-back");
+        missionBackLink.href =
+            `#game/${game.id}/${game.slug}?from=${returnRoute}&tab=missions`;
+        missionBackLink.hidden = !game.missionId;
     }
 
     document.querySelectorAll(".primary-nav [data-view-target]").forEach(button => {
@@ -78,7 +90,13 @@ const renderRoute = (route, game = null) => {
             route: activeRoute,
             viewId: activeViewId,
             gameId: game?.id || null,
-            gameSlug: game?.slug || null
+            gameSlug: game?.slug || null,
+            missionId: game?.missionId || null,
+            tabId: game?.tabId || null,
+            returnGameId: game?.returnGameId || null,
+            returnGameSlug: game?.returnGameSlug || null,
+            returnGameName: game?.returnGameName || null,
+            returnTab: game?.returnTab || null
         }
     }));
 };
@@ -104,12 +122,32 @@ const navigateToRoute = (route, { replace = false } = {}) => {
 // Restore the current route when browser history changes.
 const restoreRouteFromUrl = () => {
     const route = window.location.hash.slice(1);
-    const gameMatch = /^game\/([1-9]\d*)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?:\?from=(explore|library))?$/.exec(route);
+    const [path, queryString = ""] = route.split("?", 2);
+    const gameMatch =
+        /^game\/([1-9]\d*)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?:\/mission\/([1-9]\d*))?$/
+            .exec(path);
     if (gameMatch) {
+        const query = new URLSearchParams(queryString);
+        const returnGameId = query.get("fromGameId");
+        const returnGameSlug = query.get("fromGameSlug");
+        const validReturnGame = /^[1-9]\d*$/.test(returnGameId || "") &&
+            /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(returnGameSlug || "") &&
+            query.get("fromTab") === "related";
         renderRoute("game", {
             id: gameMatch[1],
             slug: gameMatch[2],
-            returnRoute: gameMatch[3] || "explore"
+            missionId: gameMatch[3] || null,
+            returnRoute: query.get("from") === "library" ? "library" : "explore",
+            tabId: ["overview", "missions", "media", "related", "platforms", "more"]
+                .includes(query.get("tab"))
+                ? query.get("tab")
+                : null,
+            returnGameId: validReturnGame ? returnGameId : null,
+            returnGameSlug: validReturnGame ? returnGameSlug : null,
+            returnGameName: validReturnGame
+                ? query.get("fromGameName")
+                : null,
+            returnTab: validReturnGame ? query.get("fromTab") : null
         });
         return;
     }

@@ -8,6 +8,16 @@ const GAME_STATUSES = [
     ["completed", "Completed"],
     ["drop", "Dropped"]
 ];
+const GAME_MISSION_CATEGORIES = [
+    ["main", "Main quests"],
+    ["side", "Side quests"],
+    ["contract", "Contracts"],
+    ["gig", "Gigs"],
+    ["minor", "Minor jobs"],
+    ["treasure_hunt", "Treasure hunts"],
+    ["expansion", "Expansion quests"],
+    ["other", "Other quests"]
+];
 const LIBRARY_CONTENT_TYPES = [
     { id: "games", label: "Games", icon: "bi-controller" }
 ];
@@ -527,13 +537,36 @@ const getPlatformFamilies = platforms => {
     );
 };
 
-const createGameRoute = (game, returnRoute = "explore") => {
-    const slug = game.name.normalize("NFKD")
+const createGameSlug = name => name.normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/['’‘`]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "game";
+
+const createIGNGameSlug = game => {
+    const slug = typeof game?.slug === "string" && game.slug.trim()
+        ? game.slug
+        : game?.name || "game";
+    return slug.normalize("NFKD")
         .replace(/[\u0300-\u036f]/g, "")
+        .replace(/['’‘`]/g, "")
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "") || "game";
-    return `#game/${game.id}/${slug}?from=${returnRoute}`;
+};
+
+const createGameRoute = (game, returnRoute = "explore", state = {}) => {
+    const slug = createGameSlug(game.name);
+    const query = new URLSearchParams({ from: returnRoute });
+    if (state.tab) query.set("tab", state.tab);
+    if (state.fromGameId && state.fromGameSlug && state.fromTab) {
+        query.set("fromGameId", String(state.fromGameId));
+        query.set("fromGameSlug", state.fromGameSlug);
+        query.set("fromGameName", state.fromGameName || "game");
+        query.set("fromTab", state.fromTab);
+    }
+    return `#game/${game.id}/${slug}?${query}`;
 };
 
 const GAME_DETAIL_TABS = [
@@ -547,6 +580,70 @@ const GAME_DETAIL_TABS = [
 let gameDetailController = null;
 let currentGameDetail = null;
 let activeGameDetailTab = "overview";
+
+const getGameDetailStateKey = gameId => `gryd:game-detail:${gameId}`;
+
+const saveGameDetailState = gameId => {
+    if (!currentGameDetail ||
+        Number(currentGameDetail.game.id) !== Number(gameId)) return;
+    const state = {
+        tab: activeGameDetailTab,
+        scrollY: window.scrollY,
+        openMissionCategories: [
+            ...document.querySelectorAll(
+                "#game-detail-panel .game-detail-mission-group[open]"
+            )
+        ].map(group => group.dataset.missionCategory).filter(Boolean)
+    };
+    try {
+        window.sessionStorage.setItem(
+            getGameDetailStateKey(gameId),
+            JSON.stringify(state)
+        );
+    } catch (error) {
+        console.warn("Could not save game detail navigation state:", error);
+    }
+};
+
+const loadGameDetailState = gameId => {
+    try {
+        const stored = window.sessionStorage.getItem(getGameDetailStateKey(gameId));
+        if (!stored) return null;
+        const state = JSON.parse(stored);
+        if (!state || typeof state !== "object") return null;
+        return {
+            tab: GAME_DETAIL_TABS.some(tab => tab.id === state.tab)
+                ? state.tab
+                : null,
+            scrollY: Number.isFinite(state.scrollY) && state.scrollY >= 0
+                ? state.scrollY
+                : 0,
+            openMissionCategories: Array.isArray(state.openMissionCategories)
+                ? state.openMissionCategories.filter(category =>
+                    GAME_MISSION_CATEGORIES.some(([id]) => id === category)
+                )
+                : []
+        };
+    } catch (error) {
+        console.warn("Could not restore game detail navigation state:", error);
+        return null;
+    }
+};
+
+const restoreGameDetailState = async (state, controller) => {
+    if (!state || controller.signal.aborted) return;
+    if (activeGameDetailTab === "missions" && state.openMissionCategories.length) {
+        const openCategories = new Set(state.openMissionCategories);
+        document.querySelectorAll(
+            "#game-detail-panel .game-detail-mission-group"
+        ).forEach(group => {
+            group.open = openCategories.has(group.dataset.missionCategory);
+        });
+    }
+    await new Promise(resolve => window.requestAnimationFrame(resolve));
+    if (controller.signal.aborted) return;
+    window.scrollTo({ top: state.scrollY, behavior: "instant" });
+};
 
 const gameItemName = item => {
     if (typeof item === "string") return item;
@@ -617,10 +714,23 @@ const getReleaseRegionName = region => {
         7: "Asia",
         8: "Worldwide [WW]",
         9: "Korea",
-        10: "Brazil"
+        10: "Brazil",
+        11: "Other"
     };
-    const id = Number(region);
-    return regionNames[id] || gameItemName(region) || "Region not specified";
+    const regionValue = region && typeof region === "object"
+        ? region.id
+        : region;
+    const pathRegionId = typeof regionValue === "string"
+        ? regionValue.match(/\/(\d+)\/?$/)?.[1]
+        : null;
+    const regionId = Number(pathRegionId || regionValue);
+    return regionNames[regionId] ||
+        (typeof region?.name === "string" ? region.name : "") ||
+        (typeof region === "string" && !/^\d+$/.test(region) ? region : "") ||
+        (Number.isSafeInteger(regionId) && regionId > 0
+            ? `Region ${regionId}`
+            : "") ||
+        "Region not specified";
 };
 
 const getGameMedia = game => {
@@ -1047,6 +1157,36 @@ const renderRelatedTab = game => {
             if (!name) return;
             const card = document.createElement("article");
             card.classList.add("game-detail-related-card");
+            const gameId = gameItemId(item);
+            const cardContent = document.createElement(gameId ? "a" : "div");
+            cardContent.classList.add("game-detail-related-card__link");
+            if (gameId) {
+                const query = new URLSearchParams(
+                    window.location.hash.split("?")[1] || ""
+                );
+                const returnRoute = query.get("from") === "library"
+                    ? "library"
+                    : "explore";
+                const parentSlug = game.name.normalize("NFKD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-|-$/g, "") || "game";
+                cardContent.href = createGameRoute(
+                    { id: gameId, name },
+                    returnRoute,
+                    {
+                        fromGameId: game.id,
+                        fromGameSlug: parentSlug,
+                        fromGameName: game.name,
+                        fromTab: "related"
+                    }
+                );
+                cardContent.addEventListener("click", () =>
+                    saveGameDetailState(game.id)
+                );
+                cardContent.setAttribute("aria-label", `View details for ${name}`);
+            }
             const cover = document.createElement("img");
             cover.alt = "";
             cover.loading = "lazy";
@@ -1055,7 +1195,11 @@ const renderRelatedTab = game => {
                 : "/assets/images/no-cover.png";
             const titleElement = document.createElement("h3");
             titleElement.textContent = name;
-            card.append(cover, titleElement);
+            const typeLabel = document.createElement("span");
+            typeLabel.classList.add("game-detail-related-card__type");
+            typeLabel.textContent = title;
+            cardContent.append(cover, titleElement, typeLabel);
+            card.appendChild(cardContent);
             cards.appendChild(card);
         });
         section.appendChild(cards);
@@ -1096,23 +1240,47 @@ const renderPlatformsTab = game => {
         );
         const card = document.createElement("article");
         card.classList.add("game-detail-platform-card");
+        const platformHeader = document.createElement("header");
+        platformHeader.classList.add("game-detail-platform-card__header");
+        if (platform.platform_logo?.image_id) {
+            const logo = document.createElement("img");
+            logo.src =
+                `https://images.igdb.com/igdb/image/upload/t_logo_med/${platform.platform_logo.image_id}.png`;
+            logo.alt = "";
+            logo.loading = "lazy";
+            platformHeader.appendChild(logo);
+        }
         const heading = document.createElement("h3");
         heading.textContent = platformName;
-        card.appendChild(heading);
+        platformHeader.appendChild(heading);
+        card.appendChild(platformHeader);
 
         const releaseList = document.createElement("ul");
         releaseList.classList.add("game-detail-platform-card__releases");
         platformReleases.forEach(release => {
             const item = document.createElement("li");
-            const region = getReleaseRegionName(release.region);
-            const date = release.human || formatGameDate(release.date) || "Release date TBA";
+            const region = document.createElement("span");
+            region.classList.add("game-detail-platform-card__region");
+            region.textContent = getReleaseRegionName(release.region);
+            const details = document.createElement("span");
+            details.classList.add("game-detail-platform-card__release-details");
+            const date = document.createElement("strong");
+            date.textContent = release.human ||
+                formatGameDate(release.date) ||
+                "Release date TBA";
             const status = gameItemName(release.status);
-            const description = [date, status].filter(Boolean).join(" · ");
-            item.textContent = `${region} — ${description}`;
+            details.appendChild(date);
+            if (status) {
+                const statusLabel = document.createElement("span");
+                statusLabel.textContent = status;
+                details.appendChild(statusLabel);
+            }
+            item.append(region, details);
             releaseList.appendChild(item);
         });
         if (!releaseList.childElementCount) {
             const item = document.createElement("li");
+            item.classList.add("game-detail-platform-card__empty");
             item.textContent = "Platform release date not listed";
             releaseList.appendChild(item);
         }
@@ -1135,8 +1303,969 @@ const renderPlatformsTab = game => {
             group.append(groupTitle, createNameList(names));
             card.appendChild(group);
         });
+        if (!card.querySelector(".game-detail-platform-card__companies")) {
+            const noCredits = document.createElement("p");
+            noCredits.classList.add("game-detail-platform-card__empty");
+            noCredits.textContent = "Developer and publisher details are not listed.";
+            card.appendChild(noCredits);
+        }
         content.appendChild(card);
     });
+    return content;
+};
+
+const createMissionArticleContent = (html, media, onIGNPageLink = null) => {
+    const allowedTags = new Set([
+        "A", "B", "BLOCKQUOTE", "BR", "CAPTION", "CODE", "DD", "DIV", "DL",
+        "DT", "EM", "H2", "H3", "H4", "H5", "HR", "I", "IMG", "LI", "OL",
+        "P", "PRE", "SMALL", "SPAN", "STRONG", "SUB", "SUP", "TABLE", "TBODY",
+        "TD", "TH", "THEAD", "TR", "U", "UL"
+    ]);
+    const blockedTags = new Set([
+        "IFRAME", "OBJECT", "SCRIPT", "STYLE", "SVG", "VIDEO"
+    ]);
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    const fragment = document.createDocumentFragment();
+
+    const appendSafeNode = (parent, node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            parent.appendChild(document.createTextNode(node.textContent));
+            return;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE || blockedTags.has(node.tagName)) return;
+        if (node.tagName === "IMG") {
+            const mediaIndex = node.getAttribute("data-mission-media-index");
+            if (mediaIndex === null) {
+                let imageUrl;
+                try {
+                    imageUrl = new URL(node.getAttribute("src"));
+                } catch {
+                    return;
+                }
+                if (imageUrl.protocol !== "https:" ||
+                    !(imageUrl.hostname.endsWith(".ignimgs.com") ||
+                        imageUrl.hostname === "ign.com" ||
+                        imageUrl.hostname.endsWith(".ign.com"))) {
+                    return;
+                }
+                const image = document.createElement("img");
+                image.src = imageUrl.href;
+                image.alt = node.getAttribute("alt") || "";
+                image.loading = "lazy";
+                image.decoding = "async";
+                image.referrerPolicy = "no-referrer";
+                parent.appendChild(image);
+                return;
+            }
+            if (!/^\d+$/.test(mediaIndex || "")) return;
+            const index = Number(mediaIndex);
+            const item = media[index];
+            const url = item?.type === "image" && (item.local_url || item.source_url);
+            if (!url || !Number.isSafeInteger(index)) return;
+            try {
+                if (new URL(url).protocol !== "https:") return;
+            } catch {
+                return;
+            }
+            const image = document.createElement("img");
+            image.src = url;
+            image.alt = node.getAttribute("alt") || item.title || "";
+            if (item.inline) image.classList.add("game-mission-page__inline-image");
+            image.loading = "lazy";
+            image.decoding = "async";
+            image.referrerPolicy = "no-referrer";
+            parent.appendChild(image);
+            return;
+        }
+        if (node.tagName === "SPAN" && node.hasAttribute("data-mission-media-index")) {
+            const index = Number(node.getAttribute("data-mission-media-index"));
+            const item = media[index];
+            if (item?.type !== "video" || !item.source_url) return;
+            let videoUrl;
+            try {
+                videoUrl = new URL(item.source_url);
+            } catch {
+                return;
+            }
+            if (!["http:", "https:"].includes(videoUrl.protocol)) return;
+            const isEmbeddableVideo =
+                (["youtube.com", "www.youtube.com", "youtube-nocookie.com",
+                    "www.youtube-nocookie.com"].includes(videoUrl.hostname) &&
+                    videoUrl.pathname.startsWith("/embed/")) ||
+                (videoUrl.hostname === "player.vimeo.com" &&
+                    videoUrl.pathname.startsWith("/video/"));
+            let mediaElement;
+            if (item.local_url) {
+                let localVideoUrl;
+                try {
+                    localVideoUrl = new URL(item.local_url);
+                } catch {
+                    return;
+                }
+                if (localVideoUrl.protocol !== "https:") return;
+                mediaElement = document.createElement("video");
+                mediaElement.src = localVideoUrl.href;
+                mediaElement.controls = true;
+                mediaElement.preload = "metadata";
+                mediaElement.setAttribute("aria-label", item.title || "Mission video");
+            } else if (item.format === "mp4" &&
+                /^assets\d*\.ign\.com$/.test(videoUrl.hostname) &&
+                /\.mp4$/i.test(videoUrl.pathname) &&
+                videoUrl.protocol === "https:") {
+                mediaElement = document.createElement("video");
+                mediaElement.src = videoUrl.href;
+                mediaElement.controls = true;
+                mediaElement.preload = "metadata";
+                mediaElement.setAttribute("aria-label", item.title || "IGN video");
+            } else if (isEmbeddableVideo && videoUrl.protocol === "https:") {
+                mediaElement = document.createElement("iframe");
+                mediaElement.src = videoUrl.href;
+                mediaElement.title = item.title || "Mission video";
+                mediaElement.loading = "lazy";
+                mediaElement.referrerPolicy = "strict-origin-when-cross-origin";
+                mediaElement.setAttribute("allowfullscreen", "");
+                mediaElement.setAttribute(
+                    "allow",
+                    "encrypted-media; picture-in-picture; fullscreen"
+                );
+                mediaElement.setAttribute(
+                    "sandbox",
+                    "allow-scripts allow-same-origin allow-presentation"
+                );
+            } else {
+                mediaElement = document.createElement("a");
+                mediaElement.href = item.source_url;
+                mediaElement.target = "_blank";
+                mediaElement.rel = "noreferrer";
+                mediaElement.textContent = item.title || "Open video";
+            }
+            mediaElement.classList.add("game-mission-page__inline-media");
+            parent.appendChild(mediaElement);
+            return;
+        }
+        if (!allowedTags.has(node.tagName)) {
+            node.childNodes.forEach(child => appendSafeNode(parent, child));
+            return;
+        }
+
+        const element = document.createElement(node.tagName.toLowerCase());
+        if (node.tagName === "A") {
+            const href = node.getAttribute("href");
+            if (href) {
+                try {
+                    const url = new URL(href);
+                    if (url.origin === "https://www.ign.com") {
+                        if (onIGNPageLink) {
+                            element.href = "#ign-wiki-page";
+                            element.addEventListener("click", event => {
+                                event.preventDefault();
+                                onIGNPageLink(url.href);
+                            });
+                            element.classList.add("game-mission-page__internal-link");
+                        } else {
+                            element.removeAttribute("href");
+                        }
+                    } else if (url.protocol === "https:" || url.protocol === "http:") {
+                        element.href = url.href;
+                        element.target = "_blank";
+                        element.rel = "noopener noreferrer";
+                    }
+                } catch {
+                    // Invalid links are rendered as ordinary link text.
+                }
+            }
+        }
+        node.childNodes.forEach(child => appendSafeNode(element, child));
+        parent.appendChild(element);
+    };
+
+    parsed.body.childNodes.forEach(node => appendSafeNode(fragment, node));
+    return fragment;
+};
+
+const loadGameMissionPage = async (game, missionId, controller) => {
+    const main = document.getElementById("game-detail-main");
+    const page = document.getElementById("game-mission-page");
+    const title = document.getElementById("game-mission-page-title");
+    const meta = document.getElementById("game-mission-page-meta");
+    const article = document.getElementById("game-mission-page-article");
+    const sidebar = document.getElementById("game-mission-page-sidebar");
+    const attribution = document.getElementById("game-mission-page-attribution");
+    main.hidden = true;
+    page.hidden = false;
+    window.scrollTo({ top: 0, behavior: "instant" });
+    title.textContent = "Loading mission…";
+    meta.textContent = game.name;
+    article.textContent = "Loading mission content…";
+    sidebar.replaceChildren();
+    sidebar.hidden = true;
+    attribution.replaceChildren();
+
+    try {
+        const result = await requestJson(
+            `${API_URL}/api/games/${game.id}/missions/${missionId}`,
+            { signal: controller.signal }
+        );
+        if (controller.signal.aborted ||
+            Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        if (typeof result?.article_content !== "string" ||
+            result.article_format !== "structured-v3" ||
+            !Array.isArray(result.media)) {
+            throw new Error("The server returned an invalid mission details response.");
+        }
+
+        title.textContent = result.title;
+        const categoryLabel = GAME_MISSION_CATEGORIES.find(
+            ([category]) => category === result.category
+        )?.[1] || result.category;
+        const category = document.createElement("span");
+        category.classList.add("game-mission-page__category");
+        category.textContent = categoryLabel;
+        const gameLabel = document.createElement("span");
+        gameLabel.classList.add("game-mission-page__game");
+        gameLabel.textContent = game.name;
+        meta.replaceChildren(category, gameLabel);
+        const backLabel = document.getElementById("game-mission-page-back-label");
+        backLabel.textContent = `Back to ${game.name}`;
+        article.replaceChildren(createMissionArticleContent(
+            result.article_content,
+            result.media
+        ));
+        const headingNodes = [...article.querySelectorAll("h2, h3")];
+        if (result.group_name || result.description || headingNodes.length) {
+            const details = document.createElement("section");
+            details.classList.add("game-mission-page__sidebar-card");
+            if (result.group_name || result.description) {
+                const detailsTitle = document.createElement("h2");
+                detailsTitle.textContent = "Mission details";
+                details.appendChild(detailsTitle);
+                if (result.group_name) {
+                    const groupLabel = document.createElement("span");
+                    groupLabel.classList.add("game-mission-page__detail-label");
+                    groupLabel.textContent = "Quest line";
+                    const group = document.createElement("p");
+                    group.textContent = result.group_name;
+                    details.append(groupLabel, group);
+                }
+                if (result.description) {
+                    const descriptionLabel = document.createElement("span");
+                    descriptionLabel.classList.add(
+                        "game-mission-page__detail-label"
+                    );
+                    descriptionLabel.textContent = "Overview";
+                    const description = document.createElement("p");
+                    description.textContent = result.description;
+                    details.append(descriptionLabel, description);
+                }
+            }
+            if (headingNodes.length) {
+                const contentsHeading = document.createElement("h2");
+                contentsHeading.textContent = "On this page";
+                const contents = document.createElement("nav");
+                const list = document.createElement("ol");
+                headingNodes.forEach((heading, index) => {
+                    const id = `mission-section-${index + 1}`;
+                    heading.id = id;
+                    const item = document.createElement("li");
+                    if (heading.tagName === "H3") {
+                        item.classList.add("game-mission-page__subsection");
+                    }
+                    const link = document.createElement("a");
+                    link.href = window.location.href;
+                    link.textContent = heading.textContent;
+                    link.addEventListener("click", event => {
+                        event.preventDefault();
+                        heading.scrollIntoView({ behavior: "smooth", block: "start" });
+                    });
+                    item.appendChild(link);
+                    list.appendChild(item);
+                });
+                contents.appendChild(list);
+                details.append(contentsHeading, contents);
+            }
+            sidebar.appendChild(details);
+            sidebar.hidden = false;
+        }
+        const credit = document.createElement("span");
+        credit.textContent =
+            `${result.attribution || ""} ` +
+            `${result.source_license ? `License: ${result.source_license}. ` : ""}`;
+        attribution.appendChild(credit);
+
+        const sourceUrl = new URL(result.mission_url);
+        const sourcePageUrl = new URL(result.source_page_url);
+        if (sourceUrl.protocol !== "https:" ||
+            sourcePageUrl.protocol !== "https:" ||
+            sourceUrl.origin !== sourcePageUrl.origin ||
+            !sourceUrl.pathname.startsWith("/wiki/") ||
+            !sourcePageUrl.pathname.startsWith("/wiki/")) {
+            throw new Error("The mission source URL is invalid.");
+        }
+        if (result.content_revision_id) {
+            sourceUrl.searchParams.set("oldid", result.content_revision_id);
+        }
+        const sourceLink = document.createElement("a");
+        sourceLink.href = sourceUrl.href;
+        sourceLink.target = "_blank";
+        sourceLink.rel = "noreferrer";
+        sourceLink.textContent = `${result.source_name || "Wiki"} source`;
+        attribution.appendChild(sourceLink);
+        const licenseLink = document.createElement("a");
+        if (sourceUrl.hostname.endsWith(".fandom.com")) {
+            licenseLink.href = "https://www.fandom.com/licensing";
+            licenseLink.target = "_blank";
+            licenseLink.rel = "noreferrer";
+            licenseLink.textContent = "Licensing guidance";
+            attribution.append(" · ", licenseLink);
+        }
+    } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(`Could not load mission ${missionId}:`, error);
+        if (controller.signal.aborted ||
+            Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        title.textContent = "Mission unavailable";
+        article.replaceChildren();
+        const message = document.createElement("p");
+        message.textContent = "The mission content could not be loaded.";
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.classList.add("game-detail-retry");
+        retry.textContent = "Try again";
+        retry.addEventListener("click", () =>
+            loadGameMissionPage(game, missionId, controller)
+        );
+        article.append(message, retry);
+    }
+};
+
+const loadGameChecklists = async (game, controller) => {
+    const detail = currentGameDetail;
+    if (!detail ||
+        Number(detail.game.id) !== Number(game.id) ||
+        detail.checklistsLoading ||
+        detail.checklistsLoaded) return;
+    detail.checklistsLoading = true;
+    try {
+        const slug = createGameSlug(game.name);
+        const query = new URLSearchParams({
+            gameId: String(game.id),
+            ignSlug: createIGNGameSlug(game),
+            nameSlug: createGameSlug(game.name)
+        });
+        const result = await requestJson(
+            `${API_URL}/api/games/${encodeURIComponent(slug)}/checklists?${query}`,
+            {
+                signal: controller.signal
+            }
+        );
+        if (controller.signal.aborted ||
+            Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        if (!result || typeof result.game !== "string" ||
+            !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(result.game) ||
+            !Array.isArray(result.checklists) ||
+            result.checklists.some(checklist =>
+                typeof checklist.slug !== "string" ||
+                !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(checklist.slug) ||
+                typeof checklist.name !== "string" ||
+                !checklist.name.trim() ||
+                typeof checklist.url !== "string" ||
+                new URL(checklist.url).origin !== "https://www.ign.com" ||
+                !new URL(checklist.url).pathname.startsWith(
+                    `/games/${result.game}/checklists/`
+                )
+            )) {
+            throw new Error("The server returned an invalid IGN checklists response.");
+        }
+
+        detail.ignGameSlug = result.game;
+        detail.checklists = result.checklists;
+    } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(`Could not load IGN checklists for game ${game.id}:`, error);
+        if (Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        detail.checklists = [];
+    } finally {
+        if (!controller.signal.aborted &&
+            Number(currentGameDetail?.game.id) === Number(game.id)) {
+            detail.checklistsLoading = false;
+            detail.checklistsLoaded = true;
+            if (activeGameDetailTab === "missions") {
+                renderGameDetailTab("missions");
+            }
+        }
+    }
+};
+
+const loadChecklistDetails = async (game, checklist, controller) => {
+    const detail = currentGameDetail;
+    if (!detail || Number(detail.game.id) !== Number(game.id)) return;
+    const state = detail.checklistStates[checklist.slug];
+    if (!state || state.loading || state.loaded) return;
+
+    state.loading = true;
+    renderGameDetailTab("missions");
+    try {
+        const gameSlug = createGameSlug(game.name);
+        const query = new URLSearchParams({
+            gameId: String(game.id),
+            ignSlug: detail.ignGameSlug || createIGNGameSlug(game),
+            nameSlug: createGameSlug(game.name)
+        });
+        const result = await requestJson(
+            `${API_URL}/api/games/${encodeURIComponent(gameSlug)}/checklists/` +
+                `${encodeURIComponent(checklist.slug)}?${query}`,
+            { signal: controller.signal }
+        );
+        if (controller.signal.aborted ||
+            Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        if (!result || !Array.isArray(result.tasks) ||
+            result.tasks.some(task =>
+                !Number.isSafeInteger(Number(task.id)) ||
+                typeof task.name !== "string" ||
+                !Array.isArray(task.guidePages) ||
+                task.guidePages.some(guide =>
+                    typeof guide.title !== "string" ||
+                    typeof guide.url !== "string" ||
+                    new URL(guide.url).origin !== "https://www.ign.com" ||
+                    !/^\/wikis\/[a-z0-9]+(?:-[a-z0-9]+)*\/.+$/.test(
+                        new URL(guide.url).pathname
+                    )
+                )
+            )) {
+            throw new Error("The server returned invalid IGN checklist tasks.");
+        }
+
+        const checklistUrl = new URL(result.checklist.url);
+        detail.ignGameSlug = checklistUrl.pathname.split("/")[2];
+        detail.checklistData[checklist.slug] = result;
+    } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(
+            `Could not load IGN checklist ${checklist.slug} for game ${game.id}:`,
+            error
+        );
+        if (Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        state.error = true;
+    } finally {
+        if (!controller.signal.aborted &&
+            Number(currentGameDetail?.game.id) === Number(game.id)) {
+            state.loading = false;
+            state.loaded = true;
+            if (activeGameDetailTab === "missions") {
+                renderGameDetailTab("missions");
+            }
+        }
+    }
+};
+
+const loadIGNChecklistGuide = async (
+    game,
+    checklist,
+    task,
+    guide,
+    guideIndex,
+    controller
+) => {
+    const detail = currentGameDetail;
+    if (!detail || Number(detail.game.id) !== Number(game.id)) return;
+    const taskState = detail.checklistTaskStates[
+        `${checklist.slug}:${task.id}`
+    ];
+    const guideState = taskState.guides[guideIndex];
+    if (!guideState || guideState.loading || guideState.loaded) return;
+
+    guideState.loading = true;
+    renderGameDetailTab("missions");
+    try {
+        const gameSlug = createGameSlug(game.name);
+        const query = new URLSearchParams({
+            gameId: String(game.id),
+            ignSlug: detail.ignGameSlug || createIGNGameSlug(game),
+            nameSlug: createGameSlug(game.name)
+        });
+        const result = await requestJson(
+            `${API_URL}/api/games/${encodeURIComponent(gameSlug)}/checklists/` +
+                `${encodeURIComponent(checklist.slug)}/tasks/${task.id}/guides/${guideIndex}?${query}`,
+            { signal: controller.signal }
+        );
+        if (controller.signal.aborted ||
+            Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        if (typeof result?.articleContent !== "string" ||
+            typeof result.title !== "string" ||
+            typeof result.url !== "string" ||
+            typeof result.text !== "string" ||
+            !Array.isArray(result.sections) ||
+            !Array.isArray(result.links) ||
+            !Array.isArray(result.images) ||
+            !Array.isArray(result.videos) ||
+            new URL(result.url).origin !== "https://www.ign.com" ||
+            !/^\/wikis\/[a-z0-9]+(?:-[a-z0-9]+)*\/.+$/.test(
+                new URL(result.url).pathname
+            )) {
+            throw new Error("The server returned invalid IGN guide content.");
+        }
+
+        detail.ignGameSlug = new URL(result.url).pathname.split("/")[2];
+        guideState.result = result;
+    } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(`Could not load IGN guide for task ${task.id}:`, error);
+        if (Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        guideState.error = true;
+    } finally {
+        if (!controller.signal.aborted &&
+            Number(currentGameDetail?.game.id) === Number(game.id)) {
+            guideState.loading = false;
+            guideState.loaded = true;
+            if (activeGameDetailTab === "missions") {
+                renderGameDetailTab("missions");
+            }
+        }
+    }
+};
+
+const getPreferredIGNGuideIndex = task => {
+    const pages = Array.isArray(task.guidePages) ? task.guidePages : [];
+    if (!pages.length) return 0;
+    const taskName = task.name?.toLowerCase().trim() || "";
+    const exactMatch = pages.findIndex(page =>
+        page.title?.toLowerCase().trim() === taskName
+    );
+    if (exactMatch !== -1) return exactMatch;
+    const nameMatch = pages.findIndex(page => {
+        const title = page.title?.toLowerCase() || "";
+        return taskName && (title.includes(taskName) || taskName.includes(title));
+    });
+    if (nameMatch !== -1) return nameMatch;
+    const specificGuide = pages.findIndex(page => {
+        const title = page.title?.toLowerCase() || "";
+        return !title.includes("checklist") &&
+            !title.includes("completion") &&
+            !title.includes("100%");
+    });
+    return specificGuide === -1 ? 0 : specificGuide;
+};
+
+const openIGNChecklistTask = (game, checklist, task, guideIndex = null) => {
+    const detail = currentGameDetail;
+    if (!detail || Number(detail.game.id) !== Number(game.id)) return;
+
+    const taskState = detail.checklistTaskStates[
+        `${checklist.slug}:${task.id}`
+    ] ||= {
+        open: false,
+        activeGuideIndex: getPreferredIGNGuideIndex(task),
+        guides: {}
+    };
+    taskState.open = true;
+    if (Number.isInteger(guideIndex)) {
+        taskState.activeGuideIndex = guideIndex;
+    }
+    detail.activeChecklistTask = {
+        checklistSlug: checklist.slug,
+        taskId: task.id
+    };
+    detail.ignPageStack = [{ type: "task" }];
+    renderGameDetailTab("missions");
+};
+
+const openIGNPage = async (game, url, controller) => {
+    const detail = currentGameDetail;
+    if (!detail || Number(detail.game.id) !== Number(game.id)) return;
+    let pageUrl;
+    try {
+        pageUrl = new URL(url);
+    } catch {
+        return;
+    }
+    if (pageUrl.origin !== "https://www.ign.com") {
+        return;
+    }
+
+    detail.ignPageStack.push({ type: "wiki", url: pageUrl.href });
+    renderGameDetailTab("missions");
+    const pageState = detail.ignPages[pageUrl.href] ||= {
+        loading: false,
+        loaded: false,
+        error: false,
+        result: null
+    };
+    if (pageState.loading || pageState.loaded) return;
+
+    pageState.loading = true;
+    renderGameDetailTab("missions");
+    try {
+        const query = new URLSearchParams({ url: pageUrl.href });
+        const result = await requestJson(
+            `${API_URL}/api/games/${game.id}/ign-pages?${query}`,
+            { signal: controller.signal }
+        );
+        if (controller.signal.aborted ||
+            Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        if (typeof result?.articleContent !== "string" ||
+            typeof result.title !== "string" ||
+            typeof result.url !== "string" ||
+            !Array.isArray(result.sections) ||
+            !Array.isArray(result.videos) ||
+            new URL(result.url).origin !== "https://www.ign.com") {
+            throw new Error("The server returned invalid IGN page content.");
+        }
+        pageState.result = result;
+    } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error(`Could not load IGN page ${pageUrl.href}:`, error);
+        if (Number(currentGameDetail?.game.id) !== Number(game.id)) return;
+        pageState.error = true;
+    } finally {
+        if (!controller.signal.aborted &&
+            Number(currentGameDetail?.game.id) === Number(game.id)) {
+            pageState.loading = false;
+            pageState.loaded = true;
+            if (activeGameDetailTab === "missions" &&
+                detail.ignPageStack.at(-1)?.url === pageUrl.href) {
+                renderGameDetailTab("missions");
+            }
+        }
+    }
+};
+
+const renderIGNMissionView = (game, checklist, task, controller) => {
+    const detail = currentGameDetail;
+    const page = document.getElementById("game-mission-page");
+    const title = document.getElementById("game-mission-page-title");
+    const meta = document.getElementById("game-mission-page-meta");
+    const article = document.getElementById("game-mission-page-article");
+    const sidebar = document.getElementById("game-mission-page-sidebar");
+    const attribution = document.getElementById("game-mission-page-attribution");
+    const backLink = document.getElementById("game-mission-page-back");
+    const backLabel = document.getElementById("game-mission-page-back-label");
+    document.getElementById("game-detail-main").hidden = true;
+    page.classList.add("game-mission-page--ign");
+    page.hidden = false;
+    page.scrollIntoView({ block: "start" });
+    backLink.hidden = false;
+    backLink.href = `#game/${game.id}/${createGameSlug(game.name)}?tab=missions`;
+    document.getElementById("game-detail-back").hidden = true;
+    article.replaceChildren();
+    sidebar.replaceChildren();
+    attribution.replaceChildren();
+    attribution.textContent = "Checklist and guide content provided by IGN.";
+
+    const activePage = detail.ignPageStack.at(-1);
+    const isLinkedIGNPage = activePage?.type === "wiki";
+    let taskState = null;
+    let guideState = null;
+    let selectedGuide = null;
+
+    if (isLinkedIGNPage) {
+        const pageState = detail.ignPages[activePage.url];
+        title.textContent = pageState?.result?.title || "Loading IGN content…";
+        meta.textContent = `${game.name} · IGN`;
+        backLabel.textContent = "Back";
+        sidebar.replaceChildren();
+        sidebar.hidden = true;
+
+        if (pageState?.loading || !pageState?.loaded) {
+            article.textContent = "Loading IGN content…";
+        } else if (pageState.error) {
+            article.textContent = "This IGN page could not be loaded.";
+        } else if (pageState.result) {
+            article.replaceChildren(createMissionArticleContent(
+                pageState.result.articleContent,
+                pageState.result.videos || [],
+                linkedUrl => openIGNPage(game, linkedUrl, controller)
+            ));
+            const credit = document.createElement("span");
+            credit.textContent = "Guide content provided by IGN.";
+            attribution.replaceChildren(credit);
+        }
+        return;
+    }
+
+    taskState = detail.checklistTaskStates[
+        `${checklist.slug}:${task.id}`
+    ] ||= { activeGuideIndex: getPreferredIGNGuideIndex(task), guides: {} };
+    title.textContent = task.name;
+    meta.textContent = `${checklist.name}${task.group ? ` · ${task.group}` : ""}`;
+    backLabel.textContent = "Back to Missions";
+    sidebar.replaceChildren();
+
+    if (task.group) {
+        const group = document.createElement("p");
+        group.classList.add("game-mission-page__detail-label");
+        group.textContent = `Section: ${task.group}`;
+        sidebar.appendChild(group);
+    }
+
+    if (task.guidePages.length) {
+        const guideIndex = Math.min(
+            taskState.activeGuideIndex,
+            task.guidePages.length - 1
+        );
+        taskState.activeGuideIndex = guideIndex;
+        selectedGuide = task.guidePages[guideIndex];
+        guideState = taskState.guides[guideIndex] ||= {
+            loading: false,
+            loaded: false,
+            error: false,
+            result: null
+        };
+        if (task.guidePages.length > 1) {
+            const guides = document.createElement("section");
+            guides.classList.add("game-mission-page__sidebar-card");
+            const heading = document.createElement("h2");
+            heading.textContent = "Guide pages";
+            guides.appendChild(heading);
+            task.guidePages.forEach((guide, index) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.classList.add("game-detail-task-guide");
+                button.setAttribute("aria-pressed", String(index === guideIndex));
+                button.textContent = guide.title;
+                button.addEventListener("click", () => {
+                    taskState.activeGuideIndex = index;
+                    renderGameDetailTab("missions");
+                    void loadIGNChecklistGuide(
+                        game,
+                        checklist,
+                        task,
+                        task.guidePages[index],
+                        index,
+                        controller
+                    );
+                });
+                guides.appendChild(button);
+            });
+            sidebar.appendChild(guides);
+        }
+    }
+
+    if (task.map?.name || task.videos.length) {
+        const extras = document.createElement("section");
+        extras.classList.add("game-mission-page__sidebar-card");
+        const heading = document.createElement("h2");
+        heading.textContent = "Related resources";
+        extras.appendChild(heading);
+        if (task.map?.name) {
+            const map = document.createElement("p");
+            map.textContent = `${task.map.name} map`;
+            extras.appendChild(map);
+        }
+        task.videos.forEach(video => {
+            const videoTitle = document.createElement("p");
+            videoTitle.textContent = video.title;
+            extras.appendChild(videoTitle);
+        });
+        sidebar.appendChild(extras);
+    }
+    sidebar.hidden = sidebar.childElementCount === 0;
+
+    if (!selectedGuide) {
+        article.textContent = "No guide article is available for this mission.";
+    } else if (guideState.loading || !guideState.loaded) {
+        article.textContent = "Loading guide content…";
+    } else if (guideState.error) {
+        article.textContent = "This mission guide could not be loaded from IGN.";
+    } else if (guideState.result) {
+        const heading = document.createElement("h2");
+        heading.textContent = guideState.result.title;
+        article.replaceChildren(
+            heading,
+            createMissionArticleContent(
+                guideState.result.articleContent,
+                guideState.result.videos || [],
+                linkedUrl => openIGNPage(game, linkedUrl, controller)
+            )
+        );
+        const credit = document.createElement("span");
+        credit.textContent = "Guide and checklist content provided by IGN.";
+        attribution.replaceChildren(credit);
+    }
+
+    if (selectedGuide && !guideState.loading && !guideState.loaded) {
+        void loadIGNChecklistGuide(
+            game,
+            checklist,
+            task,
+            selectedGuide,
+            taskState.activeGuideIndex,
+            controller
+        );
+    }
+};
+
+const renderMissionsTab = (game, controller) => {
+    const content = document.createElement("div");
+    content.classList.add("game-detail-missions");
+    const detail = currentGameDetail;
+
+    if (!detail.checklistsLoaded && !detail.checklistsLoading) {
+        loadGameChecklists(game, controller);
+    }
+
+    if (detail.checklistsLoading) {
+        const loading = document.createElement("div");
+        loading.classList.add("game-detail-checklists-loading");
+        loading.setAttribute("role", "status");
+        const spinner = document.createElement("span");
+        spinner.classList.add("game-detail-checklists-loading__spinner");
+        spinner.setAttribute("aria-hidden", "true");
+        const message = document.createElement("span");
+        message.textContent = "Loading missions and quests…";
+        loading.append(spinner, message);
+        return loading;
+    }
+
+    const checklists = detail.checklists || [];
+    if (!checklists.length) {
+        const empty = document.createElement("div");
+        empty.classList.add("game-detail-empty", "game-detail-missions__empty");
+        empty.textContent =
+            "Missions and quests will appear here when guide data becomes available.";
+        return empty;
+    }
+
+    checklists.forEach(checklist => {
+        const checklistState = detail.checklistStates[checklist.slug] ||= {
+            open: false,
+            loading: false,
+            loaded: false,
+            error: false
+        };
+        const section = document.createElement("details");
+        section.classList.add(
+            "game-detail-mission-group",
+            "game-detail-checklist-group"
+        );
+        section.open = checklistState.open;
+        const summary = document.createElement("summary");
+        const label = document.createElement("span");
+        label.classList.add("game-detail-mission-group__label");
+        label.textContent = checklist.name;
+        const count = document.createElement("span");
+        count.classList.add("game-detail-mission-group__count");
+        count.textContent = String(checklist.taskCount || 0);
+        count.setAttribute(
+            "aria-label",
+            `${checklist.taskCount || 0} ${checklist.taskCount === 1 ? "task" : "tasks"}`
+        );
+        summary.append(label, count);
+        section.appendChild(summary);
+
+        const checklistContent = document.createElement("div");
+        checklistContent.classList.add("game-detail-checklist-content");
+        if (checklistState.loading) {
+            const loading = document.createElement("p");
+            loading.classList.add("game-detail-muted");
+            loading.textContent = "Loading missions…";
+            checklistContent.appendChild(loading);
+        } else if (checklistState.error) {
+            const error = document.createElement("p");
+            error.classList.add("game-detail-muted");
+            error.textContent = "Missions in this section could not be loaded.";
+            checklistContent.appendChild(error);
+        } else {
+            const checklistData = detail.checklistData[checklist.slug];
+            const tasks = checklistData?.tasks || [];
+            let previousGroup = null;
+            tasks.forEach(task => {
+                if (task.group && task.group !== previousGroup) {
+                    const group = document.createElement("h3");
+                    group.classList.add("game-detail-task-group-name");
+                    group.textContent = task.group;
+                    checklistContent.appendChild(group);
+                }
+                previousGroup = task.group || null;
+
+                const taskState = detail.checklistTaskStates[
+                    `${checklist.slug}:${task.id}`
+                ] ||= {
+                    open: false,
+                    activeGuideIndex: getPreferredIGNGuideIndex(task),
+                    guides: {}
+                };
+                const taskDetails = document.createElement("details");
+                taskDetails.classList.add("game-detail-task");
+                taskDetails.open = taskState.open;
+                const taskSummary = document.createElement("summary");
+                taskSummary.classList.add("game-detail-task__summary");
+                const taskLabel = document.createElement("span");
+                taskLabel.textContent = task.name;
+                taskSummary.appendChild(taskLabel);
+                if (task.guidePages.length) {
+                    const guideCount = document.createElement("span");
+                    guideCount.classList.add("game-detail-task__count");
+                    guideCount.textContent = String(task.guidePages.length);
+                    guideCount.setAttribute(
+                        "aria-label",
+                        `${task.guidePages.length} ${
+                            task.guidePages.length === 1 ? "guide page" : "guide pages"
+                        }`
+                    );
+                    taskSummary.appendChild(guideCount);
+                }
+                taskDetails.appendChild(taskSummary);
+
+                const taskContent = document.createElement("div");
+                taskContent.classList.add("game-detail-task__pages");
+                if (task.guidePages.length) {
+                    task.guidePages.forEach((guide, index) => {
+                        const guideButton = document.createElement("button");
+                        guideButton.type = "button";
+                        guideButton.classList.add("game-detail-task-guide");
+                        guideButton.textContent = guide.title;
+                        guideButton.addEventListener("click", () => {
+                            openIGNChecklistTask(
+                                game,
+                                checklist,
+                                task,
+                                index
+                            );
+                        });
+                        taskContent.appendChild(guideButton);
+                    });
+                } else {
+                    const noGuide = document.createElement("p");
+                    noGuide.classList.add("game-detail-muted");
+                    noGuide.textContent = "No guide pages are available for this mission.";
+                    const openTask = document.createElement("button");
+                    openTask.type = "button";
+                    openTask.classList.add("game-detail-task-guide");
+                    openTask.textContent = "Open mission details";
+                    openTask.addEventListener("click", () => {
+                        openIGNChecklistTask(game, checklist, task);
+                    });
+                    taskContent.append(noGuide, openTask);
+                }
+                taskDetails.appendChild(taskContent);
+                taskDetails.addEventListener("toggle", () => {
+                    taskState.open = taskDetails.open;
+                });
+                checklistContent.appendChild(taskDetails);
+            });
+            if (checklistData && !tasks.length) {
+                const empty = document.createElement("p");
+                empty.classList.add("game-detail-muted");
+                empty.textContent = "No missions are listed in this section yet.";
+                checklistContent.appendChild(empty);
+            }
+        }
+        section.appendChild(checklistContent);
+        summary.addEventListener("click", () => {
+            checklistState.open = !section.open;
+            if (!checklistState.open) return;
+            queueMicrotask(() => {
+                void loadChecklistDetails(game, checklist, controller);
+            });
+        });
+        content.appendChild(section);
+    });
+
+    const attribution = document.createElement("p");
+    attribution.classList.add("game-detail-missions__attribution");
+    attribution.textContent = "Checklist and guide content provided by IGN.";
+    content.appendChild(attribution);
+
     return content;
 };
 
@@ -1146,16 +2275,41 @@ const renderGameDetailTab = tabId => {
     const media = currentGameDetail.media;
     const panel = document.getElementById("game-detail-panel");
     panel.setAttribute("aria-labelledby", `game-tab-${tabId}`);
+
+    if (tabId === "missions" && currentGameDetail.activeChecklistTask) {
+        const { checklistSlug, taskId } = currentGameDetail.activeChecklistTask;
+        const checklist = currentGameDetail.checklists.find(
+            item => item.slug === checklistSlug
+        );
+        const task = currentGameDetail.checklistData[checklistSlug]?.tasks.find(
+            item => String(item.id) === String(taskId)
+        );
+        if (checklist && task) {
+            renderIGNMissionView(game, checklist, task, gameDetailController);
+            document.querySelectorAll("#game-detail-tabs [role='tab']").forEach(tab => {
+                const selected = tab.dataset.gameTab === tabId;
+                tab.setAttribute("aria-selected", String(selected));
+                tab.tabIndex = selected ? 0 : -1;
+            });
+            return;
+        }
+        currentGameDetail.activeChecklistTask = null;
+        currentGameDetail.ignPageStack = [];
+    }
+
+    document.getElementById("game-detail-main").hidden = false;
+    document.getElementById("game-mission-page").hidden = true;
+    document.getElementById("game-mission-page").classList.remove(
+        "game-mission-page--ign"
+    );
+    document.getElementById("game-detail-back").hidden =
+        currentGameDetail.hasMissionRoute;
     panel.replaceChildren();
 
     if (tabId === "overview") {
         panel.appendChild(renderOverviewTab(game));
     } else if (tabId === "missions") {
-        const empty = document.createElement("div");
-        empty.classList.add("game-detail-empty");
-        empty.textContent =
-            "Missions and quests will appear here when guide data becomes available.";
-        panel.appendChild(empty);
+        panel.appendChild(renderMissionsTab(game, gameDetailController));
     } else if (tabId === "media") {
         panel.appendChild(renderMediaTab(game, media));
     } else if (tabId === "related") {
@@ -1212,11 +2366,13 @@ const updateGameDetailLibraryControls = status => {
     removeButton.hidden = normalizedStatus === DEFAULT_GAME_STATUS;
 };
 
-const loadGameDetail = async gameId => {
+const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => {
     gameDetailController?.abort();
     const controller = new AbortController();
     gameDetailController = controller;
     currentGameDetail = null;
+    document.getElementById("game-detail-main").hidden = false;
+    document.getElementById("game-mission-page").hidden = true;
     document.getElementById("game-detail-content").hidden = true;
     showGameDetailMessage("Loading game details…");
 
@@ -1225,13 +2381,26 @@ const loadGameDetail = async gameId => {
             signal: controller.signal
         });
         if (controller.signal.aborted) return;
+        const returnState = !missionId && initialTabId
+            ? loadGameDetailState(gameId)
+            : null;
 
         currentGameDetail = {
             game,
             media: renderGameMedia(game),
             playtime: null,
             playtimeLoading: true,
-            playtimeFailed: false
+            playtimeFailed: false,
+            checklists: [],
+            checklistsLoading: false,
+            checklistsLoaded: false,
+            checklistStates: {},
+            checklistData: {},
+            checklistTaskStates: {},
+            activeChecklistTask: null,
+            ignPageStack: [],
+            ignPages: {},
+            hasMissionRoute: Boolean(missionId)
         };
         const libraryControls = document.getElementById("game-detail-library-controls");
         libraryControls.dataset.gameId = String(game.id);
@@ -1307,12 +2476,23 @@ const loadGameDetail = async gameId => {
         cover.alt = `${game.name} cover`;
         cover.hidden = false;
 
-        activeGameDetailTab = "overview";
+        activeGameDetailTab = missionId
+            ? "missions"
+            : GAME_DETAIL_TABS.some(tab => tab.id === initialTabId)
+                ? initialTabId
+                : returnState?.tab
+                    ? returnState.tab
+                : "overview";
         renderGameDetailTabs();
         renderGameDetailTab(activeGameDetailTab);
         document.getElementById("game-detail-content").hidden = false;
         showGameDetailMessage("");
         loadGamePlaytime(game.id, controller);
+        if (missionId) {
+            await loadGameMissionPage(game, missionId, controller);
+        } else if (returnState) {
+            await restoreGameDetailState(returnState, controller);
+        }
     } catch (error) {
         if (error.name === "AbortError") return;
         console.error(`Could not load game ${gameId}:`, error);
@@ -1836,12 +3016,35 @@ const initializeCatalog = async () => {
     document.getElementById("catalog-load-more").addEventListener("click", () => {
         loadCatalogPage();
     });
-
     const gameDetailTabs = document.getElementById("game-detail-tabs");
+    document.getElementById("game-mission-page-back").addEventListener(
+        "click",
+        event => {
+            const detail = currentGameDetail;
+            if (!detail?.activeChecklistTask || !detail.ignPageStack?.length) return;
+            event.preventDefault();
+            if (detail.ignPageStack.length > 1) {
+                detail.ignPageStack.pop();
+            } else {
+                detail.activeChecklistTask = null;
+                detail.ignPageStack = [];
+            }
+            renderGameDetailTab("missions");
+        }
+    );
     gameDetailTabs.addEventListener("click", event => {
         const tab = event.target.closest("[data-game-tab]");
         if (!tab) return;
         activeGameDetailTab = tab.dataset.gameTab;
+        const [routePath, queryString = ""] =
+            window.location.hash.slice(1).split("?", 2);
+        if (/^game\/[1-9]\d*\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(routePath)) {
+            const query = new URLSearchParams(queryString);
+            query.set("tab", activeGameDetailTab);
+            const url = new URL(window.location.href);
+            url.hash = `${routePath}?${query}`;
+            window.history.replaceState(null, "", url);
+        }
         renderGameDetailTab(activeGameDetailTab);
     });
     gameDetailTabs.addEventListener("keydown", event => {
@@ -2023,7 +3226,9 @@ const initializeCatalog = async () => {
         refreshLibraryView();
     });
 
-    document.addEventListener("app:navigate", async ({ detail: { route, gameId } }) => {
+    document.addEventListener("app:navigate", async ({
+        detail: { route, gameId, missionId, tabId }
+    }) => {
         setCatalogFiltersOpen(false);
         setLibraryFiltersOpen(false);
         if (route !== "game") gameDetailController?.abort();
@@ -2032,7 +3237,7 @@ const initializeCatalog = async () => {
         if (route === "explore") {
             await openExplorer();
         } else if (route === "game" && gameId) {
-            await loadGameDetail(gameId);
+            await loadGameDetail(gameId, missionId, tabId);
         } else if (route === "library") {
             if (!isAuthenticated) {
                 navigateToRoute("login", { replace: true });
