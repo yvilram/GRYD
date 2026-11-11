@@ -40,10 +40,58 @@ looked up when a game detail's playtime is requested, then stored in the same
 row for future users. The backend uses `SUPABASE_SECRET_KEY` server-side; never
 expose it to the frontend.
 
+Related-content entries (expansions, DLC, bundles, editions, ports, remakes,
+and remasters) are IGDB games with their own IGDB IDs. Their detail pages reuse
+the same `games` cache and `/api/games/:id` route; a separate related-content
+table is not needed.
+
 The existing `game_playtime_cache` data is copied into `games` by the SQL
 script. Its rows are marked as partial IGDB records and will be completed on
 their next access. Keep the old table until the migration is verified; it is
 not used by the updated backend.
+
+## `game_missions`
+
+For a new database, apply
+[create_game_missions.sql](../supabase/create_game_missions.sql) after
+`create_games.sql`. For a database that already has the mission tables, apply
+[migrate_game_missions_single_table.sql](../supabase/migrate_game_missions_single_table.sql)
+once before deploying the updated backend. The migration copies existing
+missions, source configuration and cache metadata into `game_missions`, then
+drops the legacy `game_mission_cache` and `game_mission_sources` tables.
+
+Every row belongs to a game and has a `record_type`: `mission`, `source` or
+`cache`. Mission rows keep searchable/indexed columns and store the complete
+mission payload, article content, media and source attribution in `content`
+(`jsonb`). Source configuration and cache timestamps are also JSONB payloads
+in the same table. Mission lists are fetched on demand and served from
+Supabase on later requests. Failed or empty upstream results are not cached.
+
+Mission data is imported only for games explicitly configured by an
+administrator. Add one `record_type = 'source'` row per list page to
+`game_missions`; without an enabled source row, the API reports the game as
+unsupported and does not search IGDB or contact an external wiki.
+
+Store `page`, `wiki_base_url`, `api_url`, `parse_lists` and `enabled` in
+`content`; the existing scalar columns hold the game, category, source name,
+license, attribution and ordering. The `category` must be one of `main`,
+`side`, `contract`, `gig`, `minor`, `treasure_hunt`, `expansion` or `other`.
+URLs must use HTTPS and share the same origin. The license and attribution
+must reflect the actual source terms; do not assume all wikis use the same
+license. Set `parse_lists` only for list-based mission pages; tables are
+parsed by default.
+
+The importer supports standard MediaWiki API parse responses and rendered
+`.mw-parser-output` pages containing mission tables or lists. This is not
+automatic support for arbitrary wiki platforms; configure only sources with a
+compatible MediaWiki API and verified usage terms.
+
+Opening a mission lazily caches sanitized article HTML, its source revision
+ID, and media metadata in `game_missions`. Older article formats are re-imported
+when opened. Images with a verified Creative Commons or public-domain license
+are copied to the public `game-mission-media` Storage bucket; other images and
+embedded videos remain external links. Source attribution and license
+information are displayed with the mission content.
 
 ## `game_catalog_pages`
 

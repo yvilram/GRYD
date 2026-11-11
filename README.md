@@ -98,6 +98,20 @@ FOUS_API_KEY=
 No compartas ni añadas este archivo al repositorio. Antes de ejecutar la nueva
 caché por primera vez, asegúrate de haber aplicado el SQL
 [supabase/create_games.sql](supabase/create_games.sql) en el proyecto Supabase.
+Para habilitar el tab Missions, aplica también
+[supabase/create_game_missions.sql](supabase/create_game_missions.sql).
+Las checklist y guías de IGN se cargan bajo demanda desde ese tab: las tareas
+se consultan primero en `game_missions` y, si aún no están guardadas, se
+obtienen al desplegar cada sección. Cada misión despliega sus guide pages;
+el contenido se consulta al abrir una guía y se muestra en una vista propia,
+con un menú lateral para cambiar entre las guías de esa misión. Los datos
+obtenidos se guardan en la misma tabla para reutilizarlos en visitas posteriores.
+Las guías incluyen las imágenes y vídeos de IGN y los guardan junto al
+contenido. Los enlaces a otras páginas de IGN también se cargan y abren dentro
+de GRYD.
+Los slugs se resuelven desde IGDB y se prueban variantes habituales de
+numeración romana/arábiga para encontrar la ruta de IGN. La interfaz atribuye
+el contenido a IGN.
 
 Inicia el frontend y el Worker:
 

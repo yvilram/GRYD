@@ -84,11 +84,44 @@
 :root[data-theme="light"] .avatar-crop-dialog,
 :root[data-theme="light"] .account-delete-dialog,
 :root[data-theme="light"] .game-card,
+:root[data-theme="light"] .game-detail-mission-group,
+:root[data-theme="light"] .game-detail-related-card,
+:root[data-theme="light"] .game-detail-platform-card,
+:root[data-theme="light"] .game-mission-page__article,
+:root[data-theme="light"] .game-mission-page__sidebar-card,
 :root[data-theme="light"] .auth-panel,
 :root[data-theme="light"] .legal-content {
     border-color: var(--color-border);
     background: rgba(255, 255, 255, 0.96);
     box-shadow: 0 14px 36px rgba(32, 40, 58, 0.1);
+}
+
+:root[data-theme="light"] .game-mission-page__heading {
+    border-color: rgba(101, 84, 232, 0.18);
+    background:
+        radial-gradient(ellipse at 92% 10%, rgba(139, 123, 255, 0.16), transparent 40%),
+        linear-gradient(135deg, #fff, #f7f6ff);
+}
+
+:root[data-theme="light"] .game-detail-mission-list__item {
+    border-color: rgba(32, 40, 58, 0.07);
+    background: rgba(32, 40, 58, 0.025);
+}
+
+:root[data-theme="light"] .game-detail-mission-list__item:hover,
+:root[data-theme="light"] .game-detail-mission-list__item:focus-visible {
+    color: #4334b4;
+}
+
+:root[data-theme="light"] .game-detail-mission-group__label i,
+:root[data-theme="light"] .game-detail-platform-card__region {
+    color: #5545ce;
+}
+
+:root[data-theme="light"] .game-detail-platform-card__header {
+    background:
+        radial-gradient(ellipse at 0 0, rgba(139, 123, 255, 0.11), transparent 68%),
+        rgba(32, 40, 58, 0.015);
 }
 
 :root[data-theme="light"] .app-notice {

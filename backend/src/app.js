@@ -6,7 +6,8 @@ const requestIgdb = require("./services/igdb.client");
 const app = express();
 const allowedOrigins = [
     "https://gryd.pages.dev",
-    "https://crispy-dollop-pjrxw6g59jvp3r4r5-3000.app.github.dev"
+    "https://crispy-dollop-pjrxw6g59jvp3r4r5-3000.app.github.dev",
+    "https://shiny-doodle-4qrwvj499gx9cjp59-3000.app.github.dev"
 ];
 
 app.use(cors({

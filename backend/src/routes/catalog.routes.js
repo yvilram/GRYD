@@ -3,6 +3,16 @@ const { GAME_DETAILS_FIELDS } = require("../constants/igdb-fields");
 const createSupabaseClient = require("../services/supabase.client");
 const getHowLongToBeatData = require("../services/fous.client");
 const {
+    getIGNChecklistsCached,
+    getIGNChecklistDetailsCached,
+    getIGNChecklistGuideCached,
+    getIGNContentPageCached
+} = require("../services/ign-checklists-cache.service");
+const {
+    getGameMissionDetails,
+    getGameMissions
+} = require("../services/game-missions.service");
+const {
     getRowsByIds,
     loadFullGames,
     loadGameVersions,
@@ -13,6 +23,28 @@ const {
 const CATALOG_PAGE_CACHE_MS = 6 * 60 * 60 * 1000;
 
 const invalidInput = message => Object.assign(new Error(message), { status: 400 });
+
+const parseIGNGameId = value => {
+    if (typeof value !== "string" ||
+        !/^[1-9]\d*$/.test(value) ||
+        !Number.isSafeInteger(Number(value))) {
+        throw invalidInput("A valid gameId query parameter is required.");
+    }
+    return Number(value);
+};
+
+const parseIGNGameSlugs = (primary, fallback) => {
+    const slugs = [primary || fallback, fallback]
+        .filter((value, index, values) => value && values.indexOf(value) === index);
+    if (slugs.some(value =>
+        typeof value !== "string" ||
+        value.length > 120 ||
+        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)
+    )) {
+        throw invalidInput("IGN game slug is invalid.");
+    }
+    return slugs;
+};
 
 const parseIdList = value => {
     if (value === undefined) return [];
@@ -43,6 +75,153 @@ const parseYear = (value, label) => {
 };
 
 module.exports = function registerCatalogRoutes(app, requestIgdb) {
+    app.get("/api/games/:slug/checklists", async (req, res) => {
+        const { slug } = req.params;
+        if (slug.length > 120 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+            return res.status(400).json({ error: "Game slug is invalid." });
+        }
+
+        try {
+            const gameId = parseIGNGameId(req.query.gameId);
+            const [ignSlug, nameSlug] = parseIGNGameSlugs(
+                req.query.ignSlug,
+                req.query.nameSlug || slug
+            );
+            const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+            res.json(await getIGNChecklistsCached(
+                supabase,
+                gameId,
+                ignSlug,
+                nameSlug
+            ));
+        } catch (error) {
+            if (error.status === 400) {
+                return res.status(400).json({ error: error.message });
+            }
+            console.error(`Could not load IGN checklists for ${slug}:`, error);
+            res.status(502).json({ error: "Could not load IGN checklists." });
+        }
+    });
+
+    app.get("/api/games/:slug/checklists/:checklistSlug", async (req, res) => {
+        const { slug, checklistSlug } = req.params;
+        if (![slug, checklistSlug].every(value =>
+            value.length <= 120 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)
+        )) {
+            return res.status(400).json({ error: "Checklist path is invalid." });
+        }
+
+        try {
+            const gameId = parseIGNGameId(req.query.gameId);
+            const [ignSlug, nameSlug] = parseIGNGameSlugs(
+                req.query.ignSlug,
+                req.query.nameSlug || slug
+            );
+            const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+            const result = await getIGNChecklistDetailsCached(
+                supabase,
+                gameId,
+                ignSlug,
+                checklistSlug,
+                nameSlug
+            );
+            if (!result) {
+                return res.status(404).json({ error: "IGN checklist was not found." });
+            }
+            res.json(result);
+        } catch (error) {
+            if (error.status === 400) {
+                return res.status(400).json({ error: error.message });
+            }
+            console.error(
+                `Could not load IGN checklist ${slug}/${checklistSlug}:`,
+                error
+            );
+            res.status(502).json({ error: "Could not load IGN checklist tasks." });
+        }
+    });
+
+    app.get(
+        "/api/games/:slug/checklists/:checklistSlug/tasks/:taskId/guides/:guideIndex",
+        async (req, res) => {
+            const { slug, checklistSlug, taskId, guideIndex } = req.params;
+            if (![slug, checklistSlug].every(value =>
+                value.length <= 120 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)
+            ) ||
+                !/^[1-9]\d*$/.test(taskId) ||
+                !Number.isSafeInteger(Number(taskId)) ||
+                !/^(0|[1-9]\d*)$/.test(guideIndex) ||
+                !Number.isSafeInteger(Number(guideIndex))) {
+                return res.status(400).json({ error: "Guide path is invalid." });
+            }
+
+            try {
+                const gameId = parseIGNGameId(req.query.gameId);
+                const [ignSlug, nameSlug] = parseIGNGameSlugs(
+                    req.query.ignSlug,
+                    req.query.nameSlug || slug
+                );
+                const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+                const result = await getIGNChecklistGuideCached(
+                    supabase,
+                    gameId,
+                    ignSlug,
+                    checklistSlug,
+                    Number(taskId),
+                    Number(guideIndex),
+                    nameSlug
+                );
+                if (!result) {
+                    return res.status(404).json({ error: "IGN guide was not found." });
+                }
+                res.json(result);
+            } catch (error) {
+                if (error.status === 400) {
+                    return res.status(400).json({ error: error.message });
+                }
+                console.error(
+                    `Could not load IGN guide ${slug}/${checklistSlug}/${taskId}:`,
+                    error
+                );
+                res.status(502).json({ error: "Could not load IGN guide content." });
+            }
+        }
+    );
+
+    app.get("/api/games/:id/ign-pages", async (req, res) => {
+        const { id } = req.params;
+        const { url } = req.query;
+        if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)) ||
+            typeof url !== "string" || url.length > 2048) {
+            return res.status(400).json({ error: "IGN page path is invalid." });
+        }
+        try {
+            const pageUrl = new URL(url);
+            if (pageUrl.protocol !== "https:" ||
+                pageUrl.origin !== "https://www.ign.com") {
+                return res.status(400).json({ error: "IGN page URL is not allowed." });
+            }
+        } catch {
+            return res.status(400).json({ error: "IGN page URL is invalid." });
+        }
+
+        try {
+            const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+            const result = await getIGNContentPageCached(
+                supabase,
+                Number(id),
+                url
+            );
+            if (!result) {
+                return res.status(404).json({ error: "IGN page was not found." });
+            }
+            res.json(result);
+        } catch (error) {
+            console.error(`Could not load IGN page for game ${id}:`, error);
+            res.status(502).json({ error: "Could not load IGN page content." });
+        }
+    });
+
     app.get("/api/games/:id/playtime", async (req, res) => {
         try {
             if (!/^[1-9]\d*$/.test(req.params.id) ||
@@ -118,6 +297,70 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
                 return res.status(502).json({ error: error.message });
             }
             res.status(500).json({ error: "Could not load game details." });
+        }
+    });
+
+    app.get("/api/games/:id/missions", async (req, res) => {
+        try {
+            if (!/^[1-9]\d*$/.test(req.params.id) ||
+                !Number.isSafeInteger(Number(req.params.id))) {
+                throw invalidInput("Game ID must be a positive integer.");
+            }
+
+            const gameId = Number(req.params.id);
+            const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+            const rowsById = await loadFullGames(supabase, requestIgdb, [gameId]);
+            const game = rowsById.get(gameId);
+            if (!game) {
+                return res.status(404).json({ error: "Game not found." });
+            }
+
+            res.json(await getGameMissions(supabase, game.igdb_data));
+        } catch (error) {
+            if (error.status === 400) {
+                return res.status(400).json({ error: error.message });
+            }
+
+            console.error(`Could not load missions for game ${req.params.id}:`, error);
+            res.status(error.upstream ? 502 : 500).json({
+                error: "Could not load this game's missions."
+            });
+        }
+    });
+
+    app.get("/api/games/:id/missions/:missionId", async (req, res) => {
+        try {
+            for (const id of [req.params.id, req.params.missionId]) {
+                if (!/^[1-9]\d*$/.test(id) ||
+                    !Number.isSafeInteger(Number(id))) {
+                    throw invalidInput("Game and mission IDs must be positive integers.");
+                }
+            }
+
+            const gameId = Number(req.params.id);
+            const missionId = Number(req.params.missionId);
+            const supabase = createSupabaseClient.createSupabaseAdminClient(req.env);
+            const mission = await getGameMissionDetails(
+                supabase,
+                gameId,
+                missionId
+            );
+            if (!mission) {
+                return res.status(404).json({ error: "Mission not found." });
+            }
+            res.json(mission);
+        } catch (error) {
+            if (error.status === 400) {
+                return res.status(400).json({ error: error.message });
+            }
+
+            console.error(
+                `Could not load mission ${req.params.missionId} for game ${req.params.id}:`,
+                error
+            );
+            res.status(error.upstream ? 502 : 500).json({
+                error: "Could not load this mission's details."
+            });
         }
     });
 

@@ -570,6 +570,7 @@
                 </a>
                 <p class="game-detail-message" id="game-detail-message" role="status" aria-live="polite"></p>
                 <div id="game-detail-content" hidden>
+                    <div id="game-detail-main">
                     <header class="game-detail-heading">
                         <div class="game-detail-heading__title-row">
                             <h1 id="game-route-title"></h1>
@@ -639,6 +640,35 @@
                         aria-live="polite"
                         tabindex="0"
                     ></section>
+                    </div>
+                    <section class="game-mission-page" id="game-mission-page" hidden>
+                        <a class="game-route-view__back game-mission-page__back"
+                           id="game-mission-page-back" href="#explore">
+                            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                            <span id="game-mission-page-back-label">Back to game</span>
+                        </a>
+                        <header class="game-mission-page__heading">
+                            <p class="eyebrow" id="game-mission-page-meta"></p>
+                            <h1 id="game-mission-page-title"></h1>
+                        </header>
+                        <div class="game-mission-page__layout">
+                            <article
+                                class="game-mission-page__article"
+                                id="game-mission-page-article"
+                                aria-live="polite"
+                            ></article>
+                            <aside
+                                class="game-mission-page__sidebar"
+                                id="game-mission-page-sidebar"
+                                aria-label="Mission details and contents"
+                                hidden
+                            ></aside>
+                        </div>
+                        <p
+                            class="game-mission-page__attribution"
+                            id="game-mission-page-attribution"
+                        ></p>
+                    </section>
                 </div>
             </section>
 
@@ -809,5 +839,6 @@
                 </div>
             </form>
         </dialog>
+
     </body>
 </html>
