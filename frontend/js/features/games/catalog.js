@@ -60,6 +60,8 @@ let activeLibrarySearch = "";
 let activeLibrarySort = "added";
 let catalogFilterTimer = null;
 let catalogSearchTimer = null;
+let catalogFilterOptionsLoaded = false;
+let catalogFilterOptionsPromise = null;
 let explorerFilters = {
     genres: [],
     themes: [],
@@ -307,42 +309,54 @@ const removeCatalogFilter = key => {
 
 // Load available genres, themes, and platforms for the Explorer filters.
 const loadCatalogFilterOptions = async () => {
-    const genreOptions = document.getElementById("catalog-genre-options");
-    const themeOptions = document.getElementById("catalog-theme-options");
-    const platformOptions = document.getElementById("catalog-platform-options");
-    const requests = await Promise.allSettled([
-        requestJson(`${API_URL}/api/genres`),
-        requestJson(`${API_URL}/api/themes`),
-        requestJson(`${API_URL}/api/platforms`)
-    ]);
-    const [genres, themes, platforms] = requests;
-    if (genres.status === "fulfilled") {
-        renderCatalogOptions("catalog-genre-options", genres.value, "genres");
-    } else {
-        genreOptions.textContent = "Could not load genres.";
-    }
-    if (themes.status === "fulfilled") {
-        renderCatalogOptions("catalog-theme-options", themes.value, "themes");
-    } else {
-        themeOptions.textContent = "Could not load themes.";
-    }
-    if (platforms.status === "fulfilled") {
-        renderCatalogOptions("catalog-platform-options", platforms.value, "platforms");
-    } else {
-        platformOptions.textContent = "Could not load platforms.";
-    }
+    if (catalogFilterOptionsLoaded) return;
+    if (catalogFilterOptionsPromise) return catalogFilterOptionsPromise;
 
-    const failedRequests = requests.filter(result => result.status === "rejected");
-    const error = document.getElementById("catalog-filter-options-error");
-    const retry = document.getElementById("catalog-filter-retry");
-    error.hidden = failedRequests.length === 0;
-    retry.hidden = failedRequests.length === 0;
-    if (failedRequests.length) {
-        console.error("Could not load some catalog filter options:",
-            failedRequests.map(result => result.reason));
-        error.textContent = "Some filter options could not be loaded. You can retry without losing your current selections.";
+    catalogFilterOptionsPromise = (async () => {
+        const genreOptions = document.getElementById("catalog-genre-options");
+        const themeOptions = document.getElementById("catalog-theme-options");
+        const platformOptions = document.getElementById("catalog-platform-options");
+        const requests = await Promise.allSettled([
+            requestJson(`${API_URL}/api/genres`),
+            requestJson(`${API_URL}/api/themes`),
+            requestJson(`${API_URL}/api/platforms`)
+        ]);
+        const [genres, themes, platforms] = requests;
+        if (genres.status === "fulfilled") {
+            renderCatalogOptions("catalog-genre-options", genres.value, "genres");
+        } else {
+            genreOptions.textContent = "Could not load genres.";
+        }
+        if (themes.status === "fulfilled") {
+            renderCatalogOptions("catalog-theme-options", themes.value, "themes");
+        } else {
+            themeOptions.textContent = "Could not load themes.";
+        }
+        if (platforms.status === "fulfilled") {
+            renderCatalogOptions("catalog-platform-options", platforms.value, "platforms");
+        } else {
+            platformOptions.textContent = "Could not load platforms.";
+        }
+
+        const failedRequests = requests.filter(result => result.status === "rejected");
+        const error = document.getElementById("catalog-filter-options-error");
+        const retry = document.getElementById("catalog-filter-retry");
+        error.hidden = failedRequests.length === 0;
+        retry.hidden = failedRequests.length === 0;
+        catalogFilterOptionsLoaded = failedRequests.length === 0;
+        if (failedRequests.length) {
+            console.error("Could not load some catalog filter options:",
+                failedRequests.map(result => result.reason));
+            error.textContent = "Some filter options could not be loaded. You can retry without losing your current selections.";
+        }
+        renderActiveCatalogFilters();
+    })();
+
+    try {
+        await catalogFilterOptionsPromise;
+    } finally {
+        catalogFilterOptionsPromise = null;
     }
-    renderActiveCatalogFilters();
 };
 
 // Read and validate all Explorer filter controls before applying them.
@@ -502,12 +516,13 @@ const refreshLibraryView = () => {
 };
 
 // Load the current user's saved games, or return an empty list for guests.
-const fetchSavedGames = async () => {
+const fetchSavedGames = async signal => {
     if (!isAuthenticated) return [];
 
     try {
         const games = await requestJson(`${API_URL}/api/game_state_user`, {
-            credentials: "include"
+            credentials: "include",
+            signal
         });
         if (!Array.isArray(games)) {
             throw new Error("The server returned an invalid library response.");
@@ -2753,14 +2768,18 @@ const loadCatalogPage = async () => {
         if (explorerFilters.yearFrom) params.set("yearFrom", explorerFilters.yearFrom);
         if (explorerFilters.yearTo) params.set("yearTo", explorerFilters.yearTo);
 
-        const games = await requestJson(`${API_URL}/api/games?${params}`, {
-            signal: controller.signal
-        });
+        const [gamesResult, savedGamesResult] = await Promise.allSettled([
+            requestJson(`${API_URL}/api/games?${params}`, {
+                signal: controller.signal
+            }),
+            fetchSavedGames(controller.signal)
+        ]);
         if (generation !== catalogGeneration) return;
+        if (gamesResult.status === "rejected") throw gamesResult.reason;
+        if (savedGamesResult.status === "rejected") throw savedGamesResult.reason;
 
-        savedGames = await fetchSavedGames();
-        if (generation !== catalogGeneration) return;
-
+        const games = gamesResult.value;
+        savedGames = savedGamesResult.value;
         const savedGamesById = new Map(
             savedGames.map(game => [Number(game.id), game])
         );
@@ -2922,7 +2941,6 @@ const initializeCatalog = async () => {
         LIBRARY_CONTENT_TYPES[0].id,
         "explorerContent"
     );
-    loadCatalogFilterOptions();
 
     const catalogFilterToggle = document.getElementById("catalog-filters-toggle");
     const catalogFilterPanel = document.getElementById("catalog-filter-panel");
@@ -2931,7 +2949,14 @@ const initializeCatalog = async () => {
         catalogFilterToggle.setAttribute("aria-expanded", String(isOpen));
     };
     catalogFilterToggle.addEventListener("click", () => {
-        setCatalogFiltersOpen(catalogFilterToggle.getAttribute("aria-expanded") !== "true");
+        const isOpen = catalogFilterToggle.getAttribute("aria-expanded") !== "true";
+        setCatalogFiltersOpen(isOpen);
+        if (isOpen) loadCatalogFilterOptions();
+    });
+    document.querySelectorAll(".catalog-filter-details").forEach(details => {
+        details.addEventListener("toggle", () => {
+            if (details.open) loadCatalogFilterOptions();
+        });
     });
     document.getElementById("catalog-filter-apply").addEventListener("click", () => {
         scheduleCatalogFilterApplication();

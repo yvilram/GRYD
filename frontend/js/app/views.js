@@ -2,6 +2,7 @@ const ROUTE_VIEWS = {
     home: "view-home",
     explore: "view-explorer",
     library: "view-library",
+    retro: "view-retro",
     login: "view-login",
     register: "view-register",
     profile: "view-profile",

@@ -27,6 +27,7 @@
         <script src="/js/app/views.js" defer></script>
         <script src="/js/features/auth/auth.js" defer></script>
         <script src="/js/features/games/catalog.js" defer></script>
+        <script src="/js/features/games/retro.js" defer></script>
         <script src="/js/features/library/game-state.js" defer></script>
         <script src="/js/features/legal/privacy-terms.js" defer></script>
     </head>
@@ -76,6 +77,15 @@
                     >
                         <i class="bi bi-collection" aria-hidden="true"></i>
                         <span>Library</span>
+                    </button>
+                    <button
+                        class="button button--nav"
+                        id="navigation-retro"
+                        type="button"
+                        data-view-target="retro"
+                    >
+                        <i class="bi bi-controller" aria-hidden="true"></i>
+                        <span>Retro Games</span>
                     </button>
                 </nav>
 
@@ -738,6 +748,67 @@
                         Explore games
                     </button>
                 </div>
+            </section>
+
+            <section class="view collection-view retro-view" id="view-retro" data-view hidden>
+                <div class="collection-view__header">
+                    <div>
+                        <p class="eyebrow">Play in your browser</p>
+                        <h1>Retro Games</h1>
+                    </div>
+                    <p class="collection-view__description">
+                        Browse the Nintendo 64 games in the collection and play them here.
+                    </p>
+                </div>
+                <label class="retro-search">
+                    <span class="visually-hidden">Search retro games</span>
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input
+                        id="retro-search"
+                        type="search"
+                        placeholder="Search retro games"
+                        autocomplete="off"
+                    >
+                </label>
+                <p class="retro-status" id="retro-status" role="status" aria-live="polite">
+                    Loading games…
+                </p>
+                <div class="retro-catalog game-grid" id="retro-catalog" aria-live="polite"></div>
+                <section class="retro-player" id="retro-player" aria-label="Game player" hidden>
+                    <div class="retro-player__header">
+                        <div>
+                            <p class="eyebrow">Now playing</p>
+                            <h2 id="retro-player-title"></h2>
+                        </div>
+                        <button class="button button--quiet" id="retro-player-back" type="button">
+                            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                            Back to games
+                        </button>
+                    </div>
+                    <div
+                        class="retro-player__status"
+                        id="retro-player-status"
+                        data-state="loading"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                    >
+                        <p id="retro-player-status-message"></p>
+                        <div
+                            class="retro-loading-bar"
+                            role="progressbar"
+                            aria-label="Loading EmulatorJS"
+                            aria-valuetext="Initializing emulator"
+                        ></div>
+                    </div>
+                    <iframe
+                        class="retro-player__frame"
+                        id="retro-player-frame"
+                        title="Nintendo 64 game player"
+                        allow="autoplay; fullscreen; gamepad; pointer-lock"
+                        allowfullscreen
+                    ></iframe>
+                </section>
             </section>
 
             <section class="view legal-content" id="view-legal" data-view hidden></section>

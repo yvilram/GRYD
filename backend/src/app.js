@@ -47,5 +47,6 @@ app.use((req, res, next) => {
 require("./routes/auth.routes")(app);
 require("./routes/catalog.routes")(app, requestIgdb);
 require("./routes/library.routes")(app, requestIgdb);
+require("./routes/retro.routes")(app);
 
 module.exports = app;
