@@ -757,9 +757,15 @@
                         <h1>Retro Games</h1>
                     </div>
                     <p class="collection-view__description">
-                        Browse the Nintendo 64 games in the collection and play them here.
+                        Browse the retro games in your collection and play them here.
                     </p>
                 </div>
+                <nav
+                    class="retro-platform-nav"
+                    id="retro-platform-nav"
+                    aria-label="Filter games by platform"
+                    hidden
+                ></nav>
                 <label class="retro-search">
                     <span class="visually-hidden">Search retro games</span>
                     <i class="bi bi-search" aria-hidden="true"></i>
@@ -804,7 +810,7 @@
                     <iframe
                         class="retro-player__frame"
                         id="retro-player-frame"
-                        title="Nintendo 64 game player"
+                        title="Retro game player"
                         allow="autoplay; fullscreen; gamepad; pointer-lock"
                         allowfullscreen
                     ></iframe>

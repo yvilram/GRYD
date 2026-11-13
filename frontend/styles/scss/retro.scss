@@ -1,3 +1,48 @@
+.retro-platform-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-bottom: 16px;
+}
+
+.retro-platform-nav[hidden] {
+    display: none;
+}
+
+.retro-platform-nav__button {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface);
+    color: var(--color-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.88rem;
+    transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.retro-platform-nav__button:hover,
+.retro-platform-nav__button:focus-visible {
+    border-color: var(--color-accent);
+    color: var(--color-text);
+}
+
+.retro-platform-nav__button[aria-pressed="true"] {
+    border-color: var(--color-accent);
+    background: rgba(139, 123, 255, 0.16);
+    color: var(--color-text);
+}
+
+.retro-platform-nav__button i {
+    color: #b8afff;
+    font-size: 1rem;
+}
+
 .retro-search {
     display: flex;
     width: min(100%, 460px);

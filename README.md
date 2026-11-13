@@ -22,8 +22,8 @@ mantener una biblioteca personal organizada por estado.
 - Página de detalle por juego con medios, información editorial y estimaciones
   de duración de HowLongToBeat.
 - Biblioteca personal con estados, búsqueda, filtros y ordenación.
-- Catálogo retro con reproducción de juegos de Nintendo 64 mediante EmulatorJS
-  y archivos servidos desde Supabase Storage.
+- Catálogo retro con reproducción de juegos de Nintendo 64 y Super Nintendo
+  mediante EmulatorJS y archivos servidos desde Supabase Storage.
 - Autenticación con Supabase, perfil, carga de avatar y gestión de cuenta.
 - Caché compartida en Supabase para los datos de juegos y las estimaciones de
   duración.
@@ -31,10 +31,16 @@ mantener una biblioteca personal organizada por estado.
 Para habilitar Retro Games, configura el bucket público `retro-gaming` en
 Supabase Storage. El loader debe estar en `emulatorjs/data/loader.js` junto con
 los archivos `data` de EmulatorJS, y los juegos de Nintendo 64 (`.n64`, `.z64`
-o `.v64`) deben estar dentro de `roms/`. Para mostrar una portada, añade a
-`cover/` una imagen `.jpg`, `.jpeg`, `.png` o `.webp` con el mismo nombre base
-que la ROM (por ejemplo, `roms/Game.n64` y `cover/Game.webp`). Se admiten
-subcarpetas; los títulos se obtienen de los nombres de archivo.
+o `.v64`) y Super Nintendo (`.sfc`, `.smc`) deben estar dentro de `roms/`.
+Para mostrar una portada, añade a `cover/` una imagen `.jpg`, `.jpeg`, `.png`
+o `.webp` con el mismo nombre base que la ROM (por ejemplo, `roms/Game.sfc` y
+`cover/Game.webp`). Se admiten subcarpetas; los títulos se obtienen de los
+nombres de archivo. Si organizas los juegos en carpetas directas como
+`roms/n64/` y `roms/snes/`, aparecerá automáticamente un filtro por cada una;
+los juegos dentro de subcarpetas también se asignan a la carpeta de plataforma
+superior. Los filtros se generan dinámicamente, pero para reproducir una
+consola nueva también hay que añadir sus extensiones y core de EmulatorJS al
+backend.
 
 ## Tecnologías
 

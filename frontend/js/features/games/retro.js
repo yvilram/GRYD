@@ -1,5 +1,6 @@
 const retroCatalog = document.getElementById("retro-catalog");
 const retroStatus = document.getElementById("retro-status");
+const retroPlatformNav = document.getElementById("retro-platform-nav");
 const retroSearch = document.getElementById("retro-search");
 const retroPlayer = document.getElementById("retro-player");
 const retroPlayerTitle = document.getElementById("retro-player-title");
@@ -9,16 +10,63 @@ const retroPlayerFrame = document.getElementById("retro-player-frame");
 const retroPlayerBack = document.getElementById("retro-player-back");
 
 let retroGames = [];
+let retroPlatforms = [];
+let activeRetroPlatform = null;
 let retroEmulator = null;
 let retroGamesLoaded = false;
 let retroGamesLoading = false;
 let retroPlayerStartTimeout = 0;
 
+const getPlatformLabel = platform => {
+    const normalizedId = platform.id.toLocaleLowerCase();
+    if (normalizedId === "n64") return "N64";
+    if (normalizedId === "snes") return "SNES";
+
+    return platform.name
+        .replace(/[-_]+/g, " ")
+        .replace(/\b[a-z]/g, character => character.toLocaleUpperCase());
+};
+
+const renderRetroPlatformNav = () => {
+    retroPlatformNav.replaceChildren();
+    retroPlatformNav.hidden = retroPlatforms.length === 0;
+
+    const platforms = [
+        { id: null, name: "All systems" },
+        ...retroPlatforms
+    ];
+
+    for (const platform of platforms) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "retro-platform-nav__button";
+        button.setAttribute("aria-pressed", String(platform.id === activeRetroPlatform));
+        if (platform.id === null) {
+            button.dataset.allPlatforms = "";
+        } else {
+            button.dataset.platformId = platform.id;
+        }
+
+        const icon = document.createElement("i");
+        icon.className = "bi bi-controller";
+        icon.setAttribute("aria-hidden", "true");
+
+        const label = document.createElement("span");
+        label.textContent = platform.id === null ? platform.name : getPlatformLabel(platform);
+
+        button.append(icon, label);
+        retroPlatformNav.append(button);
+    }
+};
+
 const renderRetroGames = () => {
     const query = retroSearch.value.trim().toLocaleLowerCase();
     const filteredGames = retroGames
         .map((game, index) => ({ game, index }))
-        .filter(({ game }) => game.title.toLocaleLowerCase().includes(query));
+        .filter(({ game }) => (
+            (activeRetroPlatform === null || game.platformId === activeRetroPlatform) &&
+            game.title.toLocaleLowerCase().includes(query)
+        ));
 
     retroCatalog.replaceChildren();
     for (const { game, index } of filteredGames) {
@@ -32,6 +80,7 @@ const renderRetroGames = () => {
         const fallback = document.createElement("div");
         fallback.className = "retro-card__fallback";
         fallback.innerHTML = '<i class="bi bi-controller"></i><span>N64</span>';
+        fallback.querySelector("span").textContent = game.systemShort;
         artwork.append(fallback);
 
         if (game.coverUrl) {
@@ -72,7 +121,7 @@ const renderRetroGames = () => {
             ? `${filteredGames.length} ${filteredGames.length === 1 ? "game" : "games"}`
             : query
                 ? "No games match your search."
-                : "No Nintendo 64 games are available yet.";
+                : "No retro games are available yet.";
     }
 };
 
@@ -97,7 +146,7 @@ const createPlayerDocument = (game, emulator) => `<!doctype html>
     <div id="game"></div>
     <script>
         window.EJS_player = "#game";
-        window.EJS_core = ${escapeInlineJson(emulator.core)};
+        window.EJS_core = ${escapeInlineJson(game.core)};
         window.EJS_gameUrl = ${escapeInlineJson(game.url)};
         window.EJS_pathtodata = ${escapeInlineJson(emulator.dataPath)};
         window.EJS_startOnLoaded = true;
@@ -128,7 +177,7 @@ const startRetroGame = game => {
     if (!retroEmulator) return;
 
     retroPlayerTitle.textContent = game.title;
-    retroPlayerFrame.title = `${game.title} Nintendo 64 game player`;
+    retroPlayerFrame.title = `${game.title} ${game.system} game player`;
     retroPlayerStatusMessage.textContent = "Starting EmulatorJS…";
     retroPlayerStatus.dataset.state = "loading";
     retroPlayerStatus.hidden = false;
@@ -159,6 +208,7 @@ const loadRetroGames = async () => {
             throw new Error(result.error || "Could not load retro games.");
         }
         if (!Array.isArray(result.games) ||
+            !Array.isArray(result.platforms) ||
             !result.emulator ||
             typeof result.emulator.loaderUrl !== "string" ||
             typeof result.emulator.dataPath !== "string") {
@@ -166,8 +216,10 @@ const loadRetroGames = async () => {
         }
 
         retroGames = result.games;
+        retroPlatforms = result.platforms;
         retroEmulator = result.emulator;
         retroGamesLoaded = true;
+        renderRetroPlatformNav();
         renderRetroGames();
     } catch (error) {
         console.error("Could not load retro games:", error);
@@ -179,6 +231,18 @@ const loadRetroGames = async () => {
 };
 
 retroSearch.addEventListener("input", renderRetroGames);
+retroPlatformNav.addEventListener("click", event => {
+    const button = event.target instanceof Element
+        ? event.target.closest("button")
+        : null;
+    if (!button) return;
+
+    activeRetroPlatform = button.hasAttribute("data-all-platforms")
+        ? null
+        : button.dataset.platformId;
+    renderRetroPlatformNav();
+    renderRetroGames();
+});
 retroPlayerBack.addEventListener("click", stopRetroGame);
 retroCatalog.addEventListener("click", event => {
     const button = event.target instanceof Element
