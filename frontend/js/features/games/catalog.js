@@ -690,7 +690,6 @@ const createNameList = items => {
     const names = (Array.isArray(items) ? items : [])
         .map(gameItemName)
         .filter(Boolean);
-
     if (!names.length) {
         const empty = document.createElement("li");
         empty.classList.add("game-detail-muted");
@@ -1276,10 +1275,12 @@ const renderPlatformsTab = game => {
         const releaseList = document.createElement("ul");
         releaseList.classList.add("game-detail-platform-card__releases");
         platformReleases.forEach(release => {
+
             const item = document.createElement("li");
             const region = document.createElement("span");
             region.classList.add("game-detail-platform-card__region");
-            region.textContent = getReleaseRegionName(release.region);
+            /* region.textContent = getReleaseRegionName(release.region); */
+            region.textContent = gameItemName(companies.find(company => company.developer)?.company) || "Developer not specified";
             const details = document.createElement("span");
             details.classList.add("game-detail-platform-card__release-details");
             const date = document.createElement("strong");

@@ -969,6 +969,17 @@ body {
     padding: 20px;
   }
 }
+#game-detail-back {
+  box-shadow: 0 8px 26px rgba(215, 255, 0, 0.14);
+  border-radius: 999px;
+  padding: 4px 6px;
+  background: var(--color-accent);
+  color: #14170b;
+  font-weight: 650;
+  border: 1px solid transparent;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
 .collection-view {
   padding: 0px 0 56px;
 }
@@ -979,6 +990,7 @@ body {
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 28px;
+  padding-top: 10px;
 }
 
 .collection-view__header .eyebrow {
@@ -1106,6 +1118,10 @@ body {
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: thin;
+}
+
+.library-content-menu {
+  display: none;
 }
 
 .library-content-menu {
@@ -4245,7 +4261,7 @@ body {
 .game-detail-name-list li:not(.game-detail-muted),
 .game-detail-platform-card__region,
 .game-mission-page__category {
-  border-radius: 999px;
+  border-radius: 8px;
 }
 
 .game-detail-playtime__card {
