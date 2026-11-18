@@ -930,12 +930,15 @@ const renderPlaytimePlaceholder = (howlongtobeat, loading, failed) => {
     const estimates = document.createElement("div");
     estimates.classList.add("game-detail-playtime__estimates");
     [
-        ["Main Story", "main_story_hours"],
-        ["Main + Extras", "main_story_plus_extras_hours"],
-        ["Completionist", "completionist_hours"]
-    ].forEach(([label, key]) => {
+        ["Main Story", "main_story_hours", "main"],
+        ["Main + Extras", "main_story_plus_extras_hours", "extras"],
+        ["Completionist", "completionist_hours", "completionist"]
+    ].forEach(([label, key, variant]) => {
         const card = document.createElement("article");
-        card.classList.add("game-detail-playtime__card");
+        card.classList.add(
+            "game-detail-playtime__card",
+            `game-detail-playtime__card--${variant}`
+        );
         const title = document.createElement("h3");
         title.textContent = label;
         const value = document.createElement("p");

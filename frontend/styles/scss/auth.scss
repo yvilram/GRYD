@@ -70,7 +70,7 @@
     border: 1px solid var(--color-border);
     border-radius: 50%;
     background: var(--color-surface-raised);
-    color: #aaa0ff;
+    color: #d7ff00;
     font-size: 4rem;
 }
 
@@ -133,10 +133,10 @@
     aspect-ratio: 1;
     margin: 0 auto 18px;
     overflow: hidden;
-    border: 2px solid rgba(181, 173, 255, 0.7);
+    border: 2px solid rgba(215, 255, 0, 0.7);
     border-radius: 50%;
     background: #090b12;
-    box-shadow: 0 0 0 5px rgba(139, 123, 255, 0.12);
+    box-shadow: 0 0 0 5px rgba(215, 255, 0, 0.12);
 }
 
 .avatar-crop-dialog__viewport canvas {
@@ -297,7 +297,7 @@
 
 .form-field input:focus {
     border-color: var(--color-accent);
-    outline: 3px solid rgba(139, 123, 255, 0.18);
+    outline: 3px solid rgba(215, 255, 0, 0.18);
 }
 
 .button--submit {
@@ -331,7 +331,7 @@
     padding: 0;
     border: 0;
     background: none;
-    color: #b8afff;
+    color: #d7ff00;
     font-weight: 650;
     cursor: pointer;
 }

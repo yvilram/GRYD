@@ -45,7 +45,7 @@
     align-items: center;
     gap: 7px;
     margin-bottom: 12px;
-    color: #b8afff;
+    color: #d7ff00;
     font-size: 0.88rem;
     text-decoration: none;
 }
@@ -82,15 +82,15 @@
 
 .catalog-active-filters__chip {
     padding: 5px 10px;
-    border: 1px solid rgba(139, 123, 255, 0.32);
-    background: rgba(139, 123, 255, 0.1);
-    color: #d3ceff;
+    border: 1px solid rgba(215, 255, 0, 0.32);
+    background: rgba(215, 255, 0, 0.1);
+    color: #eaff80;
     cursor: pointer;
 }
 
 .catalog-active-filters__chip:hover {
-    border-color: rgba(139, 123, 255, 0.7);
-    background: rgba(139, 123, 255, 0.2);
+    border-color: rgba(215, 255, 0, 0.7);
+    background: rgba(215, 255, 0, 0.2);
 }
 
 .catalog-active-filters__clear,
@@ -158,13 +158,13 @@
 }
 
 .library-content-menu__button[aria-pressed="true"] {
-    border-color: rgba(139, 123, 255, 0.55);
-    background: rgba(139, 123, 255, 0.14);
+    border-color: rgba(215, 255, 0, 0.55);
+    background: rgba(215, 255, 0, 0.14);
     color: #fff;
 }
 
 .library-content-menu__button i {
-    color: #aaa0ff;
+    color: #d7ff00;
 }
 
 .library-tools {
@@ -207,7 +207,7 @@
 .library-tools__search input:focus,
 .library-tools__sort select:focus {
     border-color: var(--color-accent);
-    outline: 3px solid rgba(139, 123, 255, 0.18);
+    outline: 3px solid rgba(215, 255, 0, 0.18);
 }
 
 .catalog-toolbar {
@@ -244,7 +244,7 @@
 .catalog-toolbar__search input:focus,
 .catalog-toolbar__sort select:focus {
     border-color: var(--color-accent);
-    outline: 3px solid rgba(139, 123, 255, 0.18);
+    outline: 3px solid rgba(215, 255, 0, 0.18);
 }
 
 .library-status-filters {
@@ -274,7 +274,7 @@
 }
 
 .library-status-filters__button[aria-pressed="true"] {
-    background: rgba(139, 123, 255, 0.17);
+    background: rgba(215, 255, 0, 0.17);
     color: #fff;
 }
 
@@ -347,7 +347,7 @@
     padding: 5px 0;
     border: 0;
     background: transparent;
-    color: #b7adff;
+    color: #d7ff00;
     font-size: 0.78rem;
     cursor: pointer;
 }
@@ -565,7 +565,7 @@
 
 .game-card:hover {
     transform: translateY(-3px);
-    border-color: rgba(139, 123, 255, 0.6);
+    border-color: rgba(215, 255, 0, 0.6);
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
 }
 
@@ -649,7 +649,7 @@
 }
 
 .game-card__link:hover {
-    color: #b8afff;
+    color: #d7ff00;
 }
 
 .game-card__link:focus-visible {
@@ -695,8 +695,8 @@
 }
 
 .game-card__rating[data-rating-level="none"] {
-    border-color: rgba(181, 173, 255, 0.4);
-    color: #d3ceff;
+    border-color: rgba(215, 255, 0, 0.4);
+    color: #eaff80;
 }
 
 .game-card__rating[data-rating-level="low"] {
@@ -761,7 +761,7 @@
 }
 
 .game-card__platform i {
-    color: #b8afff;
+    color: #d7ff00;
     font-size: 0.78rem;
 }
 
@@ -850,13 +850,13 @@
 
     .catalog-toolbar__filters[aria-expanded="true"],
     .library-tools__filters[aria-expanded="true"] {
-        border-color: rgba(139, 123, 255, 0.55);
-        background: rgba(139, 123, 255, 0.14);
+        border-color: rgba(215, 255, 0, 0.55);
+        background: rgba(215, 255, 0, 0.14);
     }
 
     .catalog-toolbar__filters i,
     .library-tools__filters i {
-        color: #aaa0ff;
+        color: #d7ff00;
     }
 
     .catalog-toolbar__sort,
@@ -927,7 +927,7 @@
     }
 
     .catalog-filter-apply:hover {
-        background: rgba(139, 123, 255, 0.14);
+        background: rgba(215, 255, 0, 0.14);
     }
 
     .catalog-filter-panel__header {
@@ -1065,7 +1065,7 @@
     border: 1px solid var(--color-border);
     border-radius: 8px;
     background: rgba(9, 11, 18, 0.72);
-    color: #d3ceff;
+    color: #eaff80;
     font-size: 0.9rem;
     font-weight: 750;
     font-variant-numeric: tabular-nums;
@@ -1183,7 +1183,7 @@
 }
 
 .game-detail-gallery__arrow:hover {
-    background: rgba(49, 42, 91, 0.92);
+    background: rgba(50, 58, 0, 0.92);
 }
 
 .game-detail-gallery__arrow--previous {
@@ -1235,7 +1235,7 @@
 
 .game-detail-thumbnail[aria-pressed="true"] {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 1px rgba(139, 123, 255, 0.35);
+    box-shadow: 0 0 0 1px rgba(215, 255, 0, 0.35);
 }
 
 .game-detail-thumbnail img {
@@ -1364,7 +1364,7 @@
 .game-detail-gallery__arrow:focus-visible,
 .game-detail-thumbnail:focus-visible,
 .game-detail-media-card:focus-visible {
-    outline: 3px solid rgba(139, 123, 255, 0.6);
+    outline: 3px solid rgba(215, 255, 0, 0.6);
     outline-offset: 2px;
 }
 
@@ -1411,45 +1411,6 @@
     text-transform: uppercase;
 }
 
-.game-detail-playtime__card:nth-child(1) {
-    border-color: rgba(181, 173, 255, 0.28);
-    background: linear-gradient(145deg, rgba(139, 123, 255, 0.08), rgba(17, 21, 32, 0.76));
-
-    h3 {
-        color: #b7adff;
-    }
-
-    .game-detail-playtime__value {
-        color: #d3ccff;
-    }
-}
-
-.game-detail-playtime__card:nth-child(2) {
-    border-color: rgba(143, 184, 255, 0.28);
-    background: linear-gradient(145deg, rgba(95, 151, 255, 0.08), rgba(17, 21, 32, 0.76));
-
-    h3 {
-        color: #8fb8ff;
-    }
-
-    .game-detail-playtime__value {
-        color: #c4d9ff;
-    }
-}
-
-.game-detail-playtime__card:nth-child(3) {
-    border-color: rgba(202, 169, 104, 0.3);
-    background: linear-gradient(145deg, rgba(202, 169, 104, 0.08), rgba(17, 21, 32, 0.76));
-
-    h3 {
-        color: #c9a968;
-    }
-
-    .game-detail-playtime__value {
-        color: #f0d99a;
-    }
-}
-
 .game-detail-playtime__value {
     margin: 0;
     color: var(--color-subtle);
@@ -1483,7 +1444,7 @@
 .game-detail-overview__row h3,
 .game-detail-platform-card__companies h4 {
     margin: 0 0 12px;
-    color: #b7adff;
+    color: #d7ff00;
     font-size: 0.75rem;
     font-weight: 650;
     letter-spacing: 0.045em;
@@ -1501,9 +1462,9 @@
 
 .game-detail-name-list li:not(.game-detail-muted) {
     padding: 6px 10px;
-    border: 1px solid rgba(181, 173, 255, 0.17);
+    border: 1px solid rgba(215, 255, 0, 0.17);
     border-radius: 10px;
-    background: rgba(139, 123, 255, 0.08);
+    background: rgba(215, 255, 0, 0.08);
     color: var(--color-text);
     font-size: 0.82rem;
     line-height: 1.4;
@@ -1521,7 +1482,7 @@
     border: 1px solid var(--color-border);
     border-radius: 12px;
     background:
-        radial-gradient(ellipse at 0 0, rgba(139, 123, 255, 0.1), transparent 55%),
+        radial-gradient(ellipse at 0 0, rgba(215, 255, 0, 0.1), transparent 55%),
         rgba(17, 21, 32, 0.72);
     box-shadow: 0 16px 44px rgba(0, 0, 0, 0.14);
 }
@@ -1651,7 +1612,7 @@
 
 .game-detail-task__summary:hover,
 .game-detail-task__summary:focus-visible {
-    background: rgba(139, 123, 255, 0.08);
+    background: rgba(215, 255, 0, 0.08);
 }
 
 .game-detail-task__count {
@@ -1687,8 +1648,8 @@
 
 .game-detail-task-item:hover,
 .game-detail-task-item:focus-visible {
-    border-color: rgba(181, 173, 255, 0.45);
-    background: rgba(139, 123, 255, 0.08);
+    border-color: rgba(215, 255, 0, 0.45);
+    background: rgba(215, 255, 0, 0.08);
 }
 
 .game-mission-page--ign {
@@ -1698,7 +1659,7 @@
 }
 
 .game-mission-page__internal-link {
-    color: #b8afff;
+    color: #d7ff00;
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
@@ -1723,21 +1684,21 @@
 }
 
 .game-detail-task-guide[aria-pressed="true"] {
-    border-color: rgba(181, 173, 255, 0.45);
-    background: rgba(139, 123, 255, 0.12);
-    color: #d3ceff;
+    border-color: rgba(215, 255, 0, 0.45);
+    background: rgba(215, 255, 0, 0.12);
+    color: #eaff80;
 }
 
 .game-detail-task-extra {
     width: fit-content;
-    color: #b8afff;
+    color: #d7ff00;
     font-size: 0.78rem;
     text-underline-offset: 3px;
 }
 
 .game-detail-checklist:hover {
     transform: translateY(-2px);
-    border-color: rgba(181, 173, 255, 0.45);
+    border-color: rgba(215, 255, 0, 0.45);
 }
 
 .game-detail-checklist i {
@@ -1754,7 +1715,7 @@
     border: 1px solid var(--color-border);
     border-radius: 12px;
     background:
-        radial-gradient(ellipse at 0 0, rgba(139, 123, 255, 0.13), transparent 58%),
+        radial-gradient(ellipse at 0 0, rgba(215, 255, 0, 0.13), transparent 58%),
         var(--color-surface-raised);
 }
 
@@ -1774,10 +1735,10 @@
 .game-detail-missions__total {
     flex: 0 0 auto;
     padding: 7px 11px;
-    border: 1px solid rgba(181, 173, 255, 0.23);
+    border: 1px solid rgba(215, 255, 0, 0.23);
     border-radius: 999px;
-    background: rgba(139, 123, 255, 0.1);
-    color: #d3ceff;
+    background: rgba(215, 255, 0, 0.1);
+    color: #eaff80;
     font-size: 0.75rem;
     font-weight: 700;
 }
@@ -1793,7 +1754,7 @@
 }
 
 .game-detail-mission-group[open] {
-    border-color: rgba(181, 173, 255, 0.34);
+    border-color: rgba(215, 255, 0, 0.34);
     box-shadow: 0 14px 30px rgba(0, 0, 0, 0.15);
 }
 
@@ -1834,7 +1795,7 @@
 }
 
 .game-detail-mission-group > summary:focus-visible {
-    outline: 3px solid rgba(139, 123, 255, 0.5);
+    outline: 3px solid rgba(215, 255, 0, 0.5);
     outline-offset: -3px;
 }
 
@@ -1851,10 +1812,10 @@
     height: 37px;
     flex: 0 0 auto;
     place-items: center;
-    border: 1px solid rgba(181, 173, 255, 0.18);
+    border: 1px solid rgba(215, 255, 0, 0.18);
     border-radius: 10px;
-    background: rgba(139, 123, 255, 0.1);
-    color: #bdb4ff;
+    background: rgba(215, 255, 0, 0.1);
+    color: #d7ff00;
     font-size: 0.95rem;
 }
 
@@ -1882,7 +1843,7 @@
 
 .game-detail-mission-list__group {
     padding: 10px 8px 3px;
-    color: #b7adff;
+    color: #d7ff00;
     font-size: 0.66rem;
     font-weight: 750;
     letter-spacing: 0.08em;
@@ -1918,16 +1879,16 @@
 .game-detail-mission-list__item:hover,
 .game-detail-mission-list__item:focus-visible {
     transform: translateX(2px);
-    border-color: rgba(139, 123, 255, 0.38);
-    background: rgba(139, 123, 255, 0.1);
-    color: #e6e2ff;
+    border-color: rgba(215, 255, 0, 0.38);
+    background: rgba(215, 255, 0, 0.1);
+    color: #eeff9c;
     outline: none;
     text-decoration: none;
 }
 
 .game-detail-mission-list__item:hover i,
 .game-detail-mission-list__item:focus-visible i {
-    color: #c5bdff;
+    color: #badc35;
 }
 
 .game-detail-missions__attribution {
@@ -1940,7 +1901,7 @@
 
 .game-detail-missions__attribution a,
 .game-mission-page__attribution a {
-    color: #b8afff;
+    color: #d7ff00;
     text-underline-offset: 3px;
 }
 
@@ -1968,10 +1929,10 @@
     overflow: hidden;
     margin: 0 0 24px;
     padding: clamp(24px, 5vw, 46px);
-    border: 1px solid rgba(181, 173, 255, 0.18);
+    border: 1px solid rgba(215, 255, 0, 0.18);
     border-radius: 18px;
     background:
-        radial-gradient(ellipse at 92% 10%, rgba(139, 123, 255, 0.2), transparent 40%),
+        radial-gradient(ellipse at 92% 10%, rgba(215, 255, 0, 0.2), transparent 40%),
         linear-gradient(135deg, rgba(28, 31, 48, 0.96), rgba(16, 20, 32, 0.96));
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
 }
@@ -1998,10 +1959,10 @@
     min-height: 29px;
     align-items: center;
     padding: 5px 10px;
-    border: 1px solid rgba(181, 173, 255, 0.2);
+    border: 1px solid rgba(215, 255, 0, 0.2);
     border-radius: 999px;
-    background: rgba(139, 123, 255, 0.11);
-    color: #d3ceff;
+    background: rgba(215, 255, 0, 0.11);
+    color: #eaff80;
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.035em;
@@ -2026,7 +1987,7 @@
     border: 1px solid var(--color-border);
     border-radius: 15px;
     background:
-        linear-gradient(180deg, rgba(139, 123, 255, 0.035), transparent 220px),
+        linear-gradient(180deg, rgba(215, 255, 0, 0.035), transparent 220px),
         var(--color-surface-raised);
     color: var(--color-text);
     line-height: 1.7;
@@ -2058,7 +2019,7 @@
 }
 
 .game-mission-page__article h3 {
-    color: #c4bcff;
+    color: #badc35;
     font-size: 1.12rem;
     scroll-margin-top: 24px;
 }
@@ -2078,17 +2039,17 @@
 }
 
 .game-mission-page__article a {
-    color: #b8afff;
+    color: #d7ff00;
     text-underline-offset: 3px;
 }
 
 .game-mission-page__article a:hover {
-    color: #d3ceff;
+    color: #eaff80;
 }
 
 .game-mission-page__article blockquote {
     padding: 10px 15px;
-    border-left: 3px solid rgba(139, 123, 255, 0.55);
+    border-left: 3px solid rgba(215, 255, 0, 0.55);
     color: var(--color-muted);
 }
 
@@ -2108,7 +2069,7 @@
 }
 
 .game-mission-page__article th {
-    background: rgba(139, 123, 255, 0.08);
+    background: rgba(215, 255, 0, 0.08);
 }
 
 .game-mission-page__article figure {
@@ -2233,8 +2194,8 @@
 
 .game-mission-page__sidebar-card nav a:hover,
 .game-mission-page__sidebar-card nav a:focus-visible {
-    background: rgba(139, 123, 255, 0.09);
-    color: #d3ceff;
+    background: rgba(215, 255, 0, 0.09);
+    color: #eaff80;
     outline: none;
 }
 
@@ -2331,7 +2292,7 @@
 
 .game-detail-related-card:hover {
     transform: translateY(-3px);
-    border-color: rgba(181, 173, 255, 0.38);
+    border-color: rgba(215, 255, 0, 0.38);
     box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
 }
 
@@ -2344,7 +2305,7 @@
 }
 
 .game-detail-related-card__link:focus-visible {
-    outline: 3px solid rgba(139, 123, 255, 0.6);
+    outline: 3px solid rgba(215, 255, 0, 0.6);
     outline-offset: -3px;
 }
 
@@ -2397,7 +2358,7 @@
     padding: 16px 19px;
     border-bottom: 1px solid var(--color-border);
     background:
-        radial-gradient(ellipse at 0 0, rgba(139, 123, 255, 0.12), transparent 68%),
+        radial-gradient(ellipse at 0 0, rgba(215, 255, 0, 0.12), transparent 68%),
         rgba(255, 255, 255, 0.015);
 }
 
@@ -2443,10 +2404,10 @@
     align-items: center;
     justify-content: center;
     padding: 4px 8px;
-    border: 1px solid rgba(181, 173, 255, 0.15);
+    border: 1px solid rgba(215, 255, 0, 0.15);
     border-radius: 7px;
-    background: rgba(139, 123, 255, 0.08);
-    color: #c4bcff;
+    background: rgba(215, 255, 0, 0.08);
+    color: #badc35;
     font-size: 0.68rem;
     font-weight: 700;
     line-height: 1.3;

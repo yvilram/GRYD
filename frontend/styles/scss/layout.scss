@@ -2,7 +2,7 @@ body {
     display: flex;
     flex-direction: column;
     background:
-        radial-gradient(ellipse at 75% -15%, rgba(84, 66, 197, 0.2), transparent 40%),
+        radial-gradient(ellipse at 75% -15%, rgba(215, 255, 0, 0.2), transparent 40%),
         linear-gradient(180deg, rgba(9, 11, 18, 0.72), var(--color-bg) 55%),
         url("/assets/images/background.png") center / cover fixed,
         var(--color-bg);
@@ -95,17 +95,17 @@ body {
 }
 
 .button--nav i {
-    color: #aaa0ff;
+    color: #d7ff00;
 }
 
 .button--primary {
     background: var(--color-accent-strong);
     color: #fff;
-    box-shadow: 0 8px 24px rgba(109, 93, 252, 0.18);
+    box-shadow: 0 8px 24px rgba(215, 255, 0, 0.18);
 }
 
 .button--primary:hover {
-    background: #7e70ff;
+    background: #e4ff4f;
 }
 
 .button--quiet {
@@ -137,7 +137,7 @@ body {
     border: 1px solid var(--color-border);
     border-radius: 50%;
     background: var(--color-surface-raised);
-    color: #c4bdff;
+    color: #d7ff00;
     font-size: 1.3rem;
     cursor: pointer;
 }
@@ -224,7 +224,7 @@ body {
 
 .eyebrow {
     margin: 0 0 16px;
-    color: #aaa0ff;
+    color: #d7ff00;
     font-size: 0.76rem;
     font-weight: 750;
     letter-spacing: 0.14em;
@@ -240,7 +240,7 @@ body {
 }
 
 .home-view h1 span {
-    color: #aaa0ff;
+    color: #d7ff00;
 }
 
 .home-view__description {
@@ -278,21 +278,21 @@ body {
 .home-view__art > i {
     position: relative;
     z-index: 1;
-    color: rgba(211, 207, 255, 0.82);
+    color: rgba(215, 255, 0, 0.82);
     font-size: clamp(9rem, 22vw, 17rem);
-    filter: drop-shadow(0 20px 70px rgba(113, 96, 255, 0.45));
+    filter: drop-shadow(0 20px 70px rgba(215, 255, 0, 0.45));
 }
 
 .home-view__orb {
     position: absolute;
     display: block;
-    border: 1px solid rgba(181, 173, 255, 0.18);
+    border: 1px solid rgba(215, 255, 0, 0.18);
     border-radius: 50%;
 }
 
 .home-view__orb--one {
     inset: 4%;
-    background: radial-gradient(circle, rgba(119, 102, 255, 0.18), transparent 68%);
+    background: radial-gradient(circle, rgba(215, 255, 0, 0.18), transparent 68%);
 }
 
 .home-view__orb--two {
@@ -398,15 +398,15 @@ body {
         border: 1px solid var(--color-border);
         border-radius: 10px;
         background: rgba(255, 255, 255, 0.045);
-        color: #d3ceff;
+        color: #eaff80;
         font-size: 1.4rem;
         cursor: pointer;
     }
 
     .site-header__toggle:hover,
     .site-header__toggle[aria-expanded="true"] {
-        border-color: rgba(139, 123, 255, 0.5);
-        background: rgba(139, 123, 255, 0.12);
+        border-color: rgba(215, 255, 0, 0.5);
+        background: rgba(215, 255, 0, 0.12);
     }
 
     .site-header__menu {

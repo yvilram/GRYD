@@ -1,0 +1,489 @@
+:root {
+    --surface-glass: rgba(17, 18, 23, 0.84);
+    --shadow-surface: 0 18px 48px rgba(0, 0, 0, 0.24);
+}
+
+body {
+    background:
+        radial-gradient(ellipse at 12% 0%, rgba(215, 255, 0, 0.12), transparent 34%),
+        radial-gradient(ellipse at 88% 18%, rgba(215, 255, 0, 0.055), transparent 28%),
+        var(--color-bg);
+}
+
+.site-header {
+    position: sticky;
+    top: 0;
+    max-width: none;
+    padding-inline: max(24px, calc((100% - var(--content-width)) / 2));
+    border-bottom: 1px solid var(--color-border);
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+}
+
+.brand {
+    letter-spacing: 0.12em;
+}
+
+.button {
+    min-height: 44px;
+    border-radius: 999px;
+}
+
+.button--primary {
+    background: var(--color-accent);
+    color: #14170b;
+    box-shadow: 0 8px 26px rgba(215, 255, 0, 0.14);
+}
+
+.button--primary:hover {
+    background: #e2ff4f;
+    color: #14170b;
+}
+
+.button--quiet {
+    border-color: var(--color-border);
+    border-radius: 999px;
+}
+
+.button--nav[aria-current="page"] {
+    border-color: var(--color-border);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.button--nav i,
+.eyebrow,
+.home-view h1 span,
+.game-route-view__back,
+.catalog-filter-panel__reset {
+    color: var(--color-accent);
+}
+
+.home-view {
+    min-height: min(740px, calc(100svh - 150px));
+    margin: 22px 0 34px;
+    border: 1px solid var(--color-border);
+    border-radius: 28px;
+    background:
+        radial-gradient(ellipse at 86% 52%, rgba(215, 255, 0, 0.14), transparent 40%),
+        linear-gradient(115deg, rgba(17, 18, 23, 0.9), rgba(17, 18, 23, 0.48));
+}
+
+.home-view h1 {
+    max-width: 720px;
+    font-size: clamp(3.2rem, 7.4vw, 6.4rem);
+    line-height: 0.96;
+}
+
+.home-view__art > i {
+    color: rgba(215, 255, 0, 0.72);
+    filter: drop-shadow(0 20px 70px rgba(215, 255, 0, 0.2));
+}
+
+.home-view__orb {
+    border-color: rgba(215, 255, 0, 0.18);
+}
+
+.site-footer {
+    border-color: var(--color-border);
+    background: rgba(8, 9, 13, 0.72);
+}
+
+.game-card,
+.retro-card,
+.auth-panel,
+.legal-content,
+.catalog-filter-panel,
+.library-status-filters[data-open="true"],
+.game-detail-heading,
+.game-detail-story,
+.game-detail-overview__row,
+.game-detail-checklist,
+.game-detail-task,
+.game-detail-task-item,
+.game-detail-missions__header,
+.game-detail-library-controls,
+.game-detail-playtime__card,
+.game-detail-mission-group,
+.game-detail-media-card,
+.game-detail-related-card,
+.game-detail-platform-card,
+.game-mission-page__heading,
+.game-mission-page__article,
+.game-mission-page__sidebar-card {
+    border-color: var(--color-border);
+    border-radius: 14px;
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-surface);
+}
+
+.game-detail-name-list li:not(.game-detail-muted),
+.game-detail-platform-card__region,
+.game-mission-page__category {
+    border-radius: 999px;
+}
+
+.game-detail-playtime__card {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 13px;
+    overflow: hidden;
+    min-height: 160px;
+    padding: 18px 18px 16px 22px;
+    border-radius: 14px;
+    background:
+        linear-gradient(145deg, var(--playtime-tint), var(--color-surface) 76%);
+    text-align: left;
+}
+
+.game-detail-playtime__card::before {
+    position: absolute;
+    inset: 16px auto 16px 0;
+    width: 3px;
+    border-radius: 0 999px 999px 0;
+    background: var(--playtime-accent);
+    content: "";
+}
+
+.game-detail-playtime__card h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--playtime-accent);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.game-detail-playtime__card h3::before {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 10px currentColor;
+    content: "";
+}
+
+.game-detail-playtime__card .game-detail-playtime__value {
+    color: var(--playtime-value);
+    align-self: end;
+    font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+    line-height: 1.1;
+}
+
+.game-detail-playtime__card--main {
+    --playtime-accent: var(--color-accent);
+    --playtime-value: var(--color-accent);
+    --playtime-tint: rgba(215, 255, 0, 0.075);
+}
+
+.game-detail-playtime__card--extras {
+    --playtime-accent: #d8e89a;
+    --playtime-value: #f0f4dc;
+    --playtime-tint: rgba(215, 255, 0, 0.035);
+}
+
+.game-detail-playtime__card--completionist {
+    --playtime-accent: rgba(255, 255, 255, 0.72);
+    --playtime-value: var(--color-text);
+    --playtime-tint: rgba(255, 255, 255, 0.025);
+}
+
+.game-card:hover,
+.retro-card:hover {
+    border-color: rgba(215, 255, 0, 0.42);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+}
+
+.game-card__rating,
+.game-detail-heading__rating {
+    border-color: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+}
+
+.game-card__platform,
+.catalog-active-filters__chip {
+    border-radius: 999px;
+}
+
+.catalog-filter-panel,
+.auth-panel,
+.legal-content,
+.account-menu__panel {
+    box-shadow: var(--shadow-surface);
+}
+
+.account-menu__panel {
+    border-radius: 16px;
+    background: var(--color-surface);
+}
+
+.form-field input,
+.catalog-filter-field select,
+.catalog-filter-search input,
+.catalog-year-range input,
+.catalog-toolbar__search input,
+.catalog-toolbar__sort select,
+.library-tools__search input,
+.library-tools__sort select,
+.game-card__status,
+.game-detail-library-status {
+    border-color: var(--color-border);
+    border-radius: 10px;
+    background: #0c0d11;
+}
+
+.form-field input:focus,
+.catalog-toolbar__search input:focus,
+.catalog-toolbar__sort select:focus,
+.library-tools__search input:focus,
+.library-tools__sort select:focus {
+    border-color: var(--color-accent);
+    outline-color: rgba(215, 255, 0, 0.2);
+}
+
+.game-detail-tab[aria-selected="true"]::after {
+    background: var(--color-accent);
+}
+
+.game-detail-mission-list__item:hover,
+.game-detail-mission-list__item:focus-visible,
+.game-card__link:hover {
+    color: var(--color-accent);
+}
+
+.retro-platform-nav__button[aria-pressed="true"],
+.library-content-menu__button[aria-pressed="true"],
+.library-status-filters__button[aria-pressed="true"] {
+    border-color: rgba(215, 255, 0, 0.42);
+    background: rgba(215, 255, 0, 0.1);
+}
+
+:root[data-theme="light"] {
+    --color-accent: #537300;
+    --color-accent-strong: #476500;
+    --surface-glass: rgba(249, 250, 253, 0.88);
+    --shadow-surface: 0 16px 38px rgba(32, 40, 58, 0.09);
+}
+
+:root[data-theme="light"] body {
+    background:
+        radial-gradient(ellipse at 12% 0%, rgba(215, 255, 0, 0.11), transparent 34%),
+        var(--color-bg);
+}
+
+:root[data-theme="light"] .button--primary,
+:root[data-theme="light"] .button--primary:hover {
+    background: #d8f58a;
+    color: #26340c;
+}
+
+:root[data-theme="light"] .game-detail-playtime__card--main {
+    --playtime-accent: #537300;
+    --playtime-value: #26340c;
+    --playtime-tint: rgba(83, 115, 0, 0.07);
+}
+
+:root[data-theme="light"] .game-detail-playtime__card--extras {
+    --playtime-accent: #697d2d;
+    --playtime-value: #35421a;
+    --playtime-tint: rgba(83, 115, 0, 0.045);
+}
+
+:root[data-theme="light"] .game-detail-playtime__card--completionist {
+    --playtime-accent: #596477;
+    --playtime-value: var(--color-text);
+    --playtime-tint: rgba(32, 40, 58, 0.035);
+}
+
+:root[data-theme="light"] .site-header,
+:root[data-theme="light"] .site-footer {
+    background: var(--surface-glass);
+}
+
+:root[data-theme="light"] .home-view {
+    background:
+        radial-gradient(ellipse at 86% 52%, rgba(215, 255, 0, 0.1), transparent 40%),
+        linear-gradient(115deg, #fff, #f8f9fc);
+}
+
+:root[data-theme="light"] .game-card,
+:root[data-theme="light"] .retro-card,
+:root[data-theme="light"] .auth-panel,
+:root[data-theme="light"] .legal-content,
+:root[data-theme="light"] .catalog-filter-panel,
+:root[data-theme="light"] .library-status-filters[data-open="true"],
+:root[data-theme="light"] .game-detail-heading,
+:root[data-theme="light"] .game-detail-story,
+:root[data-theme="light"] .game-detail-overview__row,
+:root[data-theme="light"] .game-detail-checklist,
+:root[data-theme="light"] .game-detail-task,
+:root[data-theme="light"] .game-detail-task-item,
+:root[data-theme="light"] .game-detail-missions__header,
+:root[data-theme="light"] .game-detail-library-controls,
+:root[data-theme="light"] .game-detail-playtime__card,
+:root[data-theme="light"] .game-detail-mission-group,
+:root[data-theme="light"] .game-detail-media-card,
+:root[data-theme="light"] .game-detail-related-card,
+:root[data-theme="light"] .game-detail-platform-card,
+:root[data-theme="light"] .game-mission-page__heading,
+:root[data-theme="light"] .game-mission-page__article,
+:root[data-theme="light"] .game-mission-page__sidebar-card,
+:root[data-theme="light"] .account-menu__panel {
+    background-color: #fff;
+}
+
+:root[data-theme="light"] .form-field input,
+:root[data-theme="light"] .catalog-filter-field select,
+:root[data-theme="light"] .catalog-filter-search input,
+:root[data-theme="light"] .catalog-year-range input,
+:root[data-theme="light"] .catalog-toolbar__search input,
+:root[data-theme="light"] .catalog-toolbar__sort select,
+:root[data-theme="light"] .library-tools__search input,
+:root[data-theme="light"] .library-tools__sort select,
+:root[data-theme="light"] .game-card__status,
+:root[data-theme="light"] .game-detail-library-status {
+    background: #f8f9fc;
+}
+
+@media (max-width: 760px) {
+    .site-header {
+        padding-inline: 16px;
+    }
+
+    .site-header__menu {
+        border-radius: 16px;
+        background: var(--color-surface);
+    }
+
+    .site-main {
+        width: min(100% - 28px, var(--content-width));
+    }
+
+    .home-view {
+        min-height: min(690px, calc(100svh - 100px));
+        margin: 14px 0 24px;
+        padding: 48px 22px;
+        border-radius: 22px;
+    }
+
+    .home-view h1 {
+        font-size: clamp(2.8rem, 12vw, 4.5rem);
+    }
+
+    .home-view__description {
+        max-width: 38ch;
+    }
+
+    .site-footer {
+        padding-inline: 16px;
+        padding-bottom: max(18px, env(safe-area-inset-bottom));
+    }
+
+    .collection-view {
+        padding-top: 24px;
+    }
+
+    .catalog-toolbar__filters,
+    .library-tools__filters,
+    .library-content-menu__button,
+    .library-status-filters__button,
+    .retro-platform-nav__button {
+        min-height: 44px;
+    }
+
+    .game-grid {
+        gap: 12px;
+    }
+
+    .game-card {
+        border-radius: 13px;
+    }
+
+    .legal-document__header {
+        width: min(100% - 32px, 1280px);
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 600px) {
+    .game-detail-playtime__estimates {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 9px;
+    }
+
+    .game-detail-playtime__card {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: auto auto;
+        align-items: center;
+        gap: 6px 14px;
+        min-height: 0;
+        padding: 15px 14px 14px 19px;
+    }
+
+    .game-detail-playtime__card h3 {
+        align-self: center;
+    }
+
+    .game-detail-playtime__card .game-detail-playtime__value {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        font-size: 1.35rem;
+    }
+
+    .game-detail-playtime__card .game-detail-playtime__status {
+        grid-column: 1;
+        grid-row: 2;
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 460px) {
+    .home-view {
+        min-height: 550px;
+        padding-inline: 18px;
+    }
+
+    .home-view__actions .button {
+        width: 100%;
+    }
+
+    .game-grid {
+        gap: 9px;
+    }
+
+    .game-card__body {
+        padding-inline: 8px;
+    }
+
+    .game-card__platform {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .auth-view {
+        min-height: 0;
+        padding: 32px 0;
+    }
+
+    .auth-panel {
+        padding: 24px 20px;
+        border-radius: 18px;
+    }
+
+    .avatar-crop-dialog__actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
