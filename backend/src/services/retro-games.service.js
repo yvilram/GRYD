@@ -7,7 +7,9 @@ const ROM_FORMATS = {
     z64: { core: "n64", system: "Nintendo 64", systemShort: "N64" },
     v64: { core: "n64", system: "Nintendo 64", systemShort: "N64" },
     sfc: { core: "snes", system: "Super Nintendo", systemShort: "SNES" },
-    smc: { core: "snes", system: "Super Nintendo", systemShort: "SNES" }
+    smc: { core: "snes", system: "Super Nintendo", systemShort: "SNES" },
+    md: { core: "segaMD", system: "Sega Genesis", systemShort: "Sega Genesis" },
+    gba: { core: "gba", system: "Game Boy Advance", systemShort: "Game Boy Advance" }
 };
 const COVER_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
 const STORAGE_PAGE_SIZE = 1000;
