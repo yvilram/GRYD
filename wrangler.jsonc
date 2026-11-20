@@ -3,5 +3,5 @@
   "name": "gryd-api",
   "main": "backend/worker.mjs",
   "compatibility_date": "2026-10-30",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
 }

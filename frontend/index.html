@@ -759,7 +759,8 @@
                     aria-label="Filter games by platform"
                     hidden
                 ></nav>
-                <label class="retro-search">
+                <div class="retro-actions">
+                    <label class="retro-search">
                     <span class="visually-hidden">Search retro games</span>
                     <i class="bi bi-search" aria-hidden="true"></i>
                     <input
@@ -769,6 +770,19 @@
                         autocomplete="off"
                     >
                 </label>
+
+                <label id="retro-local-rom-label" class="retro-upload" for="retro-local-rom">
+                    Open local game
+                </label>
+
+                <input
+                    id="retro-local-rom"
+                    type="file"
+                    accept=".gba,.n64,.z64,.v64,.sfc,.smc,.md,.chd"
+                    hidden
+                >
+                </div>
+                
                 <p class="retro-status" id="retro-status" role="status" aria-live="polite">
                     Loading games…
                 </p>

@@ -8,6 +8,15 @@ const retroPlayerStatus = document.getElementById("retro-player-status");
 const retroPlayerStatusMessage = document.getElementById("retro-player-status-message");
 const retroPlayerFrame = document.getElementById("retro-player-frame");
 const retroPlayerBack = document.getElementById("retro-player-back");
+const retroLocalRom = document.getElementById("retro-local-rom");
+const retroLocalRomLabel = document.getElementById("retro-local-rom-label");
+
+const ENABLE_LOCAL_GAMES = false;
+
+retroLocalRomLabel.hidden = !ENABLE_LOCAL_GAMES;
+retroLocalRom.disabled = !ENABLE_LOCAL_GAMES;
+
+
 
 let retroGames = [];
 let retroPlatforms = [];
@@ -16,6 +25,58 @@ let retroEmulator = null;
 let retroGamesLoaded = false;
 let retroGamesLoading = false;
 let retroPlayerStartTimeout = 0;
+let activeLocalRomUrl = null;
+
+const LOCAL_ROM_FORMATS = {
+    n64: {
+        core: "n64",
+        system: "Nintendo 64",
+        systemShort: "N64",
+        platformId: "n64"
+    },
+    z64: {
+        core: "n64",
+        system: "Nintendo 64",
+        systemShort: "N64",
+        platformId: "n64"
+    },
+    v64: {
+        core: "n64",
+        system: "Nintendo 64",
+        systemShort: "N64",
+        platformId: "n64"
+    },
+    sfc: {
+        core: "snes",
+        system: "Super Nintendo",
+        systemShort: "SNES",
+        platformId: "snes"
+    },
+    smc: {
+        core: "snes",
+        system: "Super Nintendo",
+        systemShort: "SNES",
+        platformId: "snes"
+    },
+    md: {
+        core: "segaMD",
+        system: "Sega Genesis",
+        systemShort: "Sega Genesis",
+        platformId: "sega-genesis"
+    },
+    gba: {
+        core: "gba",
+        system: "Game Boy Advance",
+        systemShort: "GBA",
+        platformId: "gba"
+    },
+    chd: {
+        core: "psx",
+        system: "PlayStation",
+        systemShort: "PS1",
+        platformId: "ps1"
+    }
+};
 
 const getPlatformLabel = platform => {
     const normalizedId = platform.id.toLocaleLowerCase();
@@ -163,9 +224,61 @@ const createPlayerDocument = (game, emulator) => `<!doctype html>
 </body>
 </html>`;
 
+const openLocalRetroGame = file => {
+    if (!file) return;
+
+    if (!retroEmulator) {
+        window.showAppNotice(
+            "The emulator is still loading. Please try again.",
+            "error"
+        );
+        return;
+    }
+
+    const extension = file.name
+        .split(".")
+        .pop()
+        ?.toLocaleLowerCase();
+
+    const format = LOCAL_ROM_FORMATS[extension];
+
+    if (!format) {
+        window.showAppNotice(
+            `Unsupported game format: .${extension || "unknown"}`,
+            "error"
+        );
+        return;
+    }
+
+    if (activeLocalRomUrl) {
+        URL.revokeObjectURL(activeLocalRomUrl);
+    }
+
+    activeLocalRomUrl = URL.createObjectURL(file);
+
+    const game = {
+        title: file.name
+            .replace(/\.[^.]+$/, "")
+            .replace(/_/g, " "),
+        path: null,
+        url: activeLocalRomUrl,
+        coverUrl: null,
+        source: "local",
+        ...format
+    };
+
+    startRetroGame(game);
+};
+
 const stopRetroGame = () => {
     window.clearTimeout(retroPlayerStartTimeout);
     retroPlayerFrame.srcdoc = "";
+
+    if (activeLocalRomUrl) {
+        URL.revokeObjectURL(activeLocalRomUrl);
+        activeLocalRomUrl = null;
+    }
+
     retroPlayer.hidden = true;
     retroCatalog.hidden = false;
     retroStatus.hidden = false;
@@ -190,7 +303,7 @@ const startRetroGame = game => {
         retroPlayerStatusMessage.textContent =
             "The emulator did not start. Check that the complete EmulatorJS data package " +
             "is public under emulatorjs/data and that the ROM URL is accessible.";
-    }, 30000);
+    }, 120000);
 };
 
 const loadRetroGames = async () => {
@@ -274,4 +387,14 @@ document.addEventListener("app:navigate", ({ detail }) => {
         return;
     }
     loadRetroGames();
+});
+
+retroLocalRom.addEventListener("change", event => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+        openLocalRetroGame(file);
+    }
+
+    event.target.value = "";
 });
