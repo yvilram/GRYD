@@ -32,11 +32,17 @@ body {
 
 .brand {
     width: fit-content;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: #fff;
+    font: inherit;
     font-size: 1.65rem;
     font-weight: 850;
     letter-spacing: 0.16em;
     text-decoration: none;
+    cursor: pointer;
+    appearance: none;
 }
 
 .primary-nav,

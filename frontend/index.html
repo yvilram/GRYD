@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta
             name="description"
-            content="Discover video games and build a library that is truly yours."
+            content="Discover video games, explore detailed game information, build your personal library, and play retro classics directly in your browser with GRYD."
         >
         <meta name="theme-color" content="#090b12">
         <title>GRYD</title>
@@ -37,7 +37,14 @@
         </script>
         
         <header class="site-header">
-            <a class="brand" href="/" aria-label="GRYD home">GRYD</a>
+            <button
+                class="brand"
+                type="button"
+                data-view-target="home"
+                aria-label="GRYD home"
+            >
+                GRYD
+            </button>
 
             <button
                 class="site-header__toggle"
@@ -52,6 +59,15 @@
 
             <div class="site-header__menu" id="site-header-menu">
                 <nav class="primary-nav" aria-label="Main navigation">
+                    <button
+                        class="button button--nav"
+                        id="navigation-home"
+                        type="button"
+                        data-view-target="home"
+                    >
+                        <i class="bi bi-house" aria-hidden="true"></i>
+                        <span>Home</span>
+                    </button>
                     <button
                         class="button button--nav"
                         id="navigation-explore"
@@ -79,6 +95,15 @@
                     >
                         <i class="bi bi-controller" aria-hidden="true"></i>
                         <span>Retro Games</span>
+                    </button>
+                    <button
+                        class="button button--nav"
+                        id="navigation-roadmap"
+                        type="button"
+                        data-view-target="roadmap"
+                    >
+                        <i class="bi bi-signpost-split" aria-hidden="true"></i>
+                        <span>Roadmap</span>
                     </button>
                 </nav>
 
@@ -134,13 +159,23 @@
         </header>
 
         <main class="site-main" id="main-content">
-            <section class="view home-view" id="view-home" data-view>
+        <section class="view home-view" id="view-home" data-view>
+            <div class="home-hero">
                 <div class="home-view__content">
                     <p class="eyebrow">Your next favorite game starts here</p>
-                    <h1>Discover games.<br><span>Make them yours.</span></h1>
+
+                    <h1>
+                        Discover games.
+                        <br>
+                        <span>Make them yours.</span>
+                    </h1>
+
                     <p class="home-view__description">
-                        Explore a world of games and keep your personal collection in one place.
+                        Discover new games, explore their worlds, build your
+                        personal library, and play retro classics directly
+                        in your browser.
                     </p>
+
                     <div class="home-view__actions">
                         <button
                             class="button button--primary button--large"
@@ -151,22 +186,318 @@
                             Explore games
                             <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
                         </button>
+
                         <button
                             class="button button--quiet button--large"
                             id="home-register"
                             type="button"
+                            data-view-target="register"
                         >
                             Create your free account
                         </button>
                     </div>
-                    <p class="home-view__credit">Game data provided by IGDB</p>
+
+                    <ul class="home-hero__highlights" aria-label="GRYD highlights">
+                        <li>
+                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                            Free account
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                            Personal library
+                        </li>
+                        <li>
+                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                            Browser-based retro gaming
+                        </li>
+                    </ul>
                 </div>
+
                 <div class="home-view__art" aria-hidden="true">
                     <span class="home-view__orb home-view__orb--one"></span>
                     <span class="home-view__orb home-view__orb--two"></span>
                     <i class="bi bi-controller"></i>
                 </div>
+            </div>
+
+            <section class="home-features" aria-labelledby="home-features-title">
+                <header class="home-section-heading">
+                    <div>
+                        <p class="eyebrow">One place for your games</p>
+                        <h2 id="home-features-title">
+                            Discover, organize, and play
+                        </h2>
+                    </div>
+
+                    <p>
+                        GRYD brings game discovery, detailed information,
+                        personal collections, and retro gaming together.
+                    </p>
+                </header>
+
+                <div class="home-feature-grid">
+                    <article class="home-feature-card">
+                        <div class="home-feature-card__icon">
+                            <i class="bi bi-compass" aria-hidden="true"></i>
+                        </div>
+
+                        <div class="home-feature-card__content">
+                            <span class="home-feature-card__status">
+                                Available
+                            </span>
+
+                            <h3>Explore games</h3>
+
+                            <p>
+                                Search across platforms and generations, apply
+                                detailed filters, and discover highly rated or
+                                popular games.
+                            </p>
+                        </div>
+
+                        <button
+                            class="home-feature-card__link"
+                            type="button"
+                            data-view-target="explore"
+                        >
+                            Start exploring
+                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </button>
+                    </article>
+
+                    <article class="home-feature-card">
+                        <div class="home-feature-card__icon">
+                            <i class="bi bi-collection" aria-hidden="true"></i>
+                        </div>
+
+                        <div class="home-feature-card__content">
+                            <span class="home-feature-card__status">
+                                Available
+                            </span>
+
+                            <h3>Build your library</h3>
+
+                            <p>
+                                Create a personal collection and organize games
+                                as Backlog, Playing, Paused, Completed, or Dropped.
+                            </p>
+                        </div>
+
+                        <button
+                            class="home-feature-card__link"
+                            type="button"
+                            data-view-target="register"
+                        >
+                            Create your library
+                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </button>
+                    </article>
+
+                    <article class="home-feature-card">
+                        <div class="home-feature-card__icon">
+                            <i class="bi bi-list-check" aria-hidden="true"></i>
+                        </div>
+
+                        <div class="home-feature-card__content">
+                            <span
+                                class="home-feature-card__status
+                                    home-feature-card__status--beta"
+                            >
+                                Beta
+                            </span>
+
+                            <h3>Explore game missions</h3>
+
+                            <p>
+                                Read mission lists, objectives, and walkthrough
+                                information for supported games. Coverage continues
+                                to expand.
+                            </p>
+                        </div>
+
+                        <button
+                            class="home-feature-card__link"
+                            type="button"
+                            data-view-target="explore"
+                        >
+                            Find supported games
+                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </button>
+                    </article>
+
+                    <article class="home-feature-card">
+                        <div class="home-feature-card__icon">
+                            <i class="bi bi-controller" aria-hidden="true"></i>
+                        </div>
+
+                        <div class="home-feature-card__content">
+                            <span class="home-feature-card__status">
+                                Available
+                            </span>
+
+                            <h3>Play retro classics</h3>
+
+                            <p>
+                                Play supported Nintendo 64, Super Nintendo,
+                                Game Boy Advance, and Sega Genesis games directly
+                                in your browser.
+                            </p>
+                        </div>
+
+                        <button
+                            class="home-feature-card__link"
+                            type="button"
+                            data-view-target="retro"
+                        >
+                            Open Retro Games
+                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </button>
+                    </article>
+                </div>
             </section>
+
+            <section class="home-workflow" aria-labelledby="home-workflow-title">
+                <header class="home-section-heading home-section-heading--center">
+                    <div>
+                        <p class="eyebrow">Your gaming journey</p>
+                        <h2 id="home-workflow-title">Everything stays connected</h2>
+                    </div>
+
+                    <p>
+                        Go from discovering a game to tracking it in your
+                        collection without leaving GRYD.
+                    </p>
+                </header>
+
+                <ol class="home-workflow__steps">
+                    <li class="home-workflow__step">
+                        <span class="home-workflow__number">01</span>
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <h3>Discover</h3>
+                        <p>
+                            Find games using search, sorting, and detailed filters.
+                        </p>
+                    </li>
+
+                    <li class="home-workflow__step">
+                        <span class="home-workflow__number">02</span>
+                        <i class="bi bi-info-circle" aria-hidden="true"></i>
+                        <h3>Explore</h3>
+                        <p>
+                            Review covers, ratings, releases, media, and missions.
+                        </p>
+                    </li>
+
+                    <li class="home-workflow__step">
+                        <span class="home-workflow__number">03</span>
+                        <i class="bi bi-bookmark-plus" aria-hidden="true"></i>
+                        <h3>Organize</h3>
+                        <p>
+                            Add games to your library and update their status.
+                        </p>
+                    </li>
+
+                    <li class="home-workflow__step">
+                        <span class="home-workflow__number">04</span>
+                        <i class="bi bi-joystick" aria-hidden="true"></i>
+                        <h3>Play</h3>
+                        <p>
+                            Launch supported retro games directly in your browser.
+                        </p>
+                    </li>
+                </ol>
+            </section>
+
+            <section
+                class="home-roadmap-preview"
+                aria-labelledby="home-roadmap-title"
+            >
+                <div class="home-roadmap-preview__content">
+                    <div class="home-roadmap-preview__icon" aria-hidden="true">
+                        <i class="bi bi-controller"></i>
+                    </div>
+
+                    <div>
+                        <div class="home-roadmap-preview__meta">
+                            <p class="eyebrow">Currently in development</p>
+
+                            <span class="home-roadmap-preview__status">
+                                In progress
+                            </span>
+                        </div>
+
+                        <h2 id="home-roadmap-title">PlayStation support</h2>
+
+                        <p>
+                            PS1 emulation, CHD support, and optimized delivery for
+                            larger retro games are currently being integrated into
+                            GRYD.
+                        </p>
+
+                        <ul class="home-roadmap-preview__items">
+                            <li>
+                                <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                PCSX-ReARMed integration
+                            </li>
+                            <li>
+                                <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                CHD game support
+                            </li>
+                            <li>
+                                <i
+                                    class="bi bi-hourglass-split"
+                                    aria-hidden="true"
+                                ></i>
+                                Storage and loading optimization
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button
+                    class="button button--quiet button--large"
+                    type="button"
+                    data-view-target="roadmap"
+                >
+                    View full roadmap
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </button>
+            </section>
+
+            <section class="home-final-cta" aria-labelledby="home-final-cta-title">
+                <div>
+                    <p class="eyebrow">Start building your collection</p>
+
+                    <h2 id="home-final-cta-title">
+                        Find your next game with GRYD
+                    </h2>
+
+                    <p>
+                        Explore the catalog immediately or create a free account
+                        to start organizing your personal library.
+                    </p>
+                </div>
+
+                <div class="home-final-cta__actions">
+                    <button
+                        class="button button--primary button--large"
+                        type="button"
+                        data-view-target="explore"
+                    >
+                        Explore games
+                        <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                    </button>
+
+                    <button
+                        class="button button--quiet button--large"
+                        type="button"
+                        data-view-target="register"
+                    >
+                        Create account
+                    </button>
+                </div>
+            </section>
+        </section>
 
             <section class="view auth-view" id="view-login" data-view hidden>
                 <div class="auth-panel">
@@ -818,13 +1149,221 @@
                         class="retro-player__frame"
                         id="retro-player-frame"
                         title="Retro game player"
-                        allow="autoplay; fullscreen; gamepad; pointer-lock"
-                        allowfullscreen
+                        allow="autoplay; fullscreen; gamepad"
                     ></iframe>
                 </section>
             </section>
 
             <section class="view legal-content" id="view-legal" data-view hidden></section>
+            <section class="view collection-view roadmap-view" id="view-roadmap" data-view hidden>
+                <div class="collection-view__header">
+                    <div>
+                        <p class="eyebrow">What's happening with GRYD</p>
+                        <h1>Roadmap</h1>
+                    </div>
+
+                    <p class="collection-view__description">
+                        Follow GRYD's development and see what's available,
+                        what's being worked on, and what's coming next.
+                    </p>
+                </div>
+
+                <div class="roadmap-grid">
+
+                    <!-- Game Explorer -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-compass" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--available">
+                                Available
+                            </span>
+                        </div>
+
+                        <h2>Game Explorer</h2>
+
+                        <p>
+                            Discover games and explore detailed information about
+                            titles across different platforms and generations.
+                        </p>
+
+                        <ul>
+                            <li>Game discovery</li>
+                            <li>Detailed game information</li>
+                            <li>Platforms and release information</li>
+                            <li>Media and related games</li>
+                        </ul>
+                    </article>
+
+                    <!-- Personal Library -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-collection" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--available">
+                                Available
+                            </span>
+                        </div>
+
+                        <h2>Personal Library</h2>
+
+                        <p>
+                            Build your own game library and keep track of what
+                            you're playing and what you want to play next.
+                        </p>
+
+                        <ul>
+                            <li>Backlog</li>
+                            <li>Playing</li>
+                            <li>Completed</li>
+                            <li>Personal game tracking</li>
+                        </ul>
+                    </article>
+
+                    <!-- Retro Gaming -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-controller" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--available">
+                                Available
+                            </span>
+                        </div>
+
+                        <h2>Retro Gaming</h2>
+
+                        <p>
+                            Play classic games directly in your browser through
+                            GRYD's integrated emulator.
+                        </p>
+
+                        <ul>
+                            <li>Nintendo 64</li>
+                            <li>Super Nintendo</li>
+                            <li>Game Boy Advance</li>
+                            <li>Sega Genesis</li>
+                        </ul>
+                    </article>
+
+                    <!-- Game Missions -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-list-check" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--beta">
+                                Beta
+                            </span>
+                        </div>
+
+                        <h2>Game Missions</h2>
+
+                        <p>
+                            Explore missions and objectives directly from supported
+                            game pages. Coverage is currently being expanded.
+                        </p>
+
+                        <ul>
+                            <li>Mission lists for supported games</li>
+                            <li>Mission descriptions and objectives</li>
+                            <li>Coverage varies between games</li>
+                            <li>More titles are being added progressively</li>
+                        </ul>
+                    </article>
+
+                    <!-- PlayStation -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-controller" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--progress">
+                                In progress
+                            </span>
+                        </div>
+
+                        <h2>PlayStation Support</h2>
+
+                        <p>
+                            PlayStation support is currently being integrated into
+                            GRYD's Retro Games experience.
+                        </p>
+
+                        <ul>
+                            <li>PS1 game support</li>
+                            <li>CHD format support</li>
+                            <li>PCSX-ReARMed emulation</li>
+                            <li>Optimized storage for larger games</li>
+                        </ul>
+                    </article>
+
+                    <!-- Multi-disc -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-disc" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--planned">
+                                Planned
+                            </span>
+                        </div>
+
+                        <h2>Multi-disc Games</h2>
+
+                        <p>
+                            Support games distributed across multiple discs as part
+                            of the expanding PlayStation experience.
+                        </p>
+
+                        <ul>
+                            <li>Multiple discs per game</li>
+                            <li>In-game disc switching</li>
+                            <li>Unified game entries</li>
+                        </ul>
+                    </article>
+
+                    <!-- Library Insights -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-bar-chart" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--planned">
+                                Planned
+                            </span>
+                        </div>
+
+                        <h2>Library Insights</h2>
+
+                        <p>
+                            Understand your gaming library and progress through
+                            personalized statistics.
+                        </p>
+
+                        <ul>
+                            <li>Games completed</li>
+                            <li>Games currently playing</li>
+                            <li>Backlog progress</li>
+                            <li>Platform statistics</li>
+                        </ul>
+                    </article>
+
+                    <!-- User Profiles -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-person-badge" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--planned">
+                                Planned
+                            </span>
+                        </div>
+
+                        <h2>User Profiles</h2>
+
+                        <p>
+                            Make your GRYD profile more personal and showcase
+                            your gaming activity.
+                        </p>
+
+                        <ul>
+                            <li>Public profiles</li>
+                            <li>Favorite games</li>
+                            <li>Recently played games</li>
+                            <li>Library overview</li>
+                        </ul>
+                    </article>
+
+                </div>
+            </section>
+
         </main>
 
         <footer class="site-footer">

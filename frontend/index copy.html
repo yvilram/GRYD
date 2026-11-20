@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta
+    name="description"
+    content="Discover video games, explore detailed game information, build your personal library, and play retro classics directly in your browser with GRYD."
+>
+        <meta name="theme-color" content="#090b12">
+        <title>GRYD</title>
+        <script src="/js/app/theme.js"></script>
+        <link rel="icon" type="image/ico" href="/assets/images/favicon.ico">
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        >
+        <link rel="stylesheet" href="/styles/css/main.css">
+        <script src="/js/config.js"></script>
+        <script src="/js/app/views.js" defer></script>
+        <script src="/js/features/auth/auth.js" defer></script>
+        <script src="/js/features/games/catalog.js" defer></script>
+        <script src="/js/features/games/retro.js" defer></script>
+        <script src="/js/features/library/game-state.js" defer></script>
+        <script src="/js/features/legal/privacy-terms.js" defer></script>
+    </head>
+
+    <body>
+        <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+        <script>
+        kofiWidgetOverlay.draw('yagovrama', {
+            'type': 'floating-chat',
+            'floating-chat.donateButton.text': 'Donate',
+            'floating-chat.donateButton.background-color': '#c6ea00',
+            'floating-chat.donateButton.text-color': 'black'
+        });
+        </script>
+        
+        <header class="site-header">
+            <a class="brand" href="/" aria-label="GRYD home">GRYD</a>
+
+            <button
+                class="site-header__toggle"
+                id="site-header-toggle"
+                type="button"
+                aria-label="Open navigation menu"
+                aria-expanded="false"
+                aria-controls="site-header-menu"
+            >
+                <i class="bi bi-list" aria-hidden="true"></i>
+            </button>
+
+            <div class="site-header__menu" id="site-header-menu">
+                <nav class="primary-nav" aria-label="Main navigation">
+                    <button
+                        class="button button--nav"
+                        id="navigation-explore"
+                        type="button"
+                        data-view-target="explore"
+                    >
+                        <i class="bi bi-compass" aria-hidden="true"></i>
+                        <span>Explore</span>
+                    </button>
+                    <button
+                        class="button button--nav"
+                        id="navigation-library"
+                        type="button"
+                        data-view-target="library"
+                        hidden
+                    >
+                        <i class="bi bi-collection" aria-hidden="true"></i>
+                        <span>Library</span>
+                    </button>
+                    <button
+                        class="button button--nav"
+                        id="navigation-retro"
+                        type="button"
+                        data-view-target="retro"
+                    >
+                        <i class="bi bi-controller" aria-hidden="true"></i>
+                        <span>Retro Games</span>
+                    </button>
+                    <button
+                        class="button button--nav"
+                        id="navigation-roadmap"
+                        type="button"
+                        data-view-target="roadmap"
+                    >
+                        <i class="bi bi-signpost-split" aria-hidden="true"></i>
+                        <span>Roadmap</span>
+                    </button>
+                </nav>
+
+                <div class="header-account">
+                    <div class="auth-actions" id="auth-actions">
+                        <button class="button button--quiet" id="auth-login-trigger" type="button">
+                            Log in
+                        </button>
+                        <button class="button button--primary" id="auth-register-trigger" type="button">
+                            Create account
+                        </button>
+                    </div>
+
+                    <div class="account-menu" id="account-menu" hidden>
+                        <button
+                            class="account-menu__trigger"
+                            id="account-menu-trigger"
+                            type="button"
+                            aria-label="Open account menu"
+                            aria-expanded="false"
+                            aria-controls="account-menu-panel"
+                        >
+                            <img id="account-avatar" alt="" hidden>
+                            <i class="bi bi-person-circle" aria-hidden="true"></i>
+                        </button>
+                        <div class="account-menu__panel" id="account-menu-panel" hidden>
+                            <span class="account-menu__email" id="account-email"></span>
+                            <button
+                                class="account-menu__action"
+                                id="account-profile"
+                                type="button"
+                                data-view-target="profile"
+                            >
+                                Profile
+                            </button>
+                            <button class="account-menu__action" id="auth-logout" type="button">
+                                Log out
+                            </button>
+                            <button
+                                class="account-menu__action account-menu__theme"
+                                id="theme-toggle"
+                                type="button"
+                                data-theme-toggle
+                                aria-pressed="false"
+                            >
+                                <i class="bi bi-sun" aria-hidden="true"></i>
+                                <span id="theme-toggle-label">Light theme</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="site-main" id="main-content">
+            <section class="view home-view" id="view-home" data-view>
+                <div class="home-view__content">
+                    <p class="eyebrow">Your next favorite game starts here</p>
+                    <h1>Discover games.<br><span>Make them yours.</span></h1>
+                    <p class="home-view__description">
+                        Discover games, explore their worlds, build your personal library, and play retro classics directly in your browser.
+                    </p>
+                    <div class="home-view__actions">
+                        <button
+                            class="button button--primary button--large"
+                            id="home-explore"
+                            type="button"
+                            data-view-target="explore"
+                        >
+                            Explore games
+                            <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                        </button>
+                        <button
+                            class="button button--quiet button--large"
+                            id="home-register"
+                            type="button"
+                        >
+                            Create your free account
+                        </button>
+                    </div>
+                    <p class="home-view__credit">Game data provided by IGDB</p>
+                </div>
+                <div class="home-view__art" aria-hidden="true">
+                    <span class="home-view__orb home-view__orb--one"></span>
+                    <span class="home-view__orb home-view__orb--two"></span>
+                    <i class="bi bi-controller"></i>
+                </div>
+            </section>
+
+            <section class="view auth-view" id="view-login" data-view hidden>
+                <div class="auth-panel">
+                    <p class="eyebrow">Welcome back</p>
+                    <h1>Log in to GRYD</h1>
+                    <p class="auth-panel__description">Pick up where your gaming journey left off.</p>
+                    <form id="login-form" class="auth-form">
+                        <div class="form-field">
+                            <label for="login-email">Email address</label>
+                            <input
+                                type="email"
+                                id="login-email"
+                                name="email"
+                                autocomplete="email"
+                                placeholder="you@example.com"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="login-password">Password</label>
+                            <input
+                                type="password"
+                                id="login-password"
+                                name="password"
+                                autocomplete="current-password"
+                                placeholder="Enter your password"
+                                required
+                            >
+                        </div>
+                        <button class="button button--primary button--submit" type="submit">
+                            Log in
+                        </button>
+                        <p class="form-message" id="login-error" aria-live="polite"></p>
+                    </form>
+                    <p class="auth-panel__switch">
+                        New to GRYD?
+                        <button id="login-to-register" type="button">Create an account</button>
+                    </p>
+                </div>
+            </section>
+
+            <section class="view auth-view" id="view-register" data-view hidden>
+                <div class="auth-panel">
+                    <p class="eyebrow">Start your collection</p>
+                    <h1>Create your account</h1>
+                    <p class="auth-panel__description">A home for every game you want to play.</p>
+                    <form id="register-form" class="auth-form">
+                        <div class="form-field">
+                            <label for="register-email">Email address</label>
+                            <input
+                                type="email"
+                                id="register-email"
+                                name="email"
+                                autocomplete="email"
+                                placeholder="you@example.com"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="register-password">Password</label>
+                            <input
+                                type="password"
+                                id="register-password"
+                                name="password"
+                                autocomplete="new-password"
+                                placeholder="Create a password"
+                                required
+                            >
+                        </div>
+                        <div class="form-field">
+                            <label for="register-password-confirmation">Confirm password</label>
+                            <input
+                                type="password"
+                                id="register-password-confirmation"
+                                name="passwordConfirmation"
+                                autocomplete="new-password"
+                                placeholder="Enter your password again"
+                                required
+                            >
+                        </div>
+                        <button class="button button--primary button--submit" type="submit">
+                            Create account
+                        </button>
+                        <p class="form-message" id="register-error" aria-live="polite"></p>
+                    </form>
+                    <p class="auth-panel__switch">
+                        Already have an account?
+                        <button id="register-to-login" type="button">Log in</button>
+                    </p>
+                </div>
+            </section>
+
+            <section class="view profile-view" id="view-profile" data-view hidden>
+                <div class="profile-view__header">
+                    <p class="eyebrow">Account settings</p>
+                    <h1>Your profile</h1>
+                    <p>Manage your avatar and the details linked to your account.</p>
+                </div>
+                <section class="profile-avatar auth-panel" aria-labelledby="profile-avatar-title">
+                    <div class="profile-avatar__preview">
+                        <img id="profile-avatar-image" alt="Your profile avatar" hidden>
+                        <i class="bi bi-person-circle" id="profile-avatar-placeholder" aria-hidden="true"></i>
+                    </div>
+                    <div class="profile-avatar__content">
+                        <h2 id="profile-avatar-title">Profile picture</h2>
+                        <p class="auth-panel__description">
+                            Choose a JPG, PNG, or WebP image up to 2 MB.
+                        </p>
+                        <input
+                            class="visually-hidden"
+                            id="profile-avatar-file"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                        >
+                        <button
+                            class="button button--quiet"
+                            id="profile-avatar-change"
+                            type="button"
+                        >
+                            Change avatar
+                        </button>
+                        <p class="form-message profile-message" id="profile-avatar-message" aria-live="polite"></p>
+                    </div>
+                </section>
+                <div class="profile-view__forms">
+                    <section class="auth-panel" aria-labelledby="profile-email-title">
+                        <h2 id="profile-email-title">Email address</h2>
+                        <p class="auth-panel__description">
+                            A confirmation email may be required before the new address takes effect.
+                        </p>
+                        <form id="profile-email-form" class="auth-form">
+                            <div class="form-field">
+                                <label for="profile-email">Email address</label>
+                                <input
+                                    type="email"
+                                    id="profile-email"
+                                    name="email"
+                                    autocomplete="email"
+                                    required
+                                >
+                            </div>
+                            <button class="button button--primary button--submit" type="submit">
+                                Update email
+                            </button>
+                            <p class="form-message profile-message" id="profile-email-message" aria-live="polite"></p>
+                        </form>
+                    </section>
+
+                    <section class="auth-panel" aria-labelledby="profile-password-title">
+                        <h2 id="profile-password-title">Change password</h2>
+                        <p class="auth-panel__description">
+                            Choose a new password for your GRYD account.
+                        </p>
+                        <form id="profile-password-form" class="auth-form">
+                            <div class="form-field">
+                                <label for="profile-password">New password</label>
+                                <input
+                                    type="password"
+                                    id="profile-password"
+                                    name="password"
+                                    autocomplete="new-password"
+                                    required
+                                >
+                            </div>
+                            <div class="form-field">
+                                <label for="profile-password-confirmation">Confirm new password</label>
+                                <input
+                                    type="password"
+                                    id="profile-password-confirmation"
+                                    name="passwordConfirmation"
+                                    autocomplete="new-password"
+                                    required
+                                >
+                            </div>
+                            <button class="button button--primary button--submit" type="submit">
+                                Update password
+                            </button>
+                            <p class="form-message profile-message" id="profile-password-message" aria-live="polite"></p>
+                        </form>
+                    </section>
+                </div>
+                <section class="profile-delete" aria-labelledby="profile-delete-title">
+                    <div>
+                        <h2 id="profile-delete-title">Delete account</h2>
+                        <p>Permanently delete your account, library, and avatar.</p>
+                    </div>
+                    <button
+                        class="button profile-delete__button"
+                        id="profile-delete-trigger"
+                        type="button"
+                    >
+                        Delete Account
+                    </button>
+                </section>
+            </section>
+
+            <section class="view collection-view" id="view-explorer" data-view hidden>
+                <div class="collection-view__header">
+                    <div>
+                        <p class="eyebrow">Find your next favorite</p>
+                        <h1>Explore games</h1>
+                    </div>
+                    <p class="collection-view__description">
+                        Discover highly rated games and add them to your collection.
+                    </p>
+                </div>
+                <p class="catalog-attribution">
+                    Game information and community ratings are provided by IGDB.
+                    Ratings are out of 100; vote counts are shown on each game card.
+                </p>
+                <nav
+                    class="library-content-menu explorer-content-menu"
+                    id="explorer-content-menu"
+                    aria-label="Explore content"
+                ></nav>
+                <div class="catalog-toolbar">
+                    <label class="catalog-toolbar__search">
+                        <span class="visually-hidden">Search games</span>
+                        <input
+                            id="catalog-search"
+                            type="search"
+                            placeholder="Search games"
+                            maxlength="100"
+                            autocomplete="off"
+                        >
+                    </label>
+                    <button
+                        class="catalog-toolbar__filters"
+                        id="catalog-filters-toggle"
+                        type="button"
+                        aria-expanded="false"
+                        aria-controls="catalog-filter-panel"
+                    >
+                        <i class="bi bi-sliders" aria-hidden="true"></i>
+                        <span>Filters</span>
+                        <span class="catalog-toolbar__filter-count" id="catalog-filter-count" hidden></span>
+                    </button>
+                    <label class="catalog-toolbar__sort">
+                        <span>Sort by</span>
+                        <select id="catalog-sort" name="sort">
+                            <option value="rating">Highest rated</option>
+                            <option value="popular">Most popular</option>
+                            <option value="newest">Newest releases</option>
+                        </select>
+                    </label>
+                </div>
+                <div
+                    class="catalog-active-filters"
+                    id="catalog-active-filters"
+                    aria-label="Active search and filters"
+                    hidden
+                ></div>
+                <div class="explorer-layout">
+                    <div class="explorer-results">
+                        <div
+                            class="game-grid"
+                            id="game-catalog"
+                            aria-label="Explore games"
+                            aria-live="polite"
+                        ></div>
+                        <div class="explorer-empty-state" id="catalog-empty-state" role="status" hidden>
+                            <p id="catalog-empty-message">No games match these filters.</p>
+                            <button
+                                class="catalog-empty-state__clear"
+                                id="catalog-clear-filters"
+                                type="button"
+                                hidden
+                            >
+                                Clear search and filters
+                            </button>
+                        </div>
+                        <div class="scroll-sentinel" id="catalog-scroll-sentinel" aria-hidden="true"></div>
+                        <button
+                            class="button button--quiet catalog-load-more"
+                            id="catalog-load-more"
+                            type="button"
+                            hidden
+                        >
+                            Load more games
+                        </button>
+                    </div>
+                    <aside
+                        class="catalog-filter-panel"
+                        id="catalog-filter-panel"
+                        aria-labelledby="catalog-filter-title"
+                    >
+                        <form id="catalog-filters">
+                            <div class="catalog-filter-panel__header">
+                                <h2 id="catalog-filter-title">Filters</h2>
+                                <button class="catalog-filter-panel__reset" type="reset">
+                                    Reset
+                                </button>
+                            </div>
+
+                            <label
+                                class="catalog-filter-toggle"
+                                id="catalog-hide-owned-control"
+                                hidden
+                            >
+                                <input id="catalog-hide-owned" type="checkbox">
+                                <span>Hide library items</span>
+                            </label>
+
+                            <fieldset class="catalog-filter-group catalog-filter-group--year">
+                                <legend>Release year</legend>
+                                <div class="catalog-year-range">
+                                    <label>
+                                        <span class="visually-hidden">From year</span>
+                                        <input
+                                            id="catalog-year-from"
+                                            type="number"
+                                            min="1950"
+                                            max="2100"
+                                            inputmode="numeric"
+                                            placeholder="From"
+                                        >
+                                    </label>
+                                    <span aria-hidden="true">to</span>
+                                    <label>
+                                        <span class="visually-hidden">To year</span>
+                                        <input
+                                            id="catalog-year-to"
+                                            type="number"
+                                            min="1950"
+                                            max="2100"
+                                            inputmode="numeric"
+                                            placeholder="To"
+                                        >
+                                    </label>
+                                </div>
+                            </fieldset>
+
+                            <details class="catalog-filter-details">
+                                <summary>Genres</summary>
+                                <div
+                                    class="catalog-filter-options"
+                                    id="catalog-genre-options"
+                                    aria-live="polite"
+                                >
+                                    <p class="catalog-filter-hint">Loading genres...</p>
+                                </div>
+                            </details>
+
+                            <details class="catalog-filter-details">
+                                <summary>Themes</summary>
+                                <p class="catalog-filter-hint">
+                                    Includes Sandbox, Survival, and Zombies.
+                                </p>
+                                <div
+                                    class="catalog-filter-options"
+                                    id="catalog-theme-options"
+                                    aria-live="polite"
+                                >
+                                    <p class="catalog-filter-hint">Loading themes...</p>
+                                </div>
+                            </details>
+
+                            <details class="catalog-filter-details">
+                                <summary>Platforms</summary>
+                                <label class="catalog-filter-search">
+                                    <span class="visually-hidden">Search platforms</span>
+                                    <input
+                                        id="catalog-platform-search"
+                                        type="search"
+                                        placeholder="Search platforms"
+                                    >
+                                </label>
+                                <div
+                                    class="catalog-filter-options catalog-filter-options--scroll"
+                                    id="catalog-platform-options"
+                                    aria-live="polite"
+                                >
+                                    <p class="catalog-filter-hint">Loading platforms...</p>
+                                </div>
+                            </details>
+
+                            <p class="catalog-filter-error" id="catalog-filter-error" role="alert" hidden></p>
+                            <p
+                                class="catalog-filter-error"
+                                id="catalog-filter-options-error"
+                                role="alert"
+                                hidden
+                            ></p>
+                            <button
+                                class="catalog-filter-retry"
+                                id="catalog-filter-retry"
+                                type="button"
+                                hidden
+                            >
+                                Retry loading filter options
+                            </button>
+                            <button class="catalog-filter-apply" id="catalog-filter-apply" type="button">
+                                Apply filters
+                            </button>
+                        </form>
+                    </aside>
+                </div>
+            </section>
+
+            <section class="view collection-view game-route-view" id="view-game" data-view hidden>
+                <a class="game-route-view__back" id="game-detail-back" href="#explore">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                    <span id="game-detail-back-label">Back to Explore</span>
+                </a>
+                <p class="game-detail-message" id="game-detail-message" role="status" aria-live="polite"></p>
+                <div id="game-detail-content" hidden>
+                    <div id="game-detail-main">
+                    <header class="game-detail-heading">
+                        <div class="game-detail-heading__title-row">
+                            <h1 id="game-route-title"></h1>
+                            <span
+                                class="game-detail-heading__rating"
+                                id="game-detail-rating"
+                            ></span>
+                        </div>
+                        <p class="game-detail-byline" id="game-detail-release"></p>
+                    </header>
+                    <section class="game-detail-hero" aria-label="Game cover and media">
+                        <div class="game-detail-cover-column">
+                            <img class="game-detail-cover" id="game-detail-cover" alt="" hidden>
+                            <div
+                                class="game-detail-library-controls"
+                                id="game-detail-library-controls"
+                                data-game-id=""
+                                data-game-name=""
+                                hidden
+                            >
+                                <label class="game-detail-library-controls__status">
+                                    <span>My library</span>
+                                    <select
+                                        class="game-detail-library-status"
+                                        id="game-detail-library-status"
+                                        aria-label="Game status in your library"
+                                    >
+                                        <option value="select">Add to library…</option>
+                                        <option value="backlog">Backlog</option>
+                                        <option value="play">Playing</option>
+                                        <option value="pause">Paused</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="drop">Dropped</option>
+                                    </select>
+                                </label>
+                                <button
+                                    class="game-detail-library-remove"
+                                    id="game-detail-library-remove"
+                                    type="button"
+                                    aria-label="Remove game from your library"
+                                    hidden
+                                >
+                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                    <span>Remove from library</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="game-detail-gallery" id="game-detail-gallery">
+                            <div
+                                class="game-detail-gallery__featured"
+                                id="game-detail-featured"
+                                tabindex="0"
+                                aria-label="Featured game media"
+                            ></div>
+                            <div
+                                class="game-detail-gallery__thumbnails"
+                                id="game-detail-thumbnails"
+                                aria-label="Choose featured media"
+                            ></div>
+                        </div>
+                    </section>
+                    <nav class="game-detail-tabs" id="game-detail-tabs" role="tablist" aria-label="Game details"></nav>
+                    <section
+                        class="game-detail-panel"
+                        id="game-detail-panel"
+                        role="tabpanel"
+                        aria-live="polite"
+                        tabindex="0"
+                    ></section>
+                    </div>
+                    <section class="game-mission-page" id="game-mission-page" hidden>
+                        <a class="game-route-view__back game-mission-page__back"
+                           id="game-mission-page-back" href="#explore">
+                            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                            <span id="game-mission-page-back-label">Back to game</span>
+                        </a>
+                        <header class="game-mission-page__heading">
+                            <p class="eyebrow" id="game-mission-page-meta"></p>
+                            <h1 id="game-mission-page-title"></h1>
+                        </header>
+                        <div class="game-mission-page__layout">
+                            <article
+                                class="game-mission-page__article"
+                                id="game-mission-page-article"
+                                aria-live="polite"
+                            ></article>
+                            <aside
+                                class="game-mission-page__sidebar"
+                                id="game-mission-page-sidebar"
+                                aria-label="Mission details and contents"
+                                hidden
+                            ></aside>
+                        </div>
+                        <p
+                            class="game-mission-page__attribution"
+                            id="game-mission-page-attribution"
+                        ></p>
+                    </section>
+                </div>
+            </section>
+
+            <section class="view collection-view" id="view-library" data-view hidden>
+                <div class="collection-view__header">
+                    <div>
+                        <p class="eyebrow">Your personal collection</p>
+                        <h1>Your library</h1>
+                    </div>
+                    <p class="collection-view__description">
+                        Keep track of what you want to play, are playing, and have finished.
+                    </p>
+                </div>
+                <nav
+                    class="library-content-menu"
+                    id="library-content-menu"
+                    aria-label="Library content"
+                ></nav>
+                <div class="library-tools">
+                    <label class="library-tools__search">
+                        <span class="visually-hidden">Search your library</span>
+                        <input
+                            id="library-search"
+                            type="search"
+                            placeholder="Search your library"
+                            autocomplete="off"
+                        >
+                    </label>
+                    <button
+                        class="library-tools__filters"
+                        id="library-filters-toggle"
+                        type="button"
+                        aria-expanded="false"
+                        aria-controls="library-status-filters"
+                    >
+                        <i class="bi bi-sliders" aria-hidden="true"></i>
+                        <span>Filters</span>
+                    </button>
+                    <label class="library-tools__sort">
+                        <span>Sort by</span>
+                        <select id="library-sort">
+                            <option value="added">Recently added</option>
+                            <option value="title-asc">Title (A–Z)</option>
+                            <option value="title-desc">Title (Z–A)</option>
+                            <option value="status">Status</option>
+                        </select>
+                    </label>
+                </div>
+                <nav
+                    class="library-status-filters"
+                    id="library-status-filters"
+                    aria-label="Filter games by status"
+                ></nav>
+                <div
+                    class="game-grid"
+                    id="game-library"
+                    aria-label="Your game library"
+                    aria-live="polite"
+                ></div>
+                <div class="library-empty-state" id="library-empty-state" hidden>
+                    <p id="library-empty-message"></p>
+                    <button
+                        class="button button--primary"
+                        type="button"
+                        data-view-target="explore"
+                    >
+                        Explore games
+                    </button>
+                </div>
+            </section>
+
+            <section class="view collection-view retro-view" id="view-retro" data-view hidden>
+                <div class="collection-view__header">
+                    <div>
+                        <p class="eyebrow">Play in your browser</p>
+                        <h1>Retro Games</h1>
+                    </div>
+                    <p class="collection-view__description">
+                        Browse the retro games in your collection and play them here.
+                    </p>
+                </div>
+                <nav
+                    class="retro-platform-nav"
+                    id="retro-platform-nav"
+                    aria-label="Filter games by platform"
+                    hidden
+                ></nav>
+                <div class="retro-actions">
+                    <label class="retro-search">
+                    <span class="visually-hidden">Search retro games</span>
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input
+                        id="retro-search"
+                        type="search"
+                        placeholder="Search retro games"
+                        autocomplete="off"
+                    >
+                </label>
+
+                <label id="retro-local-rom-label" class="retro-upload" for="retro-local-rom">
+                    Open local game
+                </label>
+
+                <input
+                    id="retro-local-rom"
+                    type="file"
+                    accept=".gba,.n64,.z64,.v64,.sfc,.smc,.md,.chd"
+                    hidden
+                >
+                </div>
+                
+                <p class="retro-status" id="retro-status" role="status" aria-live="polite">
+                    Loading games…
+                </p>
+                <div class="retro-catalog game-grid" id="retro-catalog" aria-live="polite"></div>
+                <section class="retro-player" id="retro-player" aria-label="Game player" hidden>
+                    <div class="retro-player__header">
+                        <div>
+                            <p class="eyebrow">Now playing</p>
+                            <h2 id="retro-player-title"></h2>
+                        </div>
+                        <button class="button button--quiet" id="retro-player-back" type="button">
+                            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                            Back to games
+                        </button>
+                    </div>
+                    <div
+                        class="retro-player__status"
+                        id="retro-player-status"
+                        data-state="loading"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                    >
+                        <p id="retro-player-status-message"></p>
+                        <div
+                            class="retro-loading-bar"
+                            role="progressbar"
+                            aria-label="Loading EmulatorJS"
+                            aria-valuetext="Initializing emulator"
+                        ></div>
+                    </div>
+                    <iframe
+                        class="retro-player__frame"
+                        id="retro-player-frame"
+                        title="Retro game player"
+                        allow="autoplay; fullscreen; gamepad; pointer-lock"
+                        allowfullscreen
+                    ></iframe>
+                </section>
+            </section>
+
+            <section class="view legal-content" id="view-legal" data-view hidden></section>
+            <section class="view collection-view roadmap-view" id="view-roadmap" data-view hidden>
+                <div class="collection-view__header">
+                    <div>
+                        <p class="eyebrow">What's happening with GRYD</p>
+                        <h1>Roadmap</h1>
+                    </div>
+
+                    <p class="collection-view__description">
+                        Follow GRYD's development and see what's available,
+                        what's being worked on, and what's coming next.
+                    </p>
+                </div>
+
+                <div class="roadmap-grid">
+
+                    <!-- Game Explorer -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-compass" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--available">
+                                Available
+                            </span>
+                        </div>
+
+                        <h2>Game Explorer</h2>
+
+                        <p>
+                            Discover games and explore detailed information about
+                            titles across different platforms and generations.
+                        </p>
+
+                        <ul>
+                            <li>Game discovery</li>
+                            <li>Detailed game information</li>
+                            <li>Platforms and release information</li>
+                            <li>Media and related games</li>
+                        </ul>
+                    </article>
+
+                    <!-- Personal Library -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-collection" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--available">
+                                Available
+                            </span>
+                        </div>
+
+                        <h2>Personal Library</h2>
+
+                        <p>
+                            Build your own game library and keep track of what
+                            you're playing and what you want to play next.
+                        </p>
+
+                        <ul>
+                            <li>Backlog</li>
+                            <li>Playing</li>
+                            <li>Completed</li>
+                            <li>Personal game tracking</li>
+                        </ul>
+                    </article>
+
+                    <!-- Retro Gaming -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-controller" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--available">
+                                Available
+                            </span>
+                        </div>
+
+                        <h2>Retro Gaming</h2>
+
+                        <p>
+                            Play classic games directly in your browser through
+                            GRYD's integrated emulator.
+                        </p>
+
+                        <ul>
+                            <li>Nintendo 64</li>
+                            <li>Super Nintendo</li>
+                            <li>Game Boy Advance</li>
+                            <li>Sega Genesis</li>
+                        </ul>
+                    </article>
+
+                    <!-- Game Missions -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-list-check" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--beta">
+                                Beta
+                            </span>
+                        </div>
+
+                        <h2>Game Missions</h2>
+
+                        <p>
+                            Explore missions and objectives directly from supported
+                            game pages. Coverage is currently being expanded.
+                        </p>
+
+                        <ul>
+                            <li>Mission lists for supported games</li>
+                            <li>Mission descriptions and objectives</li>
+                            <li>Coverage varies between games</li>
+                            <li>More titles are being added progressively</li>
+                        </ul>
+                    </article>
+
+                    <!-- PlayStation -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-controller" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--progress">
+                                In progress
+                            </span>
+                        </div>
+
+                        <h2>PlayStation Support</h2>
+
+                        <p>
+                            PlayStation support is currently being integrated into
+                            GRYD's Retro Games experience.
+                        </p>
+
+                        <ul>
+                            <li>PS1 game support</li>
+                            <li>CHD format support</li>
+                            <li>PCSX-ReARMed emulation</li>
+                            <li>Optimized storage for larger games</li>
+                        </ul>
+                    </article>
+
+                    <!-- Multi-disc -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-disc" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--planned">
+                                Planned
+                            </span>
+                        </div>
+
+                        <h2>Multi-disc Games</h2>
+
+                        <p>
+                            Support games distributed across multiple discs as part
+                            of the expanding PlayStation experience.
+                        </p>
+
+                        <ul>
+                            <li>Multiple discs per game</li>
+                            <li>In-game disc switching</li>
+                            <li>Unified game entries</li>
+                        </ul>
+                    </article>
+
+                    <!-- Library Insights -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-bar-chart" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--planned">
+                                Planned
+                            </span>
+                        </div>
+
+                        <h2>Library Insights</h2>
+
+                        <p>
+                            Understand your gaming library and progress through
+                            personalized statistics.
+                        </p>
+
+                        <ul>
+                            <li>Games completed</li>
+                            <li>Games currently playing</li>
+                            <li>Backlog progress</li>
+                            <li>Platform statistics</li>
+                        </ul>
+                    </article>
+
+                    <!-- User Profiles -->
+                    <article class="roadmap-card">
+                        <div class="roadmap-card__header">
+                            <i class="bi bi-person-badge" aria-hidden="true"></i>
+                            <span class="roadmap-status roadmap-status--planned">
+                                Planned
+                            </span>
+                        </div>
+
+                        <h2>User Profiles</h2>
+
+                        <p>
+                            Make your GRYD profile more personal and showcase
+                            your gaming activity.
+                        </p>
+
+                        <ul>
+                            <li>Public profiles</li>
+                            <li>Favorite games</li>
+                            <li>Recently played games</li>
+                            <li>Library overview</li>
+                        </ul>
+                    </article>
+
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="site-footer">
+            <p class="site-footer__copyright">&copy; 2026 GRYD</p>
+            <small class="site-footer__credit">Game data provided by IGDB</small>
+            <nav class="site-footer__legal" aria-label="Legal">
+                <button id="legal-privacy" type="button" data-view-target="privacy">Privacy policy</button>
+                <button id="legal-terms" type="button" data-view-target="terms">Terms of service</button>
+            </nav>
+        </footer>
+
+        <p class="app-notice" id="app-notice" role="status" aria-live="polite" hidden></p>
+
+        <dialog
+            class="avatar-crop-dialog"
+            id="profile-avatar-crop-dialog"
+            aria-labelledby="profile-avatar-crop-title"
+        >
+            <h2 id="profile-avatar-crop-title">Adjust your avatar</h2>
+            <p class="avatar-crop-dialog__hint">
+                Drag the image to reposition it and use the slider to zoom.
+            </p>
+            <div class="avatar-crop-dialog__viewport">
+                <canvas
+                    id="profile-avatar-crop-canvas"
+                    width="512"
+                    height="512"
+                    tabindex="0"
+                    aria-label="Avatar crop preview. Drag to reposition the image."
+                ></canvas>
+            </div>
+            <label class="avatar-crop-dialog__zoom" for="profile-avatar-crop-zoom">
+                Zoom
+                <input
+                    id="profile-avatar-crop-zoom"
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="0.01"
+                    value="1"
+                >
+            </label>
+            <p class="form-message" id="profile-avatar-crop-message" aria-live="polite"></p>
+            <div class="avatar-crop-dialog__actions">
+                <button class="button button--quiet" id="profile-avatar-crop-cancel" type="button">
+                    Cancel
+                </button>
+                <button class="button button--primary" id="profile-avatar-crop-save" type="button">
+                    Use this crop
+                </button>
+            </div>
+        </dialog>
+
+        <dialog
+            class="account-delete-dialog"
+            id="account-delete-dialog"
+            aria-labelledby="account-delete-dialog-title"
+        >
+            <h2 id="account-delete-dialog-title">Delete your account?</h2>
+            <p>
+                This permanently deletes your account, saved games, and avatar. This cannot be undone.
+            </p>
+            <form id="account-delete-form" class="auth-form">
+                <div class="form-field">
+                    <label for="account-delete-password">Current password</label>
+                    <input
+                        id="account-delete-password"
+                        name="password"
+                        type="password"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+                <div class="form-field">
+                    <label for="account-delete-confirmation">Type DELETE to confirm</label>
+                    <input
+                        id="account-delete-confirmation"
+                        name="confirmation"
+                        type="text"
+                        autocomplete="off"
+                        required
+                    >
+                </div>
+                <p class="form-message" id="account-delete-message" aria-live="polite"></p>
+                <div class="avatar-crop-dialog__actions">
+                    <button
+                        class="button button--quiet"
+                        id="account-delete-cancel"
+                        type="button"
+                    >
+                        Cancel
+                    </button>
+                    <button class="button profile-delete__button" id="account-delete-submit" type="submit">
+                        Delete Account
+                    </button>
+                </div>
+            </form>
+        </dialog>
+
+    </body>
+</html>

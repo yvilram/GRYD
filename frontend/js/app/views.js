@@ -3,6 +3,7 @@ const ROUTE_VIEWS = {
     explore: "view-explorer",
     library: "view-library",
     retro: "view-retro",
+    roadmap: "view-roadmap",
     login: "view-login",
     register: "view-register",
     profile: "view-profile",
