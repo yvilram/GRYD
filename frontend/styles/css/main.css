@@ -1031,17 +1031,38 @@ body {
 
 .game-route-view__back {
   display: inline-flex;
+  width: fit-content;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 12px;
-  color: #d7ff00;
+  gap: 8px;
+  margin-bottom: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
   font-size: 0.88rem;
+  font-weight: 650;
   text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.game-route-view__back i {
+  color: var(--color-accent);
+  font-size: 0.9rem;
+  transition: transform 160ms ease;
 }
 
 .game-route-view__back:hover {
-  color: #fff;
-  text-decoration: underline;
+  color: var(--color-text);
+}
+
+.game-route-view__back:hover i {
+  transform: translateX(-3px);
+}
+
+.game-route-view__back:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 5px;
 }
 
 .game-route-view h1 {
