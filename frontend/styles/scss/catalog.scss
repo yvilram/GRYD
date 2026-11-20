@@ -56,36 +56,36 @@
     display: inline-flex;
     width: fit-content;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 28px;
-    padding: 0;
-    border: 0;
-    background: transparent;
+    gap: 9px;
+    margin: 32px 0 24px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.035);
     color: var(--color-muted);
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     font-weight: 650;
     text-decoration: none;
-    transition: color 160ms ease;
+    transition:
+        color 160ms ease,
+        border-color 160ms ease,
+        background 160ms ease;
 }
 
 .game-route-view__back i {
     color: var(--color-accent);
     font-size: 0.9rem;
-    transition: transform 160ms ease;
 }
 
 .game-route-view__back:hover {
+    border-color: rgba(215, 255, 0, 0.3);
+    background: rgba(215, 255, 0, 0.055);
     color: var(--color-text);
 }
 
-.game-route-view__back:hover i {
-    transform: translateX(-3px);
-}
-
 .game-route-view__back:focus-visible {
-    border-radius: 4px;
     outline: 2px solid var(--color-accent);
-    outline-offset: 5px;
+    outline-offset: 3px;
 }
 
 .game-route-view h1 {
