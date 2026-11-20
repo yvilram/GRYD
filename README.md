@@ -2,40 +2,39 @@
 
 [![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N8X82A3MND)
 
-GRYD es una aplicación web para descubrir videojuegos, consultar información detallada, organizar una biblioteca personal y jugar a títulos retro directamente desde el navegador.
+GRYD is a web application for discovering video games, accessing detailed information, organizing a personal library, and playing retro titles directly from your browser.
 
-La aplicación combina descubrimiento, seguimiento y contenido de videojuegos en una única interfaz, con nuevas funcionalidades incorporándose de forma progresiva.
+The application combines game discovery, tracking, and content into a single interface, with new features being added progressively.
 
-## Capturas
+## Screenshots
 
-| Inicio | Explorer |
+| Start | Explorer |
 |---|---|
-| ![Página de inicio de GRYD](docs/images/main.png) | ![Catálogo Explorer](docs/images/explorer.png) |
+| ![Initial page of GRYD](docs/images/main.png) | ![Explorer Catalog](docs/images/explorer.png) |
 
-| Biblioteca | Detalle de un juego |
+| Library | Game details |
 |---|---|
-| ![Biblioteca personal](docs/images/library.png) | ![Vista detallada de un videojuego](docs/images/preview.png) |
+| ![Personal Library](docs/images/library.png) | ![Detailed view of a game](docs/images/preview.png) |
 
-## Funcionalidades
+## Features
 
 ### Explorer
 
-- Catálogo de videojuegos con datos de IGDB.
-- Búsqueda por nombre.
-- Filtros por género, tema, plataforma y año de lanzamiento.
-- Ordenación por valoración, popularidad y fecha de lanzamiento.
-- Página de detalle para cada juego.
-- Portadas, capturas, vídeos y contenido relacionado.
-- Información sobre plataformas y lanzamientos.
-- Estimaciones de duración mediante HowLongToBeat.
-- Posibilidad de ocultar juegos que ya forman parte de la biblioteca personal.
+- Video game catalog powered by IGDB data.
+- Search by title.
+- Filters by genre, theme, platform, and release year.
+- Sorting by rating, popularity, and release date.
+- Dedicated detail page for each game.
+- Covers, screenshots, videos, and related content.
+- Platform and release information.
+- Playtime estimates through HowLongToBeat.
+- Option to hide games that are already part of your personal library.
 
 ### Personal Library
 
-Los usuarios autenticados pueden crear y organizar su propia biblioteca de
-videojuegos.
+Authenticated users can create and organize their own personal game library.
 
-Estados disponibles:
+Available statuses:
 
 - Backlog
 - Playing
@@ -43,80 +42,78 @@ Estados disponibles:
 - Completed
 - Dropped
 
-La biblioteca incluye búsqueda, filtros y ordenación. El estado de un juego
-también puede modificarse directamente desde su página de detalle.
+The library includes search, filtering, and sorting options. A game's status
+can also be changed directly from its detail page.
 
 ### Game Missions — Beta
 
-Algunos juegos incluyen una sección de misiones con información adicional
-sobre objetivos, misiones y guías.
+Some games include a Missions section with additional information about
+missions, objectives, and guides.
 
-La funcionalidad se encuentra actualmente en **Beta** y su cobertura depende
-del título. El número de juegos compatibles continuará ampliándose
-progresivamente.
+This feature is currently in **Beta**, and coverage depends on the game.
+Support for additional titles will continue to expand over time.
 
-Cuando existe contenido compatible, GRYD puede mostrar:
+When compatible content is available, GRYD can display:
 
-- Listas de misiones.
-- Objetivos y descripciones.
-- Guías asociadas a cada misión.
-- Navegación entre las guías de una misión.
-- Imágenes y vídeos asociados a las guías.
-- Contenido relacionado accesible desde la propia interfaz.
+- Mission lists.
+- Objectives and descriptions.
+- Guides associated with each mission.
+- Navigation between a mission's guides.
+- Images and videos associated with guides.
+- Related content accessible directly from the interface.
 
-Las misiones se consultan primero en la caché de Supabase. Cuando todavía no
-están almacenadas, GRYD obtiene la información bajo demanda y la guarda para
-reutilizarla en futuras visitas.
+GRYD checks the Supabase cache first for mission data. When the information
+has not yet been stored, GRYD retrieves it on demand and caches it for future
+visits.
 
-El contenido externo mostrado en las guías se atribuye a su fuente
-correspondiente.
+External content displayed in guides is attributed to its corresponding
+source.
 
 ### Retro Games
 
-GRYD integra EmulatorJS para ejecutar juegos retro directamente desde el
-navegador.
+GRYD integrates EmulatorJS to run retro games directly in the browser.
 
-Plataformas disponibles actualmente:
+Platforms currently available:
 
 - Nintendo 64
 - Super Nintendo
 - Game Boy Advance
 - Sega Genesis
 
-Entre los formatos soportados se encuentran:
+Supported formats include:
 
 - `.n64`, `.z64`, `.v64`
 - `.sfc`, `.smc`
 - `.gba`
 - `.md`
 
-Además del catálogo disponible en GRYD, es posible abrir una ROM compatible
-almacenada en el dispositivo mediante la opción **Open local game**.
+In addition to the catalog available in GRYD, users can open a compatible ROM
+stored on their device using the **Open local game** option.
 
-Los juegos retro y las portadas pueden organizarse automáticamente por
-plataforma y el catálogo genera dinámicamente sus filtros.
+Retro games and covers can be organized automatically by platform, and the
+catalog dynamically generates the corresponding filters.
 
 ### PlayStation — In progress
 
-El soporte para PlayStation está actualmente en desarrollo.
+PlayStation support is currently under development.
 
-La implementación está siendo preparada para:
+The implementation is being prepared for:
 
-- Emulación de PS1 mediante PCSX-ReARMed.
-- Juegos en formato `.chd`.
-- Almacenamiento externo S3-compatible para juegos de mayor tamaño.
-- Buckets privados mediante URLs temporales firmadas.
-- Asociación de los juegos externos con portadas almacenadas en Supabase.
-- Optimización de los tiempos de descarga y carga.
+- PS1 emulation through PCSX-ReARMed.
+- Games in `.chd` format.
+- S3-compatible external storage for larger games.
+- Private buckets accessed through temporary signed URLs.
+- Association of externally stored games with covers stored in Supabase.
+- Download and loading-time optimization.
 
-La integración de almacenamiento externo es opcional y puede mantenerse
-desactivada hasta disponer de un proveedor S3-compatible configurado.
+External storage integration is optional and can remain disabled until an
+S3-compatible storage provider has been configured.
 
-El soporte para juegos multidisco está previsto como una ampliación futura.
+Multi-disc game support is planned as a future extension.
 
-## Estado del proyecto
+## Project status
 
-| Funcionalidad | Estado |
+| Feature | Status |
 |---|---|
 | Game Explorer | Available |
 | Personal Library | Available |
@@ -127,15 +124,15 @@ El soporte para juegos multidisco está previsto como una ampliación futura.
 | Library Insights | Planned |
 | User Profiles | Planned |
 
-La aplicación también incluye una sección **Roadmap** donde se muestra el
-estado de las principales funcionalidades y las próximas incorporaciones.
+The application also includes a **Roadmap** section where the current status
+of GRYD's main features and upcoming additions can be tracked.
 
-## Configuración de Retro Games
+## Retro Games configuration
 
-Para habilitar Retro Games, configura el bucket público `retro-gaming` en
-Supabase Storage.
+To enable Retro Games, configure the public `retro-gaming` bucket in Supabase
+Storage.
 
-Una estructura recomendada es:
+A recommended structure is:
 
 ```text
 retro-gaming/
@@ -153,27 +150,26 @@ retro-gaming/
     └── genesis/
 ```
 
-El loader debe estar disponible en:
+The loader must be available at:
 
 ```text
 emulatorjs/data/loader.js
 ```
 
-junto con los archivos necesarios de EmulatorJS.
+along with the required EmulatorJS files.
 
-Los títulos del catálogo retro se obtienen del nombre de los archivos.
+Retro game titles are derived from their file names.
 
-Para asociar una portada con un juego, utiliza el mismo nombre base para ambos
-archivos.
+To associate a cover with a game, use the same base name for both files.
 
-Por ejemplo:
+For example:
 
 ```text
 roms/snes/Super Mario World.sfc
 cover/snes/Super Mario World.webp
 ```
 
-Las portadas pueden utilizar los formatos:
+Covers can use the following formats:
 
 ```text
 .jpg
@@ -182,23 +178,21 @@ Las portadas pueden utilizar los formatos:
 .webp
 ```
 
-Las subcarpetas situadas directamente dentro de `roms/` se utilizan como
-plataformas y permiten generar los filtros correspondientes del catálogo.
+Directories placed directly inside `roms/` are treated as platforms and are
+used to generate the corresponding catalog filters.
 
-Para reproducir una consola nueva también es necesario registrar sus
-extensiones y el core correspondiente de EmulatorJS en la configuración del
-backend.
+Adding support for another console also requires registering its file
+extensions and corresponding EmulatorJS core in the backend configuration.
 
-### Almacenamiento externo
+### External storage
 
-GRYD dispone de una implementación genérica para utilizar almacenamiento
-S3-compatible con juegos de mayor tamaño.
+GRYD includes a generic implementation for using S3-compatible storage for
+larger games.
 
-La integración es opcional y está pensada principalmente para plataformas
-cuyas imágenes de disco resultan demasiado grandes para el almacenamiento
-retro habitual.
+The integration is optional and is primarily intended for platforms whose
+disc images are too large for the regular retro game storage setup.
 
-La configuración utiliza las siguientes variables:
+The integration uses the following configuration variables:
 
 ```dotenv
 RETRO_S3_ENDPOINT=
@@ -208,24 +202,24 @@ RETRO_S3_ACCESS_KEY_ID=
 RETRO_S3_SECRET_ACCESS_KEY=
 ```
 
-Las credenciales se utilizan únicamente en el backend y nunca deben exponerse
-en el frontend o añadirse al repositorio.
+These credentials are used exclusively by the backend and must never be
+exposed to the frontend or committed to the repository.
 
-Cuando el almacenamiento externo está desactivado, Retro Games continúa
-funcionando únicamente con el contenido almacenado en Supabase.
+When external storage is disabled, Retro Games continues to operate using
+only the content stored in Supabase.
 
-## Tecnologías
+## Technologies
 
-- **Frontend:** HTML, SCSS/CSS y JavaScript sin framework.
+- **Frontend:** HTML, SCSS/CSS, and vanilla JavaScript.
 - **Backend:** Cloudflare Workers.
-- **Base de datos y autenticación:** Supabase.
-- **Almacenamiento:** Supabase Storage y soporte opcional para almacenamiento S3-compatible.
-- **Datos de videojuegos:** IGDB.
-- **Duración estimada:** HowLongToBeat, a través de Fous.
-- **Emulación:** EmulatorJS.
-- **Core de PlayStation en desarrollo:** PCSX-ReARMed.
+- **Database and authentication:** Supabase.
+- **Storage:** Supabase Storage with optional S3-compatible external storage support.
+- **Video game data:** IGDB.
+- **Playtime estimates:** HowLongToBeat through Fous.
+- **Emulation:** EmulatorJS.
+- **PlayStation core under development:** PCSX-ReARMed.
 
-## Estructura del proyecto
+## Project structure
 
 ```text
 GRYD/
@@ -241,7 +235,7 @@ GRYD/
 │   └── js/
 │       ├── app/
 │       └── features/
-├── functions/                 # Pages Functions para las rutas /api/...
+├── functions/                 # Pages Functions for /api/... routes
 ├── backend/
 │   ├── worker.mjs
 │   └── src/
@@ -253,43 +247,43 @@ GRYD/
 │   ├── DEVELOPMENT-COMMANDS.md
 │   ├── ROADMAP.md
 │   └── SCHEMA.md
-├── supabase/                  # SQL de tablas y caché
+├── supabase/                  # SQL for tables and caches
 ├── package.json
 └── wrangler.jsonc
 ```
 
-Las imágenes y fuentes utilizadas por la interfaz se encuentran en:
+Images and fonts used by the interface are located in:
 
 ```text
 frontend/assets/images/
 frontend/assets/fonts/
 ```
 
-Las capturas utilizadas en este README se almacenan en:
+Screenshots used in this README are stored in:
 
 ```text
 docs/images/
 ```
 
-## Desarrollo local
+## Local development
 
-### Requisitos
+### Requirements
 
-- Node.js y npm.
-- Un proyecto de Supabase.
-- Credenciales de IGDB.
-- Una clave de Fous para las estimaciones de HowLongToBeat.
-- Opcionalmente, un proveedor S3-compatible para almacenamiento retro externo.
+- Node.js and npm.
+- A Supabase project.
+- IGDB credentials.
+- A Fous API key for HowLongToBeat estimates.
+- Optionally, an S3-compatible provider for external retro game storage.
 
-### Instalación
+### Installation
 
-Instala las dependencias:
+Install the dependencies:
 
 ```bash
 npm install
 ```
 
-Crea `.dev.vars` en la raíz del proyecto con las variables utilizadas por
+Create a `.dev.vars` file in the project root with the variables used by
 Wrangler:
 
 ```dotenv
@@ -303,7 +297,7 @@ IGDB_ACCESS_TOKEN=
 FOUS_API_KEY=
 ```
 
-Si habilitas el almacenamiento retro externo, añade también:
+If external retro storage is enabled, also add:
 
 ```dotenv
 RETRO_S3_ENDPOINT=
@@ -313,16 +307,15 @@ RETRO_S3_ACCESS_KEY_ID=
 RETRO_S3_SECRET_ACCESS_KEY=
 ```
 
-`.dev.vars` está excluido del repositorio y no debe añadirse a Git.
+`.dev.vars` is excluded from the repository and must never be committed to Git.
 
-Antes de ejecutar GRYD por primera vez, aplica el esquema necesario de
-Supabase:
+Before running GRYD for the first time, apply the required Supabase schema:
 
 ```text
 supabase/create_games.sql
 ```
 
-Para habilitar Game Missions, aplica también:
+To enable Game Missions, also apply:
 
 ```text
 supabase/create_game_missions.sql
@@ -330,122 +323,119 @@ supabase/create_game_missions.sql
 
 ## Game Missions
 
-Las misiones y guías se cargan bajo demanda.
+Missions and guides are loaded on demand.
 
-GRYD consulta primero la tabla `game_missions`. Si la información todavía no
-está almacenada, se obtiene cuando el usuario accede al contenido
-correspondiente y posteriormente se guarda en Supabase.
+GRYD first checks the `game_missions` table. If the requested information is
+not already stored, it is retrieved when the user accesses the corresponding
+content and is then cached in Supabase.
 
-Cada misión puede incluir diferentes guide pages. El contenido de cada guía se
-consulta al abrirla y se presenta mediante una vista dedicada con navegación
-lateral.
+Each mission can include multiple guide pages. Guide content is retrieved when
+a guide is opened and displayed in a dedicated view with sidebar navigation.
 
-Las guías pueden incluir:
+Guides can include:
 
-- Texto.
-- Imágenes.
-- Vídeos.
-- Enlaces a contenido relacionado.
+- Text.
+- Images.
+- Videos.
+- Links to related content.
 
-Los slugs de los juegos se resuelven utilizando los datos disponibles en IGDB
-y se prueban variantes habituales de los títulos cuando es necesario localizar
-contenido relacionado.
+Game slugs are resolved using the available IGDB data, and common title
+variations are tested when necessary to locate related content.
 
-La interfaz muestra la atribución correspondiente para el contenido procedente
-de fuentes externas.
+The interface displays the corresponding attribution for content obtained from
+external sources.
 
-## Ejecutar el proyecto
+## Running the project
 
-Inicia simultáneamente el frontend y el Worker:
+Start the frontend and Worker together:
 
 ```bash
 npm run dev
 ```
 
-Este comando:
+This command:
 
-1. Compila el SCSS.
-2. Inicia el Cloudflare Worker.
-3. Inicia el servidor del frontend.
+1. Compiles the SCSS.
+2. Starts the Cloudflare Worker.
+3. Starts the frontend development server.
 
-En desarrollo local normalmente estarán disponibles en:
+During local development, they are normally available at:
 
 ```text
 Frontend: http://localhost:3000
 Worker:   http://localhost:8787
 ```
 
-Para compilar únicamente los estilos:
+To compile only the styles:
 
 ```bash
 npm run build:css
 ```
 
-El comando genera:
+This generates:
 
 ```text
 frontend/styles/css/main.css
 ```
 
-a partir de:
+from:
 
 ```text
 frontend/styles/scss/main.scss
 ```
 
-Por tanto, los estilos deben modificarse en los archivos SCSS y no directamente
-en `main.css`.
+Styles should therefore be modified in the SCSS source files rather than
+directly in `main.css`.
 
-## Supabase Auth y correo
+## Supabase Auth and email
 
-GRYD utiliza Supabase Auth para el registro y autenticación de usuarios.
+GRYD uses Supabase Auth for user registration and authentication.
 
-La confirmación de correo puede activarse desde Supabase.
+Email confirmation can be enabled in Supabase.
 
-Si está activada, el usuario debe abrir el enlace recibido por correo para
-confirmar la cuenta. Si está desactivada, el registro puede iniciar la sesión
-automáticamente.
+When enabled, users must open the link received by email to confirm their
+account. When disabled, registration can automatically start a user session.
 
-Para producción, configura:
+For production, configure:
 
 **Authentication → URL Configuration**
 
-incluyendo la **Site URL** y las **Redirect URLs** correspondientes.
+including the appropriate **Site URL** and **Redirect URLs**.
 
-Si utilizas confirmación de correo, revisa también:
+If email confirmation is enabled, also review:
 
 **Authentication → Email Templates → Confirm signup**
 
-para que el enlace redirija correctamente a GRYD utilizando `token_hash` y
+so that confirmation links redirect back to GRYD using `token_hash` and
 `type=email`.
 
-Para una entrega de correo fiable en producción es recomendable configurar un
-servidor SMTP propio.
+For reliable email delivery in production, configuring a dedicated SMTP server
+is recommended.
 
-La configuración detallada se encuentra en:
+Detailed configuration is available in:
 
-[Comandos y configuración](docs/DEVELOPMENT-COMMANDS.md)
+[Development commands and configuration](docs/DEVELOPMENT-COMMANDS.md)
 
-## Despliegue
+## Deployment
 
-El backend se publica mediante Cloudflare Workers y el frontend mediante
+The backend is deployed using Cloudflare Workers and the frontend using
 Cloudflare Pages.
 
-La configuración de secretos, autenticación, despliegue y comandos de
-verificación se encuentra documentada en:
+Secret configuration, authentication, deployment commands, and verification
+steps are documented in:
 
-[Guía de comandos de desarrollo y despliegue](docs/DEVELOPMENT-COMMANDS.md)
+[Development and deployment guide](docs/DEVELOPMENT-COMMANDS.md)
 
-## Documentación
+## Documentation
 
-- [Comandos, APIs y despliegue](docs/DEVELOPMENT-COMMANDS.md)
-- [Esquema de Supabase](docs/SCHEMA.md)
+- [Commands, APIs, and deployment](docs/DEVELOPMENT-COMMANDS.md)
+- [Supabase schema](docs/SCHEMA.md)
 - [Roadmap](docs/ROADMAP.md)
 
-## Créditos
+## Credits
 
-- Los datos del catálogo de videojuegos proceden de IGDB.
-- Las estimaciones de duración utilizan datos de HowLongToBeat.
-- La emulación de sistemas retro se realiza mediante EmulatorJS y los cores correspondientes.
-- El contenido de misiones y guías muestra su atribución a la fuente correspondiente.
-- La tipografía Geist Pixel se distribuye bajo la SIL Open Font License 1.1; su licencia se incluye con los archivos de fuente.
+- Video game catalog data is provided by IGDB.
+- Playtime estimates use HowLongToBeat data.
+- Retro system emulation is provided through EmulatorJS and the corresponding emulator cores.
+- Mission and guide content displays attribution to its corresponding source.
+- The Geist Pixel typeface is distributed under the SIL Open Font License 1.1; its license is included alongside the font files.
