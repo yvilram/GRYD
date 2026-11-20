@@ -4,6 +4,7 @@ const ROUTE_VIEWS = {
     library: "view-library",
     retro: "view-retro",
     roadmap: "view-roadmap",
+    developer: "view-developer",
     login: "view-login",
     register: "view-register",
     profile: "view-profile",

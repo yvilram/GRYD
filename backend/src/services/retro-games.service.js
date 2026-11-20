@@ -16,6 +16,8 @@ const COVER_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
 const STORAGE_PAGE_SIZE = 1000;
 
 const ENABLE_EXTERNAL_STORAGE = false;
+const isExternalStorageEnabled = () =>
+    ENABLE_EXTERNAL_STORAGE;
 const EXTERNAL_PLATFORMS = {
     ps1: {
         romPath: "roms/psx/",
@@ -297,4 +299,7 @@ const getRetroGames = async supabase => {
     };
 };
 
-module.exports = { getRetroGames };
+module.exports = {
+    getRetroGames,
+    isExternalStorageEnabled
+};

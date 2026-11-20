@@ -1,0 +1,99 @@
+]633;E;echo "===== AUTH / SESSION REFERENCES =====";7d82b41f-63fc-4452-bcdc-acd53a8992ae]633;C===== AUTH / SESSION REFERENCES =====
+backend/src/routes/auth.routes.js:3:const { getSessionContext } = require("../services/session.service");
+backend/src/routes/auth.routes.js:5:const SESSION_COOKIE_OPTIONS = {
+backend/src/routes/auth.routes.js:25:            Authorization: `Bearer ${accessToken}`,
+backend/src/routes/auth.routes.js:77:            if (!data.session) {
+backend/src/routes/auth.routes.js:84:            res.cookie("session", data.session.access_token, SESSION_COOKIE_OPTIONS);
+backend/src/routes/auth.routes.js:117:            if (!data.session) {
+backend/src/routes/auth.routes.js:119:                    error: "Email was confirmed, but a session could not be started. Please log in."
+backend/src/routes/auth.routes.js:123:            res.cookie("session", data.session.access_token, SESSION_COOKIE_OPTIONS);
+backend/src/routes/auth.routes.js:145:            res.cookie("session", data.session.access_token, SESSION_COOKIE_OPTIONS);
+backend/src/routes/auth.routes.js:154:    app.get("/api/session", async (req, res) => {
+backend/src/routes/auth.routes.js:156:            const session = await getSessionContext(req);
+backend/src/routes/auth.routes.js:157:            if (!session) return res.json({ loggedIn: false });
+backend/src/routes/auth.routes.js:161:                email: session.user.email,
+backend/src/routes/auth.routes.js:162:                avatarUrl: session.user.user_metadata?.avatar_url || ""
+backend/src/routes/auth.routes.js:165:            console.error("Error en /api/session:", error);
+backend/src/routes/auth.routes.js:172:            res.clearCookie("session", {
+backend/src/routes/auth.routes.js:187:            const session = await getSessionContext(req);
+backend/src/routes/auth.routes.js:188:            if (!session) return res.json({ authenticated: false });
+backend/src/routes/auth.routes.js:193:                    id: session.user.id,
+backend/src/routes/auth.routes.js:194:                    email: session.user.email
+backend/src/routes/auth.routes.js:205:            const session = await getSessionContext(req);
+backend/src/routes/auth.routes.js:206:            if (!session) return res.status(401).json({ error: "Not logged in" });
+backend/src/routes/auth.routes.js:214:            if (email === session.user.email?.toLowerCase()) {
+backend/src/routes/auth.routes.js:220:                session.accessToken,
+backend/src/routes/auth.routes.js:241:            const session = await getSessionContext(req);
+backend/src/routes/auth.routes.js:242:            if (!session) return res.status(401).json({ error: "Not logged in" });
+backend/src/routes/auth.routes.js:251:                session.accessToken,
+backend/src/routes/auth.routes.js:268:            const session = await getSessionContext(req);
+backend/src/routes/auth.routes.js:269:            if (!session) return res.status(401).json({ error: "Not logged in" });
+backend/src/routes/auth.routes.js:285:            const path = `${session.user.id}/${crypto.randomUUID()}.${extension}`;
+backend/src/routes/auth.routes.js:286:            const { data, error } = await session.supabase.storage
+backend/src/routes/auth.routes.js:306:            const session = await getSessionContext(req);
+backend/src/routes/auth.routes.js:307:            if (!session) return res.status(401).json({ error: "Not logged in" });
+backend/src/routes/auth.routes.js:311:                `^${session.user.id}/[0-9a-f-]{36}\\.(jpg|png|webp)$`
+backend/src/routes/auth.routes.js:317:            const previousPath = session.user.user_metadata?.avatar_path;
+backend/src/routes/auth.routes.js:319:            const publicUrl = session.supabase.storage
+backend/src/routes/auth.routes.js:323:            const userMetadata = session.user.user_metadata || {};
+backend/src/routes/auth.routes.js:326:                session.accessToken,
+backend/src/routes/auth.routes.js:336:                const { error: cleanupError } = await session.supabase.storage
+backend/src/routes/auth.routes.js:350:                const { error } = await session.supabase.storage
+backend/src/routes/auth.routes.js:368:            const session = await getSessionContext(req);
+backend/src/routes/auth.routes.js:369:            if (!session) return res.status(401).json({ error: "Not logged in." });
+backend/src/routes/auth.routes.js:391:                    email: session.user.email,
+backend/src/routes/auth.routes.js:401:            if (verificationError || verification.user?.id !== session.user.id) {
+backend/src/routes/auth.routes.js:409:                .eq("user_id", session.user.id);
+backend/src/routes/auth.routes.js:423:                    session.user.id,
+backend/src/routes/auth.routes.js:439:                    .map(file => `${session.user.id}/${file.name}`));
+backend/src/routes/auth.routes.js:457:                session.user.id
+backend/src/routes/auth.routes.js:466:            res.clearCookie("session", {
+backend/src/routes/library.routes.js:1:const { getSessionContext } = require("../services/session.service");
+backend/src/routes/library.routes.js:37:            const session = await getSessionContext(req);
+backend/src/routes/library.routes.js:38:            if (!session) return res.status(401).json({ error: "Not logged in" });
+backend/src/routes/library.routes.js:56:            const { error } = await session.supabase
+backend/src/routes/library.routes.js:60:                    user_id: session.user.id,
+backend/src/routes/library.routes.js:78:            const session = await getSessionContext(req);
+backend/src/routes/library.routes.js:79:            if (!session) return res.status(401).json({ error: "Not logged in" });
+backend/src/routes/library.routes.js:81:            const { data, error } = await session.supabase
+backend/src/routes/library.routes.js:84:                .eq("user_id", session.user.id);
+backend/src/routes/library.routes.js:96:            const session = await getSessionContext(req);
+backend/src/routes/library.routes.js:97:            if (!session) return res.status(401).json({ error: "Not logged in" });
+backend/src/routes/library.routes.js:104:            const { error } = await session.supabase
+backend/src/routes/library.routes.js:108:                .eq("user_id", session.user.id);
+backend/src/services/igdb.client.js:3:    const accessToken = process.env.IGDB_ACCESS_TOKEN;
+backend/src/services/igdb.client.js:9:            "Authorization": `Bearer ${accessToken}`
+backend/src/services/session.service.js:3:async function getSessionContext(request) {
+backend/src/services/session.service.js:4:    const token = request.cookies?.session;
+backend/src/services/session.service.js:8:    const { data, error } = await supabase.auth.getUser(token);
+backend/src/services/session.service.js:15:module.exports = { getSessionContext };
+backend/src/services/fous.client.js:17:            Authorization: `Bearer ${apiKey}`,
+backend/src/services/fous.client.js:39:            headers: { Authorization: `Bearer ${apiKey}` },
+backend/src/services/supabase.client.js:1:const { createClient } = require("@supabase/supabase-js");
+backend/src/services/supabase.client.js:8:                persistSession: false,
+backend/src/services/supabase.client.js:9:                detectSessionInUrl: false
+backend/src/services/supabase.client.js:13:                    Authorization: `Bearer ${accessToken}`
+backend/src/services/supabase.client.js:19:    return createClient(
+backend/src/services/supabase.client.js:31:    return createClient(
+backend/src/services/supabase.client.js:37:                persistSession: false,
+backend/src/services/supabase.client.js:38:                detectSessionInUrl: false
+backend/src/app.js:35:    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+
+===== ROUTES =====
+backend/src/routes/catalog.routes.js
+backend/src/routes/auth.routes.js
+backend/src/routes/library.routes.js
+backend/src/routes/retro.routes.js
+
+===== WORKER ROUTE SETUP =====
+import { env } from "cloudflare:workers";
+import { httpServerHandler } from "cloudflare:node";
+
+// Inyecta las variables de entorno y secretos de Cloudflare en process.env
+Object.assign(process.env, env);
+
+import app from "./src/app.js";
+
+app.listen(3000);
+
+export default httpServerHandler({ port: 3000 });

@@ -23,6 +23,7 @@
         <script src="/js/features/games/retro.js" defer></script>
         <script src="/js/features/library/game-state.js" defer></script>
         <script src="/js/features/legal/privacy-terms.js" defer></script>
+        <script src="/js/features/developer/developer.js" defer></script>
     </head>
 
     <body>
@@ -105,6 +106,16 @@
                         <i class="bi bi-signpost-split" aria-hidden="true"></i>
                         <span>Roadmap</span>
                     </button>
+                    <button
+                        class="button button--nav"
+                        id="navigation-developer"
+                        type="button"
+                        data-view-target="developer"
+                        hidden
+                    >
+                        <i class="bi bi-code-slash" aria-hidden="true"></i>
+                        <span>Developer</span>
+                    </button>
                 </nav>
 
                 <div class="header-account">
@@ -159,27 +170,328 @@
         </header>
 
         <main class="site-main" id="main-content">
-        <section class="view home-view" id="view-home" data-view>
-            <div class="home-hero">
-                <div class="home-view__content">
-                    <p class="eyebrow">Your next favorite game starts here</p>
+            <section class="view home-view" id="view-home" data-view>
+                <div class="home-hero">
+                    <div class="home-view__content">
+                        <p class="eyebrow">Your next favorite game starts here</p>
 
-                    <h1>
-                        Discover games.
-                        <br>
-                        <span>Make them yours.</span>
-                    </h1>
+                        <h1>
+                            Discover games.
+                            <br>
+                            <span>Make them yours.</span>
+                        </h1>
 
-                    <p class="home-view__description">
-                        Discover new games, explore their worlds, build your
-                        personal library, and play retro classics directly
-                        in your browser.
-                    </p>
+                        <p class="home-view__description">
+                            Discover new games, explore their worlds, build your
+                            personal library, and play retro classics directly
+                            in your browser.
+                        </p>
 
-                    <div class="home-view__actions">
+                        <div class="home-view__actions">
+                            <button
+                                class="button button--primary button--large"
+                                id="home-explore"
+                                type="button"
+                                data-view-target="explore"
+                            >
+                                Explore games
+                                <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+                            </button>
+
+                            <button
+                                class="button button--quiet button--large"
+                                id="home-register"
+                                type="button"
+                                data-view-target="register"
+                            >
+                                Create your free account
+                            </button>
+                        </div>
+
+                        <ul class="home-hero__highlights" aria-label="GRYD highlights">
+                            <li>
+                                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                Free account
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                Personal library
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                Browser-based retro gaming
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="home-view__art" aria-hidden="true">
+                        <span class="home-view__orb home-view__orb--one"></span>
+                        <span class="home-view__orb home-view__orb--two"></span>
+                        <i class="bi bi-controller"></i>
+                    </div>
+                </div>
+
+                <section class="home-features" aria-labelledby="home-features-title">
+                    <header class="home-section-heading">
+                        <div>
+                            <p class="eyebrow">One place for your games</p>
+                            <h2 id="home-features-title">
+                                Discover, organize, and play
+                            </h2>
+                        </div>
+
+                        <p>
+                            GRYD brings game discovery, detailed information,
+                            personal collections, and retro gaming together.
+                        </p>
+                    </header>
+
+                    <div class="home-feature-grid">
+                        <article class="home-feature-card">
+                            <div class="home-feature-card__icon">
+                                <i class="bi bi-compass" aria-hidden="true"></i>
+                            </div>
+
+                            <div class="home-feature-card__content">
+                                <span class="home-feature-card__status">
+                                    Available
+                                </span>
+
+                                <h3>Explore games</h3>
+
+                                <p>
+                                    Search across platforms and generations, apply
+                                    detailed filters, and discover highly rated or
+                                    popular games.
+                                </p>
+                            </div>
+
+                            <button
+                                class="home-feature-card__link"
+                                type="button"
+                                data-view-target="explore"
+                            >
+                                Start exploring
+                                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                            </button>
+                        </article>
+
+                        <article class="home-feature-card">
+                            <div class="home-feature-card__icon">
+                                <i class="bi bi-collection" aria-hidden="true"></i>
+                            </div>
+
+                            <div class="home-feature-card__content">
+                                <span class="home-feature-card__status">
+                                    Available
+                                </span>
+
+                                <h3>Build your library</h3>
+
+                                <p>
+                                    Create a personal collection and organize games
+                                    as Backlog, Playing, Paused, Completed, or Dropped.
+                                </p>
+                            </div>
+
+                            <button
+                                class="home-feature-card__link"
+                                type="button"
+                                data-view-target="register"
+                            >
+                                Create your library
+                                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                            </button>
+                        </article>
+
+                        <article class="home-feature-card">
+                            <div class="home-feature-card__icon">
+                                <i class="bi bi-list-check" aria-hidden="true"></i>
+                            </div>
+
+                            <div class="home-feature-card__content">
+                                <span
+                                    class="home-feature-card__status
+                                        home-feature-card__status--beta"
+                                >
+                                    Beta
+                                </span>
+
+                                <h3>Explore game missions</h3>
+
+                                <p>
+                                    Read mission lists, objectives, and walkthrough
+                                    information for supported games. Coverage continues
+                                    to expand.
+                                </p>
+                            </div>
+
+                            <button
+                                class="home-feature-card__link"
+                                type="button"
+                                data-view-target="explore"
+                            >
+                                Find supported games
+                                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                            </button>
+                        </article>
+
+                        <article class="home-feature-card">
+                            <div class="home-feature-card__icon">
+                                <i class="bi bi-controller" aria-hidden="true"></i>
+                            </div>
+
+                            <div class="home-feature-card__content">
+                                <span class="home-feature-card__status">
+                                    Available
+                                </span>
+
+                                <h3>Play retro classics</h3>
+
+                                <p>
+                                    Play supported Nintendo 64, Super Nintendo,
+                                    Game Boy Advance, and Sega Genesis games directly
+                                    in your browser.
+                                </p>
+                            </div>
+
+                            <button
+                                class="home-feature-card__link"
+                                type="button"
+                                data-view-target="retro"
+                            >
+                                Open Retro Games
+                                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                            </button>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="home-workflow" aria-labelledby="home-workflow-title">
+                    <header class="home-section-heading home-section-heading--center">
+                        <div>
+                            <p class="eyebrow">Your gaming journey</p>
+                            <h2 id="home-workflow-title">Everything stays connected</h2>
+                        </div>
+
+                        <p>
+                            Go from discovering a game to tracking it in your
+                            collection without leaving GRYD.
+                        </p>
+                    </header>
+
+                    <ol class="home-workflow__steps">
+                        <li class="home-workflow__step">
+                            <span class="home-workflow__number">01</span>
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <h3>Discover</h3>
+                            <p>
+                                Find games using search, sorting, and detailed filters.
+                            </p>
+                        </li>
+
+                        <li class="home-workflow__step">
+                            <span class="home-workflow__number">02</span>
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            <h3>Explore</h3>
+                            <p>
+                                Review covers, ratings, releases, media, and missions.
+                            </p>
+                        </li>
+
+                        <li class="home-workflow__step">
+                            <span class="home-workflow__number">03</span>
+                            <i class="bi bi-bookmark-plus" aria-hidden="true"></i>
+                            <h3>Organize</h3>
+                            <p>
+                                Add games to your library and update their status.
+                            </p>
+                        </li>
+
+                        <li class="home-workflow__step">
+                            <span class="home-workflow__number">04</span>
+                            <i class="bi bi-joystick" aria-hidden="true"></i>
+                            <h3>Play</h3>
+                            <p>
+                                Launch supported retro games directly in your browser.
+                            </p>
+                        </li>
+                    </ol>
+                </section>
+
+                <section
+                    class="home-roadmap-preview"
+                    aria-labelledby="home-roadmap-title"
+                >
+                    <div class="home-roadmap-preview__content">
+                        <div class="home-roadmap-preview__icon" aria-hidden="true">
+                            <i class="bi bi-controller"></i>
+                        </div>
+
+                        <div>
+                            <div class="home-roadmap-preview__meta">
+                                <p class="eyebrow">Currently in development</p>
+
+                                <span class="home-roadmap-preview__status">
+                                    In progress
+                                </span>
+                            </div>
+
+                            <h2 id="home-roadmap-title">PlayStation support</h2>
+
+                            <p>
+                                PS1 emulation, CHD support, and optimized delivery for
+                                larger retro games are currently being integrated into
+                                GRYD.
+                            </p>
+
+                            <ul class="home-roadmap-preview__items">
+                                <li>
+                                    <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                    PCSX-ReARMed integration
+                                </li>
+                                <li>
+                                    <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                    CHD game support
+                                </li>
+                                <li>
+                                    <i
+                                        class="bi bi-hourglass-split"
+                                        aria-hidden="true"
+                                    ></i>
+                                    Storage and loading optimization
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button
+                        class="button button--quiet button--large"
+                        type="button"
+                        data-view-target="roadmap"
+                    >
+                        View full roadmap
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </section>
+
+                <section class="home-final-cta" aria-labelledby="home-final-cta-title">
+                    <div>
+                        <p class="eyebrow">Start building your collection</p>
+
+                        <h2 id="home-final-cta-title">
+                            Find your next game with GRYD
+                        </h2>
+
+                        <p>
+                            Explore the catalog immediately or create a free account
+                            to start organizing your personal library.
+                        </p>
+                    </div>
+
+                    <div class="home-final-cta__actions">
                         <button
                             class="button button--primary button--large"
-                            id="home-explore"
                             type="button"
                             data-view-target="explore"
                         >
@@ -189,315 +501,14 @@
 
                         <button
                             class="button button--quiet button--large"
-                            id="home-register"
                             type="button"
                             data-view-target="register"
                         >
-                            Create your free account
+                            Create account
                         </button>
                     </div>
-
-                    <ul class="home-hero__highlights" aria-label="GRYD highlights">
-                        <li>
-                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                            Free account
-                        </li>
-                        <li>
-                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                            Personal library
-                        </li>
-                        <li>
-                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                            Browser-based retro gaming
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="home-view__art" aria-hidden="true">
-                    <span class="home-view__orb home-view__orb--one"></span>
-                    <span class="home-view__orb home-view__orb--two"></span>
-                    <i class="bi bi-controller"></i>
-                </div>
-            </div>
-
-            <section class="home-features" aria-labelledby="home-features-title">
-                <header class="home-section-heading">
-                    <div>
-                        <p class="eyebrow">One place for your games</p>
-                        <h2 id="home-features-title">
-                            Discover, organize, and play
-                        </h2>
-                    </div>
-
-                    <p>
-                        GRYD brings game discovery, detailed information,
-                        personal collections, and retro gaming together.
-                    </p>
-                </header>
-
-                <div class="home-feature-grid">
-                    <article class="home-feature-card">
-                        <div class="home-feature-card__icon">
-                            <i class="bi bi-compass" aria-hidden="true"></i>
-                        </div>
-
-                        <div class="home-feature-card__content">
-                            <span class="home-feature-card__status">
-                                Available
-                            </span>
-
-                            <h3>Explore games</h3>
-
-                            <p>
-                                Search across platforms and generations, apply
-                                detailed filters, and discover highly rated or
-                                popular games.
-                            </p>
-                        </div>
-
-                        <button
-                            class="home-feature-card__link"
-                            type="button"
-                            data-view-target="explore"
-                        >
-                            Start exploring
-                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                        </button>
-                    </article>
-
-                    <article class="home-feature-card">
-                        <div class="home-feature-card__icon">
-                            <i class="bi bi-collection" aria-hidden="true"></i>
-                        </div>
-
-                        <div class="home-feature-card__content">
-                            <span class="home-feature-card__status">
-                                Available
-                            </span>
-
-                            <h3>Build your library</h3>
-
-                            <p>
-                                Create a personal collection and organize games
-                                as Backlog, Playing, Paused, Completed, or Dropped.
-                            </p>
-                        </div>
-
-                        <button
-                            class="home-feature-card__link"
-                            type="button"
-                            data-view-target="register"
-                        >
-                            Create your library
-                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                        </button>
-                    </article>
-
-                    <article class="home-feature-card">
-                        <div class="home-feature-card__icon">
-                            <i class="bi bi-list-check" aria-hidden="true"></i>
-                        </div>
-
-                        <div class="home-feature-card__content">
-                            <span
-                                class="home-feature-card__status
-                                    home-feature-card__status--beta"
-                            >
-                                Beta
-                            </span>
-
-                            <h3>Explore game missions</h3>
-
-                            <p>
-                                Read mission lists, objectives, and walkthrough
-                                information for supported games. Coverage continues
-                                to expand.
-                            </p>
-                        </div>
-
-                        <button
-                            class="home-feature-card__link"
-                            type="button"
-                            data-view-target="explore"
-                        >
-                            Find supported games
-                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                        </button>
-                    </article>
-
-                    <article class="home-feature-card">
-                        <div class="home-feature-card__icon">
-                            <i class="bi bi-controller" aria-hidden="true"></i>
-                        </div>
-
-                        <div class="home-feature-card__content">
-                            <span class="home-feature-card__status">
-                                Available
-                            </span>
-
-                            <h3>Play retro classics</h3>
-
-                            <p>
-                                Play supported Nintendo 64, Super Nintendo,
-                                Game Boy Advance, and Sega Genesis games directly
-                                in your browser.
-                            </p>
-                        </div>
-
-                        <button
-                            class="home-feature-card__link"
-                            type="button"
-                            data-view-target="retro"
-                        >
-                            Open Retro Games
-                            <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                        </button>
-                    </article>
-                </div>
+                </section>
             </section>
-
-            <section class="home-workflow" aria-labelledby="home-workflow-title">
-                <header class="home-section-heading home-section-heading--center">
-                    <div>
-                        <p class="eyebrow">Your gaming journey</p>
-                        <h2 id="home-workflow-title">Everything stays connected</h2>
-                    </div>
-
-                    <p>
-                        Go from discovering a game to tracking it in your
-                        collection without leaving GRYD.
-                    </p>
-                </header>
-
-                <ol class="home-workflow__steps">
-                    <li class="home-workflow__step">
-                        <span class="home-workflow__number">01</span>
-                        <i class="bi bi-search" aria-hidden="true"></i>
-                        <h3>Discover</h3>
-                        <p>
-                            Find games using search, sorting, and detailed filters.
-                        </p>
-                    </li>
-
-                    <li class="home-workflow__step">
-                        <span class="home-workflow__number">02</span>
-                        <i class="bi bi-info-circle" aria-hidden="true"></i>
-                        <h3>Explore</h3>
-                        <p>
-                            Review covers, ratings, releases, media, and missions.
-                        </p>
-                    </li>
-
-                    <li class="home-workflow__step">
-                        <span class="home-workflow__number">03</span>
-                        <i class="bi bi-bookmark-plus" aria-hidden="true"></i>
-                        <h3>Organize</h3>
-                        <p>
-                            Add games to your library and update their status.
-                        </p>
-                    </li>
-
-                    <li class="home-workflow__step">
-                        <span class="home-workflow__number">04</span>
-                        <i class="bi bi-joystick" aria-hidden="true"></i>
-                        <h3>Play</h3>
-                        <p>
-                            Launch supported retro games directly in your browser.
-                        </p>
-                    </li>
-                </ol>
-            </section>
-
-            <section
-                class="home-roadmap-preview"
-                aria-labelledby="home-roadmap-title"
-            >
-                <div class="home-roadmap-preview__content">
-                    <div class="home-roadmap-preview__icon" aria-hidden="true">
-                        <i class="bi bi-controller"></i>
-                    </div>
-
-                    <div>
-                        <div class="home-roadmap-preview__meta">
-                            <p class="eyebrow">Currently in development</p>
-
-                            <span class="home-roadmap-preview__status">
-                                In progress
-                            </span>
-                        </div>
-
-                        <h2 id="home-roadmap-title">PlayStation support</h2>
-
-                        <p>
-                            PS1 emulation, CHD support, and optimized delivery for
-                            larger retro games are currently being integrated into
-                            GRYD.
-                        </p>
-
-                        <ul class="home-roadmap-preview__items">
-                            <li>
-                                <i class="bi bi-check-lg" aria-hidden="true"></i>
-                                PCSX-ReARMed integration
-                            </li>
-                            <li>
-                                <i class="bi bi-check-lg" aria-hidden="true"></i>
-                                CHD game support
-                            </li>
-                            <li>
-                                <i
-                                    class="bi bi-hourglass-split"
-                                    aria-hidden="true"
-                                ></i>
-                                Storage and loading optimization
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <button
-                    class="button button--quiet button--large"
-                    type="button"
-                    data-view-target="roadmap"
-                >
-                    View full roadmap
-                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                </button>
-            </section>
-
-            <section class="home-final-cta" aria-labelledby="home-final-cta-title">
-                <div>
-                    <p class="eyebrow">Start building your collection</p>
-
-                    <h2 id="home-final-cta-title">
-                        Find your next game with GRYD
-                    </h2>
-
-                    <p>
-                        Explore the catalog immediately or create a free account
-                        to start organizing your personal library.
-                    </p>
-                </div>
-
-                <div class="home-final-cta__actions">
-                    <button
-                        class="button button--primary button--large"
-                        type="button"
-                        data-view-target="explore"
-                    >
-                        Explore games
-                        <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
-                    </button>
-
-                    <button
-                        class="button button--quiet button--large"
-                        type="button"
-                        data-view-target="register"
-                    >
-                        Create account
-                    </button>
-                </div>
-            </section>
-        </section>
 
             <section class="view auth-view" id="view-login" data-view hidden>
                 <div class="auth-panel">
@@ -1155,6 +1166,7 @@
             </section>
 
             <section class="view legal-content" id="view-legal" data-view hidden></section>
+
             <section class="view collection-view roadmap-view" id="view-roadmap" data-view hidden>
                 <div class="collection-view__header">
                     <div>
@@ -1362,6 +1374,162 @@
                     </article>
 
                 </div>
+            </section>
+            <section
+                class="view collection-view developer-view"
+                id="view-developer"
+                data-view
+                hidden
+            >
+                <div class="collection-view__header">
+                    <div>
+                        <p class="eyebrow">Internal tools</p>
+                        <h1>Developer</h1>
+                    </div>
+
+                    <p class="collection-view__description">
+                        Internal diagnostics and development information for GRYD.
+                    </p>
+                </div>
+
+                <p
+                    class="developer-status"
+                    id="developer-status"
+                    role="status"
+                    aria-live="polite"
+                >
+                    Loading developer data…
+                </p>
+
+                <div class="developer-grid" id="developer-dashboard" hidden>
+
+                <article class="developer-card">
+                <div class="developer-card__header">
+                <div class="developer-card__icon">
+                <i class="bi bi-person-lock" aria-hidden="true"></i>
+                </div>
+
+                <span class="developer-badge developer-badge--ok">
+                Authorized
+                </span>
+                </div>
+
+                <h2>Access</h2>
+
+                <dl class="developer-values">
+                <div>
+                <dt>Account</dt>
+                <dd id="developer-user-email">—</dd>
+                </div>
+
+                <div>
+                <dt>Role</dt>
+                <dd>Developer</dd>
+                </div>
+                </dl>
+                </article>
+
+                <article class="developer-card">
+                <div class="developer-card__header">
+                <div class="developer-card__icon">
+                <i class="bi bi-database" aria-hidden="true"></i>
+                </div>
+                </div>
+
+                <h2>Database</h2>
+
+                <dl class="developer-values">
+                <div>
+                <dt>Games cache</dt>
+                <dd id="developer-games-count">—</dd>
+                </div>
+
+                <div>
+                <dt>Catalog pages</dt>
+                <dd id="developer-catalog-count">—</dd>
+                </div>
+
+                <div>
+                <dt>Mission records</dt>
+                <dd id="developer-missions-count">—</dd>
+                </div>
+                </dl>
+                </article>
+
+                <article class="developer-card">
+                <div class="developer-card__header">
+                <div class="developer-card__icon">
+                <i class="bi bi-controller" aria-hidden="true"></i>
+                </div>
+                </div>
+
+                <h2>Retro Gaming</h2>
+
+                <dl class="developer-values">
+                <div class="developer-setting">
+                <dt>
+                    <label for="developer-local-upload">
+                        Local game upload
+                    </label>
+                </dt>
+
+                <dd>
+                    <input
+                        id="developer-local-upload"
+                        class="developer-switch"
+                        type="checkbox"
+                        role="switch"
+                        disabled
+                    >
+                </dd>
+                </div>
+
+                <div>
+                <dt>External storage</dt>
+                <dd id="developer-external-storage">—</dd>
+                </div>
+
+                <div>
+                <dt>Emulator</dt>
+                <dd>EmulatorJS</dd>
+                </div>
+
+                <div>
+                <dt>PS1</dt>
+                <dd id="developer-ps1-status">In progress</dd>
+                </div>
+                </dl>
+                </article>
+
+                <article class="developer-card">
+                <div class="developer-card__header">
+                <div class="developer-card__icon">
+                <i class="bi bi-hdd-network" aria-hidden="true"></i>
+                </div>
+                </div>
+
+                <h2>Services</h2>
+
+                <dl class="developer-values">
+                <div>
+                <dt>Supabase</dt>
+                <dd id="developer-supabase-status">—</dd>
+                </div>
+
+                <div>
+                <dt>IGDB</dt>
+                <dd id="developer-igdb-status">—</dd>
+                </div>
+
+                <div>
+                <dt>External S3</dt>
+                <dd id="developer-s3-status">—</dd>
+                </div>
+                </dl>
+                </article>
+
+                </div>
+
             </section>
 
         </main>

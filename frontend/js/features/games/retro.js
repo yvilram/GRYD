@@ -11,6 +11,57 @@ const retroPlayerBack = document.getElementById("retro-player-back");
 const retroLocalRom = document.getElementById("retro-local-rom");
 const retroLocalRomLabel = document.getElementById("retro-local-rom-label");
 
+const applyLocalUploadSetting = enabled => {
+    retroLocalRomLabel.hidden = !enabled;
+    retroLocalRom.disabled = !enabled;
+
+    if (!enabled) {
+        retroLocalRom.value = "";
+    }
+};
+
+const loadRetroSettings = async () => {
+    try {
+        const response = await fetch(
+            `${API_URL}/api/app-settings`
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Could not load Retro Games settings."
+            );
+        }
+
+        const settings = await response.json();
+
+        applyLocalUploadSetting(
+            settings.retroLocalUploadEnabled === true
+        );
+    } catch (error) {
+        console.error(
+            "Could not load Retro Games settings:",
+            error
+        );
+
+        applyLocalUploadSetting(false);
+    }
+};
+
+window.addEventListener(
+    "app:settings-changed",
+    ({ detail }) => {
+        if (
+            typeof detail?.retroLocalUploadEnabled !== "boolean"
+        ) {
+            return;
+        }
+
+        applyLocalUploadSetting(
+            detail.retroLocalUploadEnabled
+        );
+    }
+);
+
 const ENABLE_LOCAL_GAMES = false;
 
 retroLocalRomLabel.hidden = !ENABLE_LOCAL_GAMES;
@@ -386,6 +437,8 @@ document.addEventListener("app:navigate", ({ detail }) => {
         stopRetroGame();
         return;
     }
+
+    loadRetroSettings();
     loadRetroGames();
 });
 
