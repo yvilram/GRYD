@@ -54,8 +54,10 @@
 
 .game-route-view__back {
     display: inline-flex;
-    width: fit-content;
     align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: fit-content;
     gap: 9px;
     margin: 32px 0 24px;
     padding: 8px 12px;
