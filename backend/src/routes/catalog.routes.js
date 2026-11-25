@@ -13,7 +13,9 @@ const {
     getGameMissions
 } = require("../services/game-missions.service");
 const {
-    getPricesForGame
+    getPricesForGame,
+    getSteamAppDetails,
+    findSteamBaseAppId
 } = require("../services/game-prices.service");
 const {
     getRowsByIds,
@@ -306,14 +308,26 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
             const steamExternalGame =
                 igdbGame.external_games?.find(externalGame =>
                     externalGame.external_game_source?.name === "Steam"
-                );
+            );
+
+            const gogProductIds = (
+                igdbGame.external_games || []
+            )
+                .filter(externalGame =>
+                    externalGame.external_game_source?.name === "GOG"
+                )
+                .map(externalGame =>
+                    String(externalGame.uid || "").trim()
+                )
+                .filter(uid => /^[1-9]\d*$/.test(uid));
 
             const result = await getPricesForGame(
                 req.env,
                 {
                     name: igdbGame.name,
                     steamAppId: steamExternalGame?.uid || null,
-                    },
+                    gogProductIds
+                },
                 "ES"
             );
 
@@ -333,6 +347,100 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
 
             return res.status(error.upstream ? 502 : 500).json({
                 error: "Could not load this game's prices."
+            });
+        }
+    });
+
+    app.get("/api/games/:id/requirements", async (req, res) => {
+        try {
+            if (
+                !/^[1-9]\d*$/.test(req.params.id) ||
+                !Number.isSafeInteger(Number(req.params.id))
+            ) {
+                throw invalidInput(
+                    "Game ID must be a positive integer."
+                );
+            }
+
+            const gameId = Number(req.params.id);
+
+            const supabase =
+                createSupabaseClient.createSupabaseAdminClient(
+                    req.env
+                );
+
+            const rowsById = await loadFullGames(
+                supabase,
+                requestIgdb,
+                [gameId]
+            );
+
+            const game = rowsById.get(gameId);
+
+            if (!game) {
+                return res.status(404).json({
+                    error: "Game not found."
+                });
+            }
+
+            const igdbGame = game.igdb_data;
+
+            const steamExternalGame =
+                igdbGame.external_games?.find(
+                    externalGame =>
+                        externalGame
+                            .external_game_source
+                            ?.name === "Steam"
+                );
+
+            let steamAppId = steamExternalGame?.uid || null;
+
+            if (!steamAppId) {
+                steamAppId = await findSteamBaseAppId(
+                    igdbGame.name,
+                    "ES"
+                );
+            }
+
+            if (!steamAppId) {
+                return res.json({
+                    available: false,
+                    source: null,
+                    minimum: null,
+                    recommended: null
+                });
+            }
+
+            const steamData = await getSteamAppDetails(
+                steamAppId,
+                "ES"
+            );
+
+            const minimum =
+                steamData?.pc_requirements?.minimum || null;
+
+            const recommended =
+                steamData?.pc_requirements?.recommended || null;
+
+            return res.json({
+                available: Boolean(
+                    minimum || recommended
+                ),
+                source: minimum || recommended
+                    ? "steam"
+                    : null,
+                minimum,
+                recommended
+            });
+        } catch (error) {
+            console.error(
+                `Could not load requirements for game ${req.params.id}:`,
+                error
+            );
+
+            return res.status(500).json({
+                error:
+                    "Could not load this game's PC requirements."
             });
         }
     });

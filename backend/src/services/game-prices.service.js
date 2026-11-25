@@ -14,6 +14,10 @@ const getApiKey = env =>
     env?.ISTHEREANYDEAL_API_KEY ||
     process.env.ISTHEREANYDEAL_API_KEY;
 
+const {
+    getGogPrice
+} = require("./gog-prices.service");
+
 const requestItad = async (env, path, options = {}) => {
     const apiKey = getApiKey(env);
 
@@ -525,6 +529,61 @@ const getSteamPackagePrice = async (
     }
 };
 
+const findSteamBaseAppId = async (
+    title,
+    country = "ES"
+) => {
+    const baseTitle = String(title || "")
+        .replace(
+            /\s*[-:–—]\s*(ultimate|complete|deluxe|definitive|game of the year|goty)\s+edition\s*$/i,
+            ""
+        )
+        .trim();
+
+    if (!baseTitle || baseTitle === title) {
+        return null;
+    }
+
+    const searchParams = new URLSearchParams({
+        term: baseTitle,
+        cc: country,
+        l: "english"
+    });
+
+    try {
+        const response = await fetch(
+            `https://store.steampowered.com/api/storesearch/?${searchParams}`,
+            {
+                headers: {
+                    Accept: "application/json"
+                },
+                signal: AbortSignal.timeout(
+                    REQUEST_TIMEOUT_MS
+                )
+            }
+        );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const result = await response.json();
+
+        const baseApp = (result?.items || []).find(
+            item =>
+                item?.type === "app" &&
+                normalizeTitle(item.name) ===
+                    normalizeTitle(baseTitle)
+        );
+
+        return baseApp?.id
+            ? String(baseApp.id)
+            : null;
+    } catch {
+        return null;
+    }
+};
+
 const findSteamPackagePrice = async (
     title,
     country = "ES"
@@ -686,6 +745,34 @@ const getPricesForGame = async (
         }
     }
 
+    const hasGogDeal = deals.some(deal =>
+        normalizeTitle(
+            deal?.shop?.name
+        ) === "gog"
+    );
+
+    if (
+        !hasGogDeal &&
+        Array.isArray(game.gogProductIds) &&
+        game.gogProductIds.length > 0
+    ) {
+        try {
+            const gogPrice = await getGogPrice(
+                game.gogProductIds,
+                country
+            );
+
+            if (gogPrice) {
+                deals.push(gogPrice);
+            }
+        } catch (error) {
+            console.error(
+                `Could not load GOG price for ${game.name}:`,
+                error
+            );
+        }
+    }
+
     let hasSteamDeal = deals.some(deal =>
         normalizeTitle(
             deal?.shop?.name
@@ -770,5 +857,7 @@ const getPricesForGame = async (
 };
 
 module.exports = {
-    getPricesForGame
+    getPricesForGame,
+    getSteamAppDetails,
+    findSteamBaseAppId
 };

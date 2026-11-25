@@ -2175,6 +2175,58 @@ body {
   gap: 12px;
 }
 
+.game-detail-requirements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.game-detail-requirements__card {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(24, 29, 43, 0.82), rgba(15, 18, 28, 0.76));
+}
+
+.game-detail-requirements__card h2 {
+  margin: 0 0 20px;
+  color: #d7ff00;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.game-detail-requirements__specs {
+  color: var(--color-text);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.game-detail-requirements__specs ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.game-detail-requirements__specs li {
+  margin: 0;
+  padding: 0;
+  color: var(--color-text);
+}
+
+.game-detail-requirements__specs strong {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
 .game-price-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -3509,7 +3561,7 @@ body {
   .game-detail-panel {
     padding-top: 18px;
   }
-  .game-detail-overview, .game-detail-platforms, .game-detail-prices {
+  .game-detail-overview, .game-detail-platforms, .game-detail-prices, .game-detail-requirements {
     grid-template-columns: minmax(0, 1fr);
   }
   .game-detail-missions {

@@ -588,6 +588,7 @@ const GAME_DETAIL_TABS = [
     { id: "overview", label: "Overview" },
     { id: "missions", label: "Missions" },
     { id: "prices", label: "Prices" },
+    { id: "requirements", label: "PC Requirements" },
     { id: "media", label: "Gallery" },
     { id: "related", label: "Related content" },
     { id: "platforms", label: "Platforms" },
@@ -2459,6 +2460,63 @@ const renderPricesTab = (game, controller) => {
     return content;
 };
 
+const renderRequirementsTab = requirements => {
+    const content = document.createElement("div");
+    content.classList.add("game-detail-requirements");
+
+    const createCard = (title, html) => {
+        if (!html) return null;
+
+        const card = document.createElement("section");
+        card.classList.add("game-detail-requirements__card");
+
+        const heading = document.createElement("h2");
+        heading.textContent = title;
+
+        const specs = document.createElement("div");
+        specs.classList.add("game-detail-requirements__specs");
+
+        specs.innerHTML = html;
+
+        specs.querySelectorAll(
+            "script, style, iframe, object, embed"
+        ).forEach(element => element.remove());
+
+        // Steam suele incluir "Minimum:" / "Recommended:"
+        // dentro del propio contenido. Ya tenemos nuestro título.
+        const firstStrong = specs.querySelector("strong");
+
+        if (
+            firstStrong &&
+            /^(minimum|recommended):?$/i.test(
+                firstStrong.textContent.trim()
+            )
+        ) {
+            firstStrong.remove();
+        }
+
+        card.append(heading, specs);
+
+        return card;
+    };
+
+    const minimum = createCard(
+        "Minimum",
+        requirements?.minimum
+    );
+
+    const recommended = createCard(
+        "Recommended",
+        requirements?.recommended
+    );
+
+    if (minimum) content.appendChild(minimum);
+    if (recommended) content.appendChild(recommended);
+
+    return content;
+};
+
+
 const renderGameDetailTab = tabId => {
     if (!currentGameDetail) return;
     const game = currentGameDetail.game;
@@ -2509,9 +2567,16 @@ const renderGameDetailTab = tabId => {
     } else if (tabId === "more") {
         panel.appendChild(renderMoreTab(game));
     }else if (tabId === "prices") {
-    panel.appendChild(
-        renderPricesTab(game, gameDetailController)
-    );}
+        panel.appendChild(
+            renderPricesTab(game, gameDetailController)
+        );
+    }else if (tabId === "requirements") {
+        panel.appendChild(
+            renderRequirementsTab(
+                currentGameDetail.requirements
+            )
+        );
+    }
 
     document.querySelectorAll("#game-detail-tabs [role='tab']").forEach(tab => {
         const selected = tab.dataset.gameTab === tabId;
@@ -2577,6 +2642,31 @@ const loadGameMissionsAvailability = async (gameId, controller) => {
     return result?.disabled !== true;
 };
 
+const loadGameRequirements = async (
+    gameId,
+    controller
+) => {
+    try {
+        return await requestJson(
+            `${API_URL}/api/games/${gameId}/requirements`,
+            {
+                signal: controller.signal
+            }
+        );
+    } catch (error) {
+        if (controller.signal.aborted) {
+            return null;
+        }
+
+        console.error(
+            `Could not load PC requirements for game ${gameId}:`,
+            error
+        );
+
+        return null;
+    }
+};
+
 const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => {
     gameDetailController?.abort();
     const controller = new AbortController();
@@ -2588,7 +2678,11 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
     showGameDetailMessage("Loading game details…");
 
     try {
-        const [game, gameMissionsEnabled] = await Promise.all([
+        const [
+            game,
+            gameMissionsEnabled,
+            requirements
+        ] = await Promise.all([
             requestJson(
                 `${API_URL}/api/games/${gameId}`,
                 {
@@ -2596,6 +2690,10 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
                 }
             ),
             loadGameMissionsAvailability(
+                gameId,
+                controller
+            ),
+            loadGameRequirements(
                 gameId,
                 controller
             )
@@ -2608,6 +2706,7 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
         currentGameDetail = {
             game,
             gameMissionsEnabled,
+            requirements,
             media: renderGameMedia(game),
             playtime: null,
             playtimeLoading: true,

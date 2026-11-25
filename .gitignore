@@ -4,3 +4,5 @@ node_modules/
 .wrangler/
 *.css.map
 docs/DEVELOPMENT-COMMANDS.md
+scripts/
+tmp.txt
