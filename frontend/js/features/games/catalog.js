@@ -2368,10 +2368,14 @@ const renderPricesTab = (game, controller) => {
 
         const iconElement = document.createElement("i");
 
+        const shopIcons = {
+            Steam: "bi bi-steam",
+            "Nintendo eShop": "bi bi-nintendo-switch"
+        };
+
         iconElement.className =
-            deal.shop?.name === "Steam"
-                ? "bi bi-steam"
-                : "bi bi-shop";
+            shopIcons[deal.shop?.name] ||
+            "bi bi-shop";
 
         icon.appendChild(iconElement);
 

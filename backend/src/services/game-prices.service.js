@@ -1,6 +1,11 @@
 const ITAD_API_URL = "https://api.isthereanydeal.com";
 const REQUEST_TIMEOUT_MS = 12000;
 
+const {
+    findNintendoNsuid,
+    getNintendoPrice
+} = require("./nintendo-prices.service");
+
 const getApiKey = env =>
     env?.ISTHEREANYDEAL_API_KEY ||
     process.env.ISTHEREANYDEAL_API_KEY;
@@ -441,6 +446,28 @@ const getPricesForGame = async (
 
             deals.push(steamPrice);
         }
+    }
+    try {
+        const nsuid = await findNintendoNsuid(
+            game.name
+        );
+
+        if (nsuid) {
+            const nintendoPrice =
+                await getNintendoPrice(
+                    nsuid,
+                    country
+                );
+
+            if (nintendoPrice) {
+                deals.push(nintendoPrice);
+            }
+        }
+    } catch (error) {
+        console.error(
+            `Could not load Nintendo price for ${game.name}:`,
+            error
+        );
     }
 
     return {
