@@ -2591,10 +2591,23 @@ const renderGameDetailTabs = () => {
     const tabs = document.getElementById("game-detail-tabs");
     tabs.replaceChildren();
     GAME_DETAIL_TABS
-    .filter(({ id }) =>
-        id !== "missions" ||
-        currentGameDetail?.gameMissionsEnabled
-    )
+    .filter(({ id }) => {
+        if (
+            id === "missions" &&
+            !currentGameDetail?.gameMissionsEnabled
+        ) {
+            return false;
+        }
+
+        if (
+            id === "requirements" &&
+            !currentGameDetail?.requirements?.available
+        ) {
+            return false;
+        }
+
+        return true;
+    })
     .forEach(({ id, label }) => {
         const tab = document.createElement("button");
         tab.classList.add("game-detail-tab");

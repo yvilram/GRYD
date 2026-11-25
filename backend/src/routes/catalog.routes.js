@@ -305,6 +305,7 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
 
             const igdbGame = game.igdb_data;
 
+
             const steamExternalGame =
                 igdbGame.external_games?.find(externalGame =>
                     externalGame.external_game_source?.name === "Steam"
