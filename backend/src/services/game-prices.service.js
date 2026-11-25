@@ -6,6 +6,10 @@ const {
     getNintendoPrice
 } = require("./nintendo-prices.service");
 
+const {
+    getEpicPrice
+} = require("./epic-prices.service");
+
 const getApiKey = env =>
     env?.ISTHEREANYDEAL_API_KEY ||
     process.env.ISTHEREANYDEAL_API_KEY;
@@ -378,6 +382,252 @@ const findPurchasableSteamAppId = async (
         : null;
 };
 
+const stripHtml = value =>
+    String(value || "")
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+const normalizeSteamPackageTitle = value =>
+    normalizeTitle(value)
+        .replace(/[:–—-]/g, " ")
+        .replace(/\bedition\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+const getSteamAppDetails = async (
+    steamAppId,
+    country = "ES"
+) => {
+    const appId = String(steamAppId || "").trim();
+
+    if (!/^[1-9]\d*$/.test(appId)) {
+        return null;
+    }
+
+    const params = new URLSearchParams({
+        appids: appId,
+        cc: country,
+        l: "english"
+    });
+
+    try {
+        const response = await fetch(
+            `https://store.steampowered.com/api/appdetails?${params}`,
+            {
+                headers: {
+                    Accept: "application/json"
+                },
+                signal: AbortSignal.timeout(
+                    REQUEST_TIMEOUT_MS
+                )
+            }
+        );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const result = await response.json();
+        const app = result?.[appId];
+
+        return app?.success
+            ? app.data
+            : null;
+    } catch {
+        return null;
+    }
+};
+
+const getSteamPackagePrice = async (
+    packageId,
+    country = "ES"
+) => {
+    const id = String(packageId || "").trim();
+
+    if (!/^[1-9]\d*$/.test(id)) {
+        return null;
+    }
+
+    const params = new URLSearchParams({
+        packageids: id,
+        cc: country,
+        l: "english"
+    });
+
+    try {
+        const response = await fetch(
+            `https://store.steampowered.com/api/packagedetails?${params}`,
+            {
+                headers: {
+                    Accept: "application/json"
+                },
+                signal: AbortSignal.timeout(
+                    REQUEST_TIMEOUT_MS
+                )
+            }
+        );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const result = await response.json();
+        const steamPackage = result?.[id];
+
+        if (!steamPackage?.success) {
+            return null;
+        }
+
+        const price = steamPackage.data?.price;
+
+        if (!price) {
+            return null;
+        }
+
+        return {
+            shop: {
+                id: 61,
+                name: "Steam"
+            },
+
+            price: {
+                amount: price.final / 100,
+                amountInt: price.final,
+                currency: price.currency
+            },
+
+            regular: {
+                amount: price.initial / 100,
+                amountInt: price.initial,
+                currency: price.currency
+            },
+
+            cut: Number(price.discount_percent) || 0,
+            voucher: null,
+            storeLow: null,
+
+            drm: [{
+                id: 61,
+                name: "Steam"
+            }],
+
+            platforms: [],
+
+            url:
+                `https://store.steampowered.com/sub/${id}`,
+
+            packageId: id,
+            source: "steam-package"
+        };
+    } catch {
+        return null;
+    }
+};
+
+const findSteamPackagePrice = async (
+    title,
+    country = "ES"
+) => {
+    const normalizedTitle =
+        normalizeSteamPackageTitle(title);
+
+    if (!normalizedTitle) {
+        return null;
+    }
+
+    const baseTitle = String(title)
+        .replace(
+            /\s*[-:–—]\s*(ultimate|complete|deluxe|definitive|game of the year|goty)\s+edition\s*$/i,
+            ""
+        )
+        .trim();
+
+    if (baseTitle === title) {
+        return null;
+    }
+
+    const searchParams = new URLSearchParams({
+        term: baseTitle,
+        cc: country,
+        l: "english"
+    });
+
+    let searchResult;
+
+    try {
+        const response = await fetch(
+            `https://store.steampowered.com/api/storesearch/?${searchParams}`,
+            {
+                headers: {
+                    Accept: "application/json"
+                },
+                signal: AbortSignal.timeout(
+                    REQUEST_TIMEOUT_MS
+                )
+            }
+        );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        searchResult = await response.json();
+    } catch {
+        return null;
+    }
+
+    const baseApp = (searchResult?.items || []).find(
+        item =>
+            item?.type === "app" &&
+            normalizeTitle(item.name) ===
+                normalizeTitle(baseTitle)
+    );
+
+    if (!baseApp?.id) {
+        return null;
+    }
+
+    const appDetails = await getSteamAppDetails(
+        baseApp.id,
+        country
+    );
+
+    const packages = (
+        appDetails?.package_groups || []
+    ).flatMap(group =>
+        Array.isArray(group?.subs)
+            ? group.subs
+            : []
+    );
+
+    const matchingPackage = packages.find(
+        steamPackage => {
+            const packageTitle =
+                normalizeSteamPackageTitle(
+                    stripHtml(
+                        steamPackage.option_text
+                    ).replace(
+                        /\s+\d+[.,]\d{2}\s*€.*$/i,
+                        ""
+                    )
+                );
+
+            return packageTitle ===
+                normalizedTitle;
+        }
+    );
+
+    if (!matchingPackage?.packageid) {
+        return null;
+    }
+
+    return getSteamPackagePrice(
+        matchingPackage.packageid,
+        country
+    );
+};
+
 const getPricesForGame = async (
     env,
     game,
@@ -396,26 +646,54 @@ const getPricesForGame = async (
         game
     );
 
-    if (!resolvedGame) {
-        return {
-            supported: false,
-            game: null,
-            deals: []
-        };
+    let deals = [];
+
+    if (resolvedGame) {
+        const priceData = await getGamePrices(
+            env,
+            resolvedGame.id,
+            country
+        );
+
+        deals = Array.isArray(priceData?.deals)
+            ? [...priceData.deals]
+            : [];
     }
 
-    const priceData = await getGamePrices(
-        env,
-        resolvedGame.id,
-        country
+    const responseGame = resolvedGame || {
+        id: null,
+        title: game.name,
+        matchedBy: null,
+        steamAppId: game.steamAppId
+            ? String(game.steamAppId)
+            : null
+    };
+
+    const hasEpicDeal = deals.some(deal =>
+        normalizeTitle(
+            deal?.shop?.name
+        ).includes("epic")
     );
 
-    const deals = Array.isArray(priceData?.deals)
-        ? priceData.deals
-        : [];
+    if (!hasEpicDeal) {
+        const epicPrice = await getEpicPrice(
+            game.name,
+            country
+        );
 
-    if (!deals.length && resolvedGame.steamAppId) {
-        let steamAppId = resolvedGame.steamAppId;
+        if (epicPrice) {
+            deals.push(epicPrice);
+        }
+    }
+
+    let hasSteamDeal = deals.some(deal =>
+        normalizeTitle(
+            deal?.shop?.name
+        ) === "steam"
+    );
+
+    if (!hasSteamDeal && responseGame.steamAppId) {
+        let steamAppId = responseGame.steamAppId;
 
         let steamPrice = await getSteamStorePrice(
             steamAppId,
@@ -441,12 +719,26 @@ const getPricesForGame = async (
         }
 
         if (steamPrice) {
-            resolvedGame.resolvedSteamAppId =
+            responseGame.resolvedSteamAppId =
                 steamAppId;
 
             deals.push(steamPrice);
+            hasSteamDeal = true;
         }
     }
+
+    if (!hasSteamDeal) {
+        const steamPackagePrice =
+            await findSteamPackagePrice(
+                game.name,
+                country
+            );
+
+        if (steamPackagePrice) {
+            deals.push(steamPackagePrice);
+        }
+    }
+
     try {
         const nsuid = await findNintendoNsuid(
             game.name
@@ -471,8 +763,8 @@ const getPricesForGame = async (
     }
 
     return {
-        supported: true,
-        game: resolvedGame,
+        supported: deals.length > 0,
+        game: responseGame,
         deals
     };
 };
