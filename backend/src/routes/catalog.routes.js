@@ -312,10 +312,11 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
                 req.env,
                 {
                     name: igdbGame.name,
-                    steamAppId: steamExternalGame?.uid || null
-                },
+                    steamAppId: steamExternalGame?.uid || null,
+                    },
                 "ES"
             );
+
 
             return res.json(result);
         } catch (error) {
