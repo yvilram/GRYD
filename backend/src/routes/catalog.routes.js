@@ -17,6 +17,12 @@ const {
     getSteamAppDetails,
     findSteamBaseAppId
 } = require("../services/game-prices.service");
+
+const {
+    getSteamMetadata,
+    getSteamAchievements
+} = require("../services/steam-details.service");
+
 const {
     getRowsByIds,
     loadFullGames,
@@ -309,7 +315,7 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
             const steamExternalGame =
                 igdbGame.external_games?.find(externalGame =>
                     externalGame.external_game_source?.name === "Steam"
-            );
+                );
 
             const gogProductIds = (
                 igdbGame.external_games || []
@@ -445,6 +451,229 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
             });
         }
     });
+
+    app.get("/api/games/:id/steam", async (req, res) => {
+        try {
+            if (
+                !/^[1-9]\d*$/.test(req.params.id) ||
+                !Number.isSafeInteger(Number(req.params.id))
+            ) {
+                throw invalidInput(
+                    "Game ID must be a positive integer."
+                );
+            }
+
+            const gameId = Number(req.params.id);
+
+            const supabase =
+                createSupabaseClient.createSupabaseAdminClient(
+                    req.env
+                );
+
+            const rowsById = await loadFullGames(
+                supabase,
+                requestIgdb,
+                [gameId]
+            );
+
+            const game = rowsById.get(gameId);
+
+            if (!game) {
+                return res.status(404).json({
+                    error: "Game not found."
+                });
+            }
+
+            const igdbGame = game.igdb_data;
+
+            const hasPcPlatform = igdbGame.platforms?.some(
+                platform =>
+                    Number(platform?.id) === 6 ||
+                    platform?.name === "PC (Microsoft Windows)"
+            );
+
+            if (!hasPcPlatform) {
+                return res.json({
+                    available: false
+                });
+            }
+
+            const steamExternalGame =
+                igdbGame.external_games?.find(
+                    externalGame =>
+                        externalGame
+                            .external_game_source
+                            ?.name === "Steam"
+                );
+
+            let steamAppId =
+                steamExternalGame?.uid || null;
+
+            if (!steamAppId) {
+                steamAppId = await findSteamBaseAppId(
+                    igdbGame.name,
+                    "ES"
+                );
+            }
+
+            if (!steamAppId) {
+                return res.json({
+                    available: false
+                });
+            }
+
+            const metadata = await getSteamMetadata(
+                steamAppId,
+                "ES",
+                "english"
+            );
+
+            if (!metadata) {
+                return res.json({
+                    available: false
+                });
+            }
+
+            return res.json({
+                available: true,
+                ...metadata,
+                achievements: {
+                    available:
+                        metadata.achievements?.total > 0,
+                    total:
+                        metadata.achievements?.total || 0
+                }
+            });
+        } catch (error) {
+            console.error(
+                `Could not load Steam metadata for game ${req.params.id}:`,
+                error
+            );
+
+            return res.status(
+                error.upstream ? 502 : 500
+            ).json({
+                error:
+                    "Could not load this game's Steam metadata."
+            });
+        }
+    });
+
+        app.get(
+        "/api/games/:id/steam/achievements",
+        async (req, res) => {
+            try {
+                if (
+                    !/^[1-9]\d*$/.test(req.params.id) ||
+                    !Number.isSafeInteger(
+                        Number(req.params.id)
+                    )
+                ) {
+                    throw invalidInput(
+                        "Game ID must be a positive integer."
+                    );
+                }
+
+                const gameId = Number(req.params.id);
+
+                const supabase =
+                    createSupabaseClient
+                        .createSupabaseAdminClient(
+                            req.env
+                        );
+
+                const rowsById = await loadFullGames(
+                    supabase,
+                    requestIgdb,
+                    [gameId]
+                );
+
+                const game = rowsById.get(gameId);
+
+                if (!game) {
+                    return res.status(404).json({
+                        error: "Game not found."
+                    });
+                }
+
+                const igdbGame = game.igdb_data;
+
+                const hasPcPlatform =
+                    igdbGame.platforms?.some(
+                        platform =>
+                            Number(platform?.id) === 6 ||
+                            platform?.name ===
+                                "PC (Microsoft Windows)"
+                    );
+
+                if (!hasPcPlatform) {
+                    return res.json({
+                        available: false,
+                        steamAppId: null,
+                        gameName: null,
+                        total: 0,
+                        achievements: []
+                    });
+                }
+
+                const steamExternalGame =
+                    igdbGame.external_games?.find(
+                        externalGame =>
+                            externalGame
+                                .external_game_source
+                                ?.name === "Steam"
+                    );
+
+                let steamAppId =
+                    steamExternalGame?.uid || null;
+
+                if (!steamAppId) {
+                    steamAppId =
+                        await findSteamBaseAppId(
+                            igdbGame.name,
+                            "ES"
+                        );
+                }
+
+                if (!steamAppId) {
+                    return res.json({
+                        available: false,
+                        steamAppId: null,
+                        gameName: null,
+                        total: 0,
+                        achievements: []
+                    });
+                }
+
+                const achievements =
+                    await getSteamAchievements(
+                        req.env,
+                        steamAppId,
+                        "english"
+                    );
+
+                return res.json(achievements);
+            } catch (error) {
+                if (error.status === 400) {
+                    return res.status(400).json({
+                        error: error.message
+                    });
+                }
+
+                console.error(
+                    `Could not load Steam achievements for game ${req.params.id}:`,
+                    error
+                );
+
+                return res.status(
+                    error.upstream ? 502 : 500
+                ).json({
+                    error:
+                        "Could not load this game's Steam achievements."
+                });
+            }
+        }
+    );
 
     app.get("/api/games/:id", async (req, res) => {
         try {
@@ -605,7 +834,7 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
             let games;
             if (cachedPage &&
                 Date.now() - new Date(cachedPage.cached_at).getTime() <
-                    CATALOG_PAGE_CACHE_MS) {
+                CATALOG_PAGE_CACHE_MS) {
                 const rowsById = await getRowsByIds(supabase, cachedPage.game_ids);
                 const cachedGames = cachedPage.game_ids
                     .map(id => rowsById.get(Number(id)))

@@ -975,6 +975,55 @@ body {
     padding: 20px;
   }
 }
+.game-detail-controller-support {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.game-detail-controller-support i {
+  color: #d7ff00;
+  font-size: 1rem;
+}
+
+.game-detail-languages {
+  grid-column: 1/-1;
+}
+
+.game-detail-languages__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.game-detail-language {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.game-detail-language__audio {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(215, 255, 0, 0.12);
+  color: #d7ff00;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .game-detail-breadcrumb {
   display: flex;
   min-width: 0;
@@ -1094,7 +1143,8 @@ body {
   display: none;
 }
 
-.catalog-active-filters__chip, .catalog-active-filters__clear {
+.catalog-active-filters__chip,
+.catalog-active-filters__clear {
   min-height: 30px;
   border-radius: 999px;
   font-size: 0.76rem;
@@ -1113,7 +1163,9 @@ body {
   background: rgba(215, 255, 0, 0.2);
 }
 
-.catalog-active-filters__clear, .catalog-empty-state__clear, .catalog-filter-retry {
+.catalog-active-filters__clear,
+.catalog-empty-state__clear,
+.catalog-filter-retry {
   padding: 6px 10px;
   border: 1px solid var(--color-border);
   border-radius: 7px;
@@ -1122,7 +1174,9 @@ body {
   cursor: pointer;
 }
 
-.catalog-active-filters__clear:hover, .catalog-empty-state__clear:hover, .catalog-filter-retry:hover {
+.catalog-active-filters__clear:hover,
+.catalog-empty-state__clear:hover,
+.catalog-filter-retry:hover {
   border-color: var(--color-accent);
   color: var(--color-text);
 }
@@ -1144,7 +1198,8 @@ body {
   display: none;
 }
 
-.library-content-menu, .library-status-filters {
+.library-content-menu,
+.library-status-filters {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1183,7 +1238,8 @@ body {
   color: #d7ff00;
 }
 
-.library-tools, .catalog-toolbar {
+.library-tools,
+.catalog-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
   align-items: end;
@@ -1198,21 +1254,30 @@ body {
   margin-bottom: 20px;
 }
 
-.catalog-toolbar__filters, .library-tools__filters, .catalog-filter-apply {
+.catalog-toolbar__filters,
+.library-tools__filters,
+.catalog-filter-apply {
   display: none;
 }
 
-.library-tools__search, .library-tools__sort, .catalog-toolbar__search, .catalog-toolbar__sort {
+.library-tools__search,
+.library-tools__sort,
+.catalog-toolbar__search,
+.catalog-toolbar__sort {
   display: grid;
   gap: 7px;
 }
 
-.library-tools__sort, .catalog-toolbar__sort {
+.library-tools__sort,
+.catalog-toolbar__sort {
   color: var(--color-muted);
   font-size: 0.78rem;
 }
 
-.library-tools__search input, .library-tools__sort select, .catalog-toolbar__search input, .catalog-toolbar__sort select {
+.library-tools__search input,
+.library-tools__sort select,
+.catalog-toolbar__search input,
+.catalog-toolbar__sort select {
   width: 100%;
   min-height: 40px;
   padding: 8px 11px;
@@ -1223,7 +1288,10 @@ body {
   font: inherit;
 }
 
-.library-tools__search input:focus, .library-tools__sort select:focus, .catalog-toolbar__search input:focus, .catalog-toolbar__sort select:focus {
+.library-tools__search input:focus,
+.library-tools__sort select:focus,
+.catalog-toolbar__search input:focus,
+.catalog-toolbar__sort select:focus {
   border-color: var(--color-accent);
   outline: 3px solid rgba(215, 255, 0, 0.18);
 }
@@ -1343,7 +1411,8 @@ body {
   font-size: 0.84rem;
 }
 
-.catalog-filter-toggle input, .catalog-filter-option input {
+.catalog-filter-toggle input,
+.catalog-filter-option input {
   accent-color: var(--color-accent);
 }
 
@@ -1355,7 +1424,9 @@ body {
   font-size: 0.82rem;
 }
 
-.catalog-filter-field select, .catalog-filter-search input, .catalog-year-range input {
+.catalog-filter-field select,
+.catalog-filter-search input,
+.catalog-year-range input {
   width: 100%;
   min-height: 36px;
   padding: 7px 9px;
@@ -1419,11 +1490,14 @@ body {
   content: "−";
 }
 
-.catalog-filter-details[open] .catalog-filter-options, .catalog-filter-details[open] .catalog-filter-search, .catalog-filter-details[open] .catalog-filter-hint {
+.catalog-filter-details[open] .catalog-filter-options,
+.catalog-filter-details[open] .catalog-filter-search,
+.catalog-filter-details[open] .catalog-filter-hint {
   margin-top: 12px;
 }
 
-.catalog-filter-details .catalog-filter-options, .catalog-filter-options {
+.catalog-filter-details .catalog-filter-options,
+.catalog-filter-options {
   max-height: 190px;
 }
 
@@ -1463,7 +1537,8 @@ body {
   max-height: 220px;
 }
 
-.catalog-filter-hint, .explorer-empty-state {
+.catalog-filter-hint,
+.explorer-empty-state {
   margin: 8px 0;
   color: var(--color-muted);
   font-size: 0.82rem;
@@ -1785,6 +1860,15 @@ body {
   gap: 16px;
 }
 
+.game-detail-heading__ratings {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .game-detail-heading h1 {
   min-width: 0;
   margin: 0;
@@ -1804,6 +1888,18 @@ body {
   font-weight: 750;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.game-detail-heading__rating--metacritic {
+  border-color: rgba(255, 205, 55, 0.45);
+  color: #ffcd37;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.game-detail-heading__rating--metacritic:hover {
+  border-color: rgba(255, 205, 55, 0.75);
+  background: rgba(255, 205, 55, 0.08);
 }
 
 .game-detail-heading__rating[data-rating-level=low] {
@@ -1889,7 +1985,8 @@ body {
   background: #07090e;
 }
 
-.game-detail-gallery__featured img, .game-detail-gallery__featured iframe {
+.game-detail-gallery__featured img,
+.game-detail-gallery__featured iframe {
   display: block;
   width: 100%;
   height: 100%;
@@ -2077,7 +2174,8 @@ body {
   cursor: pointer;
 }
 
-.game-detail-tab:hover, .game-detail-tab[aria-selected=true] {
+.game-detail-tab:hover,
+.game-detail-tab[aria-selected=true] {
   color: var(--color-text);
 }
 
@@ -2091,7 +2189,11 @@ body {
   content: "";
 }
 
-.game-detail-tab:focus-visible, .game-detail-gallery__featured:focus-visible, .game-detail-gallery__arrow:focus-visible, .game-detail-thumbnail:focus-visible, .game-detail-media-card:focus-visible {
+.game-detail-tab:focus-visible,
+.game-detail-gallery__featured:focus-visible,
+.game-detail-gallery__arrow:focus-visible,
+.game-detail-thumbnail:focus-visible,
+.game-detail-media-card:focus-visible {
   outline: 3px solid rgba(215, 255, 0, 0.6);
   outline-offset: 2px;
 }
@@ -2167,6 +2269,121 @@ body {
   border: 1px solid var(--color-border);
   border-radius: 10px;
   background: linear-gradient(145deg, rgba(24, 29, 43, 0.82), rgba(15, 18, 28, 0.76));
+}
+
+.game-detail-achievements {
+  display: grid;
+  gap: 16px;
+}
+
+.game-detail-achievements__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 0 0, rgba(215, 255, 0, 0.13), transparent 58%), var(--color-surface-raised);
+}
+
+.game-detail-achievements__header h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.game-detail-achievements__header p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.game-detail-achievements__total {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border: 1px solid rgba(215, 255, 0, 0.23);
+  border-radius: 999px;
+  background: rgba(215, 255, 0, 0.1);
+  color: #eaff80;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.game-detail-achievements__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.game-detail-achievement {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(24, 29, 43, 0.82), rgba(15, 18, 28, 0.76));
+  transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.game-detail-achievement:hover {
+  transform: translateY(-2px);
+  border-color: rgba(215, 255, 0, 0.35);
+}
+
+.game-detail-achievement__icon {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.game-detail-achievement__body {
+  min-width: 0;
+}
+
+.game-detail-achievement__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.game-detail-achievement__name {
+  min-width: 0;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.game-detail-achievement__description {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.game-detail-achievement__badge {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  color: var(--color-subtle);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.game-detail-achievement--hidden .game-detail-achievement__icon {
+  opacity: 0.68;
 }
 
 .game-detail-prices {
@@ -2312,7 +2529,8 @@ body {
   margin-left: auto;
 }
 
-.game-detail-overview__row h3, .game-detail-platform-card__companies h4 {
+.game-detail-overview__row h3,
+.game-detail-platform-card__companies h4 {
   margin: 0 0 12px;
   color: #d7ff00;
   font-size: 0.75rem;
@@ -2477,7 +2695,8 @@ body {
   display: none;
 }
 
-.game-detail-task__summary:hover, .game-detail-task__summary:focus-visible {
+.game-detail-task__summary:hover,
+.game-detail-task__summary:focus-visible {
   background: rgba(215, 255, 0, 0.08);
 }
 
@@ -2512,7 +2731,8 @@ body {
   transition: border-color 0.18s ease, background 0.18s ease;
 }
 
-.game-detail-task-item:hover, .game-detail-task-item:focus-visible {
+.game-detail-task-item:hover,
+.game-detail-task-item:focus-visible {
   border-color: rgba(215, 255, 0, 0.45);
   background: rgba(215, 255, 0, 0.08);
 }
@@ -2738,7 +2958,8 @@ body {
   transition: color 150ms ease, transform 150ms ease;
 }
 
-.game-detail-mission-list__item:hover, .game-detail-mission-list__item:focus-visible {
+.game-detail-mission-list__item:hover,
+.game-detail-mission-list__item:focus-visible {
   transform: translateX(2px);
   border-color: rgba(215, 255, 0, 0.38);
   background: rgba(215, 255, 0, 0.1);
@@ -2747,7 +2968,8 @@ body {
   text-decoration: none;
 }
 
-.game-detail-mission-list__item:hover i, .game-detail-mission-list__item:focus-visible i {
+.game-detail-mission-list__item:hover i,
+.game-detail-mission-list__item:focus-visible i {
   color: #badc35;
 }
 
@@ -2759,7 +2981,8 @@ body {
   line-height: 1.6;
 }
 
-.game-detail-missions__attribution a, .game-mission-page__attribution a {
+.game-detail-missions__attribution a,
+.game-mission-page__attribution a {
   color: #d7ff00;
   text-underline-offset: 3px;
 }
@@ -2810,7 +3033,8 @@ body {
   line-height: 1.08;
 }
 
-.game-mission-page__category, .game-mission-page__game {
+.game-mission-page__category,
+.game-mission-page__game {
   display: inline-flex;
   min-height: 29px;
   align-items: center;
@@ -2849,13 +3073,18 @@ body {
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.1);
 }
 
-.game-mission-page__article h2, .game-mission-page__article h3, .game-mission-page__article h4, .game-mission-page__article h5 {
+.game-mission-page__article h2,
+.game-mission-page__article h3,
+.game-mission-page__article h4,
+.game-mission-page__article h5 {
   margin: 1.5em 0 0.6em;
   color: var(--color-text);
   line-height: 1.3;
 }
 
-.game-mission-page__article h2:first-child, .game-mission-page__article h3:first-child, .game-mission-page__article h4:first-child {
+.game-mission-page__article h2:first-child,
+.game-mission-page__article h3:first-child,
+.game-mission-page__article h4:first-child {
   margin-top: 0;
 }
 
@@ -2873,11 +3102,17 @@ body {
   scroll-margin-top: 24px;
 }
 
-.game-mission-page__article p, .game-mission-page__article ul, .game-mission-page__article ol, .game-mission-page__article blockquote, .game-mission-page__article pre, .game-mission-page__article figure {
+.game-mission-page__article p,
+.game-mission-page__article ul,
+.game-mission-page__article ol,
+.game-mission-page__article blockquote,
+.game-mission-page__article pre,
+.game-mission-page__article figure {
   margin: 0 0 1em;
 }
 
-.game-mission-page__article ul, .game-mission-page__article ol {
+.game-mission-page__article ul,
+.game-mission-page__article ol {
   padding-left: 1.5em;
 }
 
@@ -2903,7 +3138,8 @@ body {
   border-collapse: collapse;
 }
 
-.game-mission-page__article th, .game-mission-page__article td {
+.game-mission-page__article th,
+.game-mission-page__article td {
   padding: 8px 10px;
   border: 1px solid var(--color-border);
   text-align: left;
@@ -2944,7 +3180,8 @@ body {
   vertical-align: -0.2em;
 }
 
-.game-mission-page__article p, .game-mission-page__article li {
+.game-mission-page__article p,
+.game-mission-page__article li {
   overflow-wrap: normal;
 }
 
@@ -3033,7 +3270,8 @@ body {
   text-decoration: none;
 }
 
-.game-mission-page__sidebar-card nav a:hover, .game-mission-page__sidebar-card nav a:focus-visible {
+.game-mission-page__sidebar-card nav a:hover,
+.game-mission-page__sidebar-card nav a:focus-visible {
   background: rgba(215, 255, 0, 0.09);
   color: #eaff80;
   outline: none;
@@ -3300,6 +3538,13 @@ body {
   }
 }
 @media (max-width: 760px) {
+  game-detail-achievements__grid {
+    grid-template-columns: 1fr;
+  }
+  .game-detail-achievements__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
   .collection-view {
     padding-top: 30px;
   }
@@ -3337,15 +3582,18 @@ body {
     justify-content: center;
     padding-inline: 8px;
   }
-  .catalog-toolbar, .library-tools {
+  .catalog-toolbar,
+  .library-tools {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: end;
     gap: 10px;
   }
-  .catalog-toolbar__search, .library-tools__search {
+  .catalog-toolbar__search,
+  .library-tools__search {
     grid-column: 1/-1;
   }
-  .catalog-toolbar__filters, .library-tools__filters {
+  .catalog-toolbar__filters,
+  .library-tools__filters {
     display: inline-flex;
     min-width: 0;
     min-height: 44px;
@@ -3362,20 +3610,27 @@ body {
     font-weight: 650;
     cursor: pointer;
   }
-  .catalog-toolbar__filters[aria-expanded=true], .library-tools__filters[aria-expanded=true] {
+  .catalog-toolbar__filters[aria-expanded=true],
+  .library-tools__filters[aria-expanded=true] {
     border-color: rgba(215, 255, 0, 0.55);
     background: rgba(215, 255, 0, 0.14);
   }
-  .catalog-toolbar__filters i, .library-tools__filters i {
+  .catalog-toolbar__filters i,
+  .library-tools__filters i {
     color: #d7ff00;
   }
-  .catalog-toolbar__sort, .library-tools__sort {
+  .catalog-toolbar__sort,
+  .library-tools__sort {
     min-width: 0;
   }
-  .catalog-toolbar__search input, .catalog-toolbar__sort select, .library-tools__search input, .library-tools__sort select {
+  .catalog-toolbar__search input,
+  .catalog-toolbar__sort select,
+  .library-tools__search input,
+  .library-tools__sort select {
     min-height: 44px;
   }
-  .catalog-toolbar__sort select, .library-tools__sort select {
+  .catalog-toolbar__sort select,
+  .library-tools__sort select {
     min-width: 0;
     padding-inline: 8px;
     font-size: 0.84rem;
@@ -3436,7 +3691,9 @@ body {
   .catalog-filter-toggle {
     min-height: 46px;
   }
-  .catalog-filter-field select, .catalog-filter-search input, .catalog-year-range input {
+  .catalog-filter-field select,
+  .catalog-filter-search input,
+  .catalog-year-range input {
     min-height: 44px;
     font-size: 16px;
   }
@@ -3446,7 +3703,8 @@ body {
   .catalog-filter-option {
     min-height: 40px;
   }
-  .catalog-filter-option input, .catalog-filter-toggle input {
+  .catalog-filter-option input,
+  .catalog-filter-toggle input {
     width: 18px;
     height: 18px;
   }
@@ -3561,7 +3819,10 @@ body {
   .game-detail-panel {
     padding-top: 18px;
   }
-  .game-detail-overview, .game-detail-platforms, .game-detail-prices, .game-detail-requirements {
+  .game-detail-overview,
+  .game-detail-platforms,
+  .game-detail-prices,
+  .game-detail-requirements {
     grid-template-columns: minmax(0, 1fr);
   }
   .game-detail-missions {

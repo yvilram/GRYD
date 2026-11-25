@@ -587,6 +587,7 @@ const createGameRoute = (game, returnRoute = "explore", state = {}) => {
 const GAME_DETAIL_TABS = [
     { id: "overview", label: "Overview" },
     { id: "missions", label: "Missions" },
+    { id: "achievements", label: "Achievements" },
     { id: "prices", label: "Prices" },
     { id: "requirements", label: "PC Requirements" },
     { id: "media", label: "Gallery" },
@@ -1029,6 +1030,77 @@ const renderOverviewTab = game => {
         row.append(term, createNameList(items));
         details.appendChild(row);
     });
+        const controllerSupport =
+        currentGameDetail?.steamMetadata?.controllerSupport;
+
+    if (
+        controllerSupport === "full" ||
+        controllerSupport === "partial"
+    ) {
+        const row = document.createElement("div");
+        row.classList.add("game-detail-overview__row");
+
+        const term = document.createElement("h3");
+        term.textContent = "Controller support";
+
+        const value = document.createElement("p");
+        value.classList.add("game-detail-controller-support");
+
+        const icon = document.createElement("i");
+        icon.classList.add("bi", "bi-controller");
+        icon.setAttribute("aria-hidden", "true");
+
+        const label = document.createElement("span");
+        label.textContent =
+            controllerSupport === "full"
+                ? "Full controller support"
+                : "Partial controller support";
+
+        value.append(icon, label);
+        row.append(term, value);
+        details.appendChild(row);
+    }
+
+        const supportedLanguages =
+        currentGameDetail?.steamMetadata?.supportedLanguages;
+
+    if (
+        Array.isArray(supportedLanguages) &&
+        supportedLanguages.length
+    ) {
+        const row = document.createElement("div");
+        row.classList.add(
+            "game-detail-overview__row",
+            "game-detail-languages"
+        );
+
+        const term = document.createElement("h3");
+        term.textContent = "Languages";
+
+        const list = document.createElement("div");
+        list.classList.add("game-detail-languages__list");
+
+        supportedLanguages.forEach(language => {
+            const item = document.createElement("span");
+            item.classList.add("game-detail-language");
+
+        item.textContent = language.name;
+
+        if (language.fullAudio) {
+            const audio = document.createElement("span");
+            audio.classList.add("game-detail-language__audio");
+            audio.textContent = "Audio";
+            audio.title = "Full audio support";
+
+            item.appendChild(audio);
+        }
+            list.appendChild(item);
+        });
+
+        row.append(term, list);
+        details.appendChild(row);
+    }
+
     return details;
 };
 
@@ -1735,7 +1807,7 @@ const loadChecklistDetails = async (game, checklist, controller) => {
         });
         const result = await requestJson(
             `${API_URL}/api/games/${encodeURIComponent(gameSlug)}/checklists/` +
-                `${encodeURIComponent(checklist.slug)}?${query}`,
+            `${encodeURIComponent(checklist.slug)}?${query}`,
             { signal: controller.signal }
         );
         if (controller.signal.aborted ||
@@ -1807,7 +1879,7 @@ const loadIGNChecklistGuide = async (
         });
         const result = await requestJson(
             `${API_URL}/api/games/${encodeURIComponent(gameSlug)}/checklists/` +
-                `${encodeURIComponent(checklist.slug)}/tasks/${task.id}/guides/${guideIndex}?${query}`,
+            `${encodeURIComponent(checklist.slug)}/tasks/${task.id}/guides/${guideIndex}?${query}`,
             { signal: controller.signal }
         );
         if (controller.signal.aborted ||
@@ -2220,8 +2292,7 @@ const renderMissionsTab = (game, controller) => {
                     guideCount.textContent = String(task.guidePages.length);
                     guideCount.setAttribute(
                         "aria-label",
-                        `${task.guidePages.length} ${
-                            task.guidePages.length === 1 ? "guide page" : "guide pages"
+                        `${task.guidePages.length} ${task.guidePages.length === 1 ? "guide page" : "guide pages"
                         }`
                     );
                     taskSummary.appendChild(guideCount);
@@ -2287,6 +2358,188 @@ const renderMissionsTab = (game, controller) => {
     attribution.classList.add("game-detail-missions__attribution");
     attribution.textContent = "Checklist and guide content provided by IGN.";
     content.appendChild(attribution);
+
+    return content;
+};
+
+const loadGameAchievements = async (gameId, controller) => {
+    const detail = currentGameDetail;
+
+    if (
+        !detail ||
+        detail.achievementsLoading ||
+        detail.achievementsLoaded
+    ) {
+        return;
+    }
+
+    detail.achievementsLoading = true;
+    detail.achievementsFailed = false;
+
+    try {
+        detail.achievements = await requestJson(
+            `${API_URL}/api/games/${gameId}/steam/achievements`,
+            {
+                signal: controller.signal
+            }
+        );
+    } catch (error) {
+        if (error.name === "AbortError") return;
+
+        console.error(
+            `Could not load achievements for game ${gameId}:`,
+            error
+        );
+
+        detail.achievementsFailed = true;
+    } finally {
+        detail.achievementsLoading = false;
+        detail.achievementsLoaded = true;
+
+        if (
+            !controller.signal.aborted &&
+            activeGameDetailTab === "achievements"
+        ) {
+            renderGameDetailTab("achievements");
+        }
+    }
+};
+
+const renderAchievementsTab = (game, controller) => {
+    const content = document.createElement("div");
+    content.classList.add("game-detail-achievements");
+
+    const detail = currentGameDetail;
+
+    if (
+        !detail.achievementsLoaded &&
+        !detail.achievementsLoading
+    ) {
+        void loadGameAchievements(
+            game.id,
+            controller
+        );
+    }
+
+    if (
+        detail.achievementsLoading ||
+        !detail.achievementsLoaded
+    ) {
+        const loading = document.createElement("p");
+        loading.classList.add("game-detail-muted");
+        loading.textContent = "Loading achievements…";
+        content.appendChild(loading);
+
+        return content;
+    }
+
+    if (
+        detail.achievementsFailed ||
+        !detail.achievements?.available
+    ) {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent =
+            "Achievements are not available for this game.";
+        content.appendChild(empty);
+
+        return content;
+    }
+
+    const achievements = Array.isArray(
+        detail.achievements.achievements
+    )
+        ? detail.achievements.achievements
+        : [];
+
+    const header = document.createElement("div");
+    header.classList.add("game-detail-achievements__header");
+
+    const headerText = document.createElement("div");
+
+    const heading = document.createElement("h2");
+    heading.textContent = "Steam Achievements";
+
+    const subtitle = document.createElement("p");
+    subtitle.textContent =
+        "Achievements available for this game on Steam.";
+
+    headerText.append(heading, subtitle);
+
+    const total = document.createElement("span");
+    total.classList.add("game-detail-achievements__total");
+    total.textContent = `${achievements.length} achievements`;
+
+    header.append(headerText, total);
+    content.appendChild(header);
+
+    const grid = document.createElement("div");
+    grid.classList.add("game-detail-achievements__grid");
+
+    achievements.forEach(achievement => {
+        const item = document.createElement("article");
+        item.classList.add("game-detail-achievement");
+
+        if (achievement.hidden) {
+            item.classList.add(
+                "game-detail-achievement--hidden"
+            );
+        }
+
+        const image = document.createElement("img");
+        image.classList.add(
+            "game-detail-achievement__icon"
+        );
+        image.src = achievement.icon;
+        image.alt = "";
+        image.loading = "lazy";
+
+        const body = document.createElement("div");
+        body.classList.add(
+            "game-detail-achievement__body"
+        );
+
+        const headingRow = document.createElement("div");
+        headingRow.classList.add(
+            "game-detail-achievement__heading"
+        );
+
+        const name = document.createElement("h3");
+        name.classList.add(
+            "game-detail-achievement__name"
+        );
+        name.textContent = achievement.name;
+
+        headingRow.appendChild(name);
+
+        if (achievement.hidden) {
+            const badge = document.createElement("span");
+            badge.classList.add(
+                "game-detail-achievement__badge"
+            );
+            badge.textContent = "Hidden";
+            headingRow.appendChild(badge);
+        }
+
+        const description = document.createElement("p");
+        description.classList.add(
+            "game-detail-achievement__description"
+        );
+
+        description.textContent =
+            achievement.description ||
+            (
+                achievement.hidden
+                    ? "Details hidden by Steam."
+                    : "No description available."
+            );
+
+        body.append(headingRow, description);
+        item.append(image, body);
+        grid.appendChild(item);
+    });
+
+    content.appendChild(grid);
 
     return content;
 };
@@ -2558,6 +2811,13 @@ const renderGameDetailTab = tabId => {
         panel.appendChild(renderOverviewTab(game));
     } else if (tabId === "missions") {
         panel.appendChild(renderMissionsTab(game, gameDetailController));
+    } else if (tabId === "achievements") {
+        panel.appendChild(
+            renderAchievementsTab(
+                game,
+                gameDetailController
+            )
+        );
     } else if (tabId === "media") {
         panel.appendChild(renderMediaTab(game, media));
     } else if (tabId === "related") {
@@ -2566,11 +2826,11 @@ const renderGameDetailTab = tabId => {
         panel.appendChild(renderPlatformsTab(game));
     } else if (tabId === "more") {
         panel.appendChild(renderMoreTab(game));
-    }else if (tabId === "prices") {
+    } else if (tabId === "prices") {
         panel.appendChild(
             renderPricesTab(game, gameDetailController)
         );
-    }else if (tabId === "requirements") {
+    } else if (tabId === "requirements") {
         panel.appendChild(
             renderRequirementsTab(
                 currentGameDetail.requirements
@@ -2591,34 +2851,41 @@ const renderGameDetailTabs = () => {
     const tabs = document.getElementById("game-detail-tabs");
     tabs.replaceChildren();
     GAME_DETAIL_TABS
-    .filter(({ id }) => {
-        if (
-            id === "missions" &&
-            !currentGameDetail?.gameMissionsEnabled
-        ) {
-            return false;
-        }
+        .filter(({ id }) => {
+            if (
+                id === "missions" &&
+                !currentGameDetail?.gameMissionsEnabled
+            ) {
+                return false;
+            }
 
-        if (
-            id === "requirements" &&
-            !currentGameDetail?.requirements?.available
-        ) {
-            return false;
-        }
+            if (
+                id === "achievements" &&
+                !currentGameDetail?.steamMetadata?.achievements?.available
+            ) {
+                return false;
+            }
 
-        return true;
-    })
-    .forEach(({ id, label }) => {
-        const tab = document.createElement("button");
-        tab.classList.add("game-detail-tab");
-        tab.type = "button";
-        tab.id = `game-tab-${id}`;
-        tab.dataset.gameTab = id;
-        tab.setAttribute("role", "tab");
-        tab.setAttribute("aria-controls", "game-detail-panel");
-        tab.textContent = label;
-        tabs.appendChild(tab);
-    });
+            if (
+                id === "requirements" &&
+                !currentGameDetail?.requirements?.available
+            ) {
+                return false;
+            }
+
+            return true;
+        })
+        .forEach(({ id, label }) => {
+            const tab = document.createElement("button");
+            tab.classList.add("game-detail-tab");
+            tab.type = "button";
+            tab.id = `game-tab-${id}`;
+            tab.dataset.gameTab = id;
+            tab.setAttribute("role", "tab");
+            tab.setAttribute("aria-controls", "game-detail-panel");
+            tab.textContent = label;
+            tabs.appendChild(tab);
+        });
 };
 
 const showGameDetailMessage = (message, isError = false) => {
@@ -2680,6 +2947,31 @@ const loadGameRequirements = async (
     }
 };
 
+const loadGameSteamMetadata = async (
+    gameId,
+    controller
+) => {
+    try {
+        return await requestJson(
+            `${API_URL}/api/games/${gameId}/steam`,
+            {
+                signal: controller.signal
+            }
+        );
+    } catch (error) {
+        if (controller.signal.aborted) {
+            return null;
+        }
+
+        console.error(
+            `Could not load Steam metadata for game ${gameId}:`,
+            error
+        );
+
+        return null;
+    }
+};
+
 const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => {
     gameDetailController?.abort();
     const controller = new AbortController();
@@ -2694,7 +2986,8 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
         const [
             game,
             gameMissionsEnabled,
-            requirements
+            requirements,
+            steamMetadata
         ] = await Promise.all([
             requestJson(
                 `${API_URL}/api/games/${gameId}`,
@@ -2709,6 +3002,10 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
             loadGameRequirements(
                 gameId,
                 controller
+            ),
+            loadGameSteamMetadata(
+                gameId,
+                controller
             )
         ]);
         if (controller.signal.aborted) return;
@@ -2720,6 +3017,7 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
             game,
             gameMissionsEnabled,
             requirements,
+            steamMetadata,
             media: renderGameMedia(game),
             playtime: null,
             playtimeLoading: true,
@@ -2728,6 +3026,10 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
             pricesLoading: false,
             pricesLoaded: false,
             pricesFailed: false,
+            achievements: null,
+            achievementsLoading: false,
+            achievementsLoaded: false,
+            achievementsFailed: false,
             checklists: [],
             checklistsLoading: false,
             checklistsLoaded: false,
@@ -2770,11 +3072,17 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
         const hasRating = game.total_rating !== null &&
             game.total_rating !== undefined &&
             Number.isFinite(totalRating);
+
         const ratingOutOfTen = hasRating ? totalRating / 10 : null;
+
         const formattedRating = hasRating
-            ? formatRatingOutOfTen(ratingOutOfTen)
+            ? Math.round(totalRating)
             : "—";
-        detailRating.textContent = formattedRating;
+
+        detailRating.textContent = hasRating
+            ? `IGDB ${formattedRating}`
+            : "IGDB —";
+
         detailRating.dataset.ratingLevel = !hasRating
             ? "none"
             : ratingOutOfTen >= 10
@@ -2786,25 +3094,78 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
                         : ratingOutOfTen >= 4
                             ? "fair"
                             : "low";
+
         const ratingCount = Number(game.total_rating_count);
         const hasRatingCount = Number.isFinite(ratingCount) && ratingCount > 0;
+
         detailRating.setAttribute(
             "aria-label",
             hasRating
-                ? `IGDB rating ${formattedRating} out of 10` +
-                    `${hasRatingCount ? ` from ${new Intl.NumberFormat("en").format(ratingCount)} votes` : ""}`
+                ? `IGDB rating ${formattedRating} out of 100` +
+                `${hasRatingCount ? ` from ${new Intl.NumberFormat("en").format(ratingCount)} votes` : ""}`
                 : "No IGDB rating available"
         );
+
         detailRating.title = detailRating.getAttribute("aria-label");
+
+
+        const existingMetacritic =
+            document.getElementById("game-detail-metacritic");
+
+        existingMetacritic?.remove();
+
+        const metacritic =
+            currentGameDetail.steamMetadata?.metacritic;
+
+        if (
+            metacritic &&
+            Number.isFinite(Number(metacritic.score))
+        ) {
+            const metacriticRating =
+                document.createElement("a");
+
+            metacriticRating.id =
+                "game-detail-metacritic";
+
+            metacriticRating.classList.add(
+                "game-detail-heading__rating",
+                "game-detail-heading__rating--metacritic"
+            );
+
+            metacriticRating.textContent =
+                `Metacritic ${metacritic.score}`;
+
+            metacriticRating.title =
+                `Metacritic score: ${metacritic.score}/100`;
+
+            metacriticRating.setAttribute(
+                "aria-label",
+                `Metacritic score ${metacritic.score} out of 100`
+            );
+
+            if (metacritic.url) {
+                metacriticRating.href =
+                    metacritic.url;
+
+                metacriticRating.target =
+                    "_blank";
+
+                metacriticRating.rel =
+                    "noopener noreferrer";
+            }
+
+            detailRating.parentElement.appendChild(
+                metacriticRating
+            );
+        }
 
         const release = document.getElementById("game-detail-release");
         const publishers = getGameCompaniesByRole(game, "publisher");
         const releaseYear = Number(game.first_release_date) > 0
             ? new Date(Number(game.first_release_date) * 1000).getUTCFullYear()
             : null;
-        release.textContent = `${publishers.join(", ") || "Publisher not listed"} - ${
-            releaseYear || "Release date TBA"
-        }`;
+        release.textContent = `${publishers.join(", ") || "Publisher not listed"} - ${releaseYear || "Release date TBA"
+            }`;
 
         const cover = document.getElementById("game-detail-cover");
         cover.src = game.cover?.image_id
@@ -2819,7 +3180,7 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
                 ? initialTabId
                 : returnState?.tab
                     ? returnState.tab
-                : "overview";
+                    : "overview";
         renderGameDetailTabs();
         renderGameDetailTab(activeGameDetailTab);
         document.getElementById("game-detail-content").hidden = false;
@@ -2847,6 +3208,8 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
         document.getElementById("game-detail-message").appendChild(retry);
     }
 };
+
+
 
 const loadGamePlaytime = async (gameId, controller) => {
     try {
@@ -2902,9 +3265,11 @@ const createGameCard = (
         Number.isFinite(totalRating);
     const ratingOutOfTen = hasRating ? totalRating / 10 : null;
     const formattedRating = hasRating
-        ? formatRatingOutOfTen(ratingOutOfTen)
+        ? Math.round(totalRating)
         : "—";
-    rating.textContent = formattedRating;
+    rating.textContent = hasRating
+        ? `IGDB ${formattedRating}`
+        : "IGDB —";
     rating.dataset.ratingLevel = !hasRating
         ? "none"
         : ratingOutOfTen >= 10
@@ -2920,13 +3285,13 @@ const createGameCard = (
         "aria-label",
         !hasRating
             ? "No IGDB rating available"
-            : `IGDB rating ${formattedRating} out of 10`
+            : `IGDB rating ${formattedRating} out of 100`
     );
     const totalRatingCount = Number(game.total_rating_count);
     const hasRatingCount = Number.isFinite(totalRatingCount) && totalRatingCount > 0;
     rating.title = hasRating
         ? `IGDB rating: ${rating.textContent}` +
-            `${hasRatingCount ? ` from ${new Intl.NumberFormat("en").format(totalRatingCount)} votes` : ""}`
+        `${hasRatingCount ? ` from ${new Intl.NumberFormat("en").format(totalRatingCount)} votes` : ""}`
         : "No IGDB rating available";
 
     const ratingMeta = document.createElement("p");
@@ -3034,21 +3399,21 @@ const createGameCard = (
     );
     platforms.hidden = platformFamilies.length === 0;
     platformFamilies.forEach(({ id, label, icon }) => {
-            const platform = document.createElement("span");
-            platform.classList.add("game-card__platform");
-            platform.dataset.platform = id;
-            platform.title = label;
-            platform.setAttribute("aria-label", label);
+        const platform = document.createElement("span");
+        platform.classList.add("game-card__platform");
+        platform.dataset.platform = id;
+        platform.title = label;
+        platform.setAttribute("aria-label", label);
 
-            const platformIcon = document.createElement("i");
-            platformIcon.classList.add("bi", icon);
-            platformIcon.setAttribute("aria-hidden", "true");
+        const platformIcon = document.createElement("i");
+        platformIcon.classList.add("bi", icon);
+        platformIcon.setAttribute("aria-hidden", "true");
 
-            const platformName = document.createElement("span");
-            platformName.textContent = label;
-            platform.append(platformIcon, platformName);
-            platforms.appendChild(platform);
-        });
+        const platformName = document.createElement("span");
+        platformName.textContent = label;
+        platform.append(platformIcon, platformName);
+        platforms.appendChild(platform);
+    });
 
     const details = document.createElement("div");
     details.classList.add("game-card__details");
@@ -3405,7 +3770,7 @@ const initializeCatalog = async () => {
             : event.key === "End"
                 ? tabs.length - 1
                 : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
-                    tabs.length;
+                tabs.length;
         tabs[nextIndex].focus();
         tabs[nextIndex].click();
     });
