@@ -13,6 +13,9 @@ const {
     getGameMissions
 } = require("../services/game-missions.service");
 const {
+    getPricesForGame
+} = require("../services/game-prices.service");
+const {
     getRowsByIds,
     loadFullGames,
     loadGameVersions,
@@ -269,6 +272,66 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
             console.error(`Could not load playtime for game ${req.params.id}:`, error);
             res.status(error.upstream ? 502 : 500).json({
                 error: "Could not load this game's playtime."
+            });
+        }
+    });
+
+    app.get("/api/games/:id/prices", async (req, res) => {
+        try {
+            if (!/^[1-9]\d*$/.test(req.params.id) ||
+                !Number.isSafeInteger(Number(req.params.id))) {
+                throw invalidInput("Game ID must be a positive integer.");
+            }
+
+            const gameId = Number(req.params.id);
+            const supabase =
+                createSupabaseClient.createSupabaseAdminClient(req.env);
+
+            const rowsById = await loadFullGames(
+                supabase,
+                requestIgdb,
+                [gameId]
+            );
+
+            const game = rowsById.get(gameId);
+
+            if (!game) {
+                return res.status(404).json({
+                    error: "Game not found."
+                });
+            }
+
+            const igdbGame = game.igdb_data;
+
+            const steamExternalGame =
+                igdbGame.external_games?.find(externalGame =>
+                    externalGame.external_game_source?.name === "Steam"
+                );
+
+            const result = await getPricesForGame(
+                req.env,
+                {
+                    name: igdbGame.name,
+                    steamAppId: steamExternalGame?.uid || null
+                },
+                "ES"
+            );
+
+            return res.json(result);
+        } catch (error) {
+            if (error.status === 400) {
+                return res.status(400).json({
+                    error: error.message
+                });
+            }
+
+            console.error(
+                `Could not load prices for game ${req.params.id}:`,
+                error
+            );
+
+            return res.status(error.upstream ? 502 : 500).json({
+                error: "Could not load this game's prices."
             });
         }
     });

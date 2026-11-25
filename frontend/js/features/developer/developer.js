@@ -10,6 +10,9 @@ const developerDashboard =
 const localUploadToggle =
     document.getElementById("developer-local-upload");
 
+const gameMissionsToggle =
+    document.getElementById("developer-game-missions");
+
 let developerAccess = false;
 
 const checkDeveloperAccess = async () => {
@@ -65,7 +68,11 @@ const loadDeveloperSettings = async () => {
     localUploadToggle.checked =
         settings.localRomUploadEnabled === true;
 
+    gameMissionsToggle.checked =
+        settings.gameMissionsEnabled === true;
+
     localUploadToggle.disabled = false;
+    gameMissionsToggle.disabled = false;
 };
 
 const loadDeveloperDashboard = async () => {
@@ -73,6 +80,7 @@ const loadDeveloperDashboard = async () => {
     developerStatus.textContent = "Loading developer data…";
     developerDashboard.hidden = true;
     localUploadToggle.disabled = true;
+    gameMissionsToggle.disabled = true;
 
     try {
         const response = await fetch(
@@ -239,6 +247,91 @@ localUploadToggle.addEventListener(
             );
         } finally {
             localUploadToggle.disabled = false;
+        }
+    }
+);
+
+gameMissionsToggle.addEventListener(
+    "change",
+    async () => {
+        const enabled = gameMissionsToggle.checked;
+
+        gameMissionsToggle.disabled = true;
+
+        try {
+            const response = await fetch(
+                `${API_URL}/api/developer/settings/game-missions`,
+                {
+                    method: "PATCH",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        enabled
+                    })
+                }
+            );
+
+            if (response.status === 401) {
+                navigateToRoute("login", {
+                    replace: true
+                });
+                return;
+            }
+
+            if (response.status === 403) {
+                developerNavigation.hidden = true;
+
+                navigateToRoute("home", {
+                    replace: true
+                });
+
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    "Could not update Game Missions."
+                );
+            }
+
+            const result = await response.json();
+
+            gameMissionsToggle.checked =
+                result.gameMissionsEnabled === true;
+
+            window.showAppNotice(
+                result.gameMissionsEnabled
+                    ? "Game Missions enabled."
+                    : "Game Missions disabled."
+            );
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "app:settings-changed",
+                    {
+                        detail: {
+                            gameMissionsEnabled:
+                                result.gameMissionsEnabled
+                        }
+                    }
+                )
+            );
+        } catch (error) {
+            gameMissionsToggle.checked = !enabled;
+
+            console.error(
+                "Could not update Game Missions:",
+                error
+            );
+
+            window.showAppNotice(
+                "Could not update Game Missions.",
+                "error"
+            );
+        } finally {
+            gameMissionsToggle.disabled = false;
         }
     }
 );

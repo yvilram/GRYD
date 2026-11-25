@@ -109,7 +109,7 @@ module.exports = app => {
             });
         }
     });
-    app.get("/api/developer/settings", async (req, res) => {
+app.get("/api/developer/settings", async (req, res) => {
     try {
         const session = await getSessionContext(req);
 
@@ -127,17 +127,37 @@ module.exports = app => {
 
         const supabase = createSupabaseAdminClient();
 
-        const { data, error } = await supabase
-            .from("app_settings")
-            .select("key, value, updated_at")
-            .eq("key", "retro_local_upload_enabled")
-            .single();
+        const [
+            localUploadResult,
+            gameMissionsResult
+        ] = await Promise.all([
+            supabase
+                .from("app_settings")
+                .select("value, updated_at")
+                .eq("key", "retro_local_upload_enabled")
+                .maybeSingle(),
 
-        if (error) throw error;
+            supabase
+                .from("app_settings")
+                .select("value, updated_at")
+                .eq("key", "game_missions_enabled")
+                .maybeSingle()
+        ]);
+
+        if (localUploadResult.error) {
+            throw localUploadResult.error;
+        }
+
+        if (gameMissionsResult.error) {
+            throw gameMissionsResult.error;
+        }
 
         return res.json({
-            localRomUploadEnabled: data.value === true,
-            updatedAt: data.updated_at
+            localRomUploadEnabled:
+                localUploadResult.data?.value === true,
+
+            gameMissionsEnabled:
+                gameMissionsResult.data?.value !== false
         });
     } catch (error) {
         console.error(
@@ -239,4 +259,66 @@ app.patch(
             });
         }
     });
+
+    app.patch(
+        "/api/developer/settings/game-missions",
+        async (req, res) => {
+            try {
+                const session = await getSessionContext(req);
+
+                if (!session) {
+                    return res.status(401).json({
+                        error: "Not logged in"
+                    });
+                }
+
+                if (!isAdminEmail(session.user.email)) {
+                    return res.status(403).json({
+                        error: "Developer access required"
+                    });
+                }
+
+                const { enabled } = req.body;
+
+                if (typeof enabled !== "boolean") {
+                    return res.status(400).json({
+                        error: "enabled must be a boolean"
+                    });
+                }
+
+                const supabase = createSupabaseAdminClient();
+
+                const { data, error } = await supabase
+                    .from("app_settings")
+                    .upsert(
+                        {
+                            key: "game_missions_enabled",
+                            value: enabled,
+                            updated_at: new Date().toISOString()
+                        },
+                        {
+                            onConflict: "key"
+                        }
+                    )
+                    .select("value, updated_at")
+                    .single();
+
+                if (error) throw error;
+
+                return res.json({
+                    gameMissionsEnabled: data.value === true,
+                    updatedAt: data.updated_at
+                });
+            } catch (error) {
+                console.error(
+                    "Could not update Game Missions setting:",
+                    error
+                );
+
+                return res.status(500).json({
+                    error: "Could not update Game Missions setting"
+                });
+            }
+        }
+    );
 };

@@ -853,17 +853,29 @@ const loadGameMissionDetails = async (
     return savedMission;
 };
 
-const getGameMissionDetails = (supabase, gameId, missionId) => {
+const getGameMissionDetails = async (
+    supabase,
+    gameId,
+    missionId
+) => {
+    const enabled = await areGameMissionsEnabled(supabase);
+
+    if (!enabled) {
+        return null;
+    }
+
     const key = `${gameId}:${missionId}`;
+
     if (!inFlightMissionDetails.has(key)) {
         const request = loadGameMissionDetails(
             supabase,
             gameId,
             missionId
-        )
-            .finally(() => inFlightMissionDetails.delete(key));
+        ).finally(() => inFlightMissionDetails.delete(key));
+
         inFlightMissionDetails.set(key, request);
     }
+
     return inFlightMissionDetails.get(key);
 };
 
@@ -1069,6 +1081,18 @@ const importMissions = async (supabase, gameId, sources) => {
     };
 };
 
+const areGameMissionsEnabled = async supabase => {
+    const { data, error } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "game_missions_enabled")
+        .maybeSingle();
+
+    if (error) throw error;
+
+    return data?.value !== false;
+};
+
 const loadGameMissions = async (supabase, game) => {
     const gameId = Number(game?.id);
     const sources = await getConfiguredMissionSources(supabase, gameId);
@@ -1082,13 +1106,27 @@ const loadGameMissions = async (supabase, game) => {
     return importMissions(supabase, gameId, sources);
 };
 
-const getGameMissions = (supabase, game) => {
+const getGameMissions = async (supabase, game) => {
+    const enabled = await areGameMissionsEnabled(supabase);
+
+    if (!enabled) {
+        return {
+            supported: false,
+            missions: [],
+            source: null,
+            disabled: true
+        };
+    }
+
     const gameId = Number(game?.id);
+
     if (!inFlightImports.has(gameId)) {
         const request = loadGameMissions(supabase, game)
             .finally(() => inFlightImports.delete(gameId));
+
         inFlightImports.set(gameId, request);
     }
+
     return inFlightImports.get(gameId);
 };
 

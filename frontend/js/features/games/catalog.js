@@ -587,11 +587,13 @@ const createGameRoute = (game, returnRoute = "explore", state = {}) => {
 const GAME_DETAIL_TABS = [
     { id: "overview", label: "Overview" },
     { id: "missions", label: "Missions" },
+    { id: "prices", label: "Prices" },
     { id: "media", label: "Gallery" },
     { id: "related", label: "Related content" },
     { id: "platforms", label: "Platforms" },
     { id: "more", label: "More" }
 ];
+
 let gameDetailController = null;
 let currentGameDetail = null;
 let activeGameDetailTab = "overview";
@@ -2288,6 +2290,171 @@ const renderMissionsTab = (game, controller) => {
     return content;
 };
 
+const loadGamePrices = async (gameId, controller) => {
+    const detail = currentGameDetail;
+
+    if (!detail ||
+        detail.pricesLoading ||
+        detail.pricesLoaded) {
+        return;
+    }
+
+    detail.pricesLoading = true;
+
+    try {
+        detail.prices = await requestJson(
+            `${API_URL}/api/games/${gameId}/prices`,
+            {
+                signal: controller.signal
+            }
+        );
+    } catch (error) {
+        if (error.name === "AbortError") return;
+
+        console.error(
+            `Could not load prices for game ${gameId}:`,
+            error
+        );
+
+        detail.pricesFailed = true;
+    } finally {
+        detail.pricesLoading = false;
+        detail.pricesLoaded = true;
+
+        if (!controller.signal.aborted &&
+            activeGameDetailTab === "prices") {
+            renderGameDetailTab("prices");
+        }
+    }
+};
+
+const renderPricesTab = (game, controller) => {
+    const content = document.createElement("div");
+    content.classList.add("game-detail-prices");
+
+    const detail = currentGameDetail;
+
+    if (!detail.pricesLoaded && !detail.pricesLoading) {
+        void loadGamePrices(game.id, controller);
+    }
+
+    if (detail.pricesLoading || !detail.pricesLoaded) {
+        const loading = document.createElement("p");
+        loading.classList.add("game-detail-muted");
+        loading.textContent = "Loading prices…";
+        content.appendChild(loading);
+        return content;
+    }
+
+    const deals = detail.prices?.deals || [];
+
+    if (detail.pricesFailed || !deals.length) {
+        const empty = document.createElement("p");
+        empty.classList.add("game-detail-muted");
+        empty.textContent = "No current prices are available.";
+        content.appendChild(empty);
+        return content;
+    }
+
+    deals.forEach(deal => {
+        const card = document.createElement("article");
+        card.classList.add("game-price-card");
+
+        const store = document.createElement("div");
+        store.classList.add("game-price-card__store");
+
+        const icon = document.createElement("span");
+        icon.classList.add("game-price-card__icon");
+
+        const iconElement = document.createElement("i");
+
+        iconElement.className =
+            deal.shop?.name === "Steam"
+                ? "bi bi-steam"
+                : "bi bi-shop";
+
+        icon.appendChild(iconElement);
+
+        const storeInfo = document.createElement("div");
+
+        const label = document.createElement("span");
+        label.classList.add("game-price-card__label");
+        label.textContent = "Available at";
+
+        const name = document.createElement("h3");
+        name.textContent = deal.shop?.name || "Store";
+
+        storeInfo.append(label, name);
+        store.append(icon, storeInfo);
+
+        const priceArea = document.createElement("div");
+        priceArea.classList.add("game-price-card__pricing");
+
+        const amount = Number(deal.price?.amount);
+        const regular = Number(deal.regular?.amount);
+        const currency = deal.price?.currency || "EUR";
+
+        const formatPrice = value =>
+            new Intl.NumberFormat("es-ES", {
+                style: "currency",
+                currency
+            }).format(value);
+
+        const price = document.createElement("strong");
+        price.classList.add("game-price-card__price");
+        price.textContent = Number.isFinite(amount)
+            ? formatPrice(amount)
+            : "—";
+
+        priceArea.appendChild(price);
+
+        if (deal.cut > 0 && Number.isFinite(regular)) {
+            const regularPrice = document.createElement("span");
+            regularPrice.classList.add(
+                "game-price-card__regular-price"
+            );
+            regularPrice.textContent = formatPrice(regular);
+
+            const discount = document.createElement("span");
+            discount.classList.add(
+                "game-price-card__discount"
+            );
+            discount.textContent = `-${deal.cut}%`;
+
+            priceArea.append(
+                regularPrice,
+                discount
+            );
+        }
+
+        const link = document.createElement("a");
+        link.classList.add(
+            "button",
+            "button--primary",
+            "game-price-card__action"
+        );
+        link.href = deal.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+
+        link.innerHTML = `
+            <i class="bi bi-cart3" aria-hidden="true"></i>
+            <span>View deal</span>
+            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+        `;
+
+        card.append(
+            store,
+            priceArea,
+            link
+        );
+
+        content.appendChild(card);
+    });
+
+    return content;
+};
+
 const renderGameDetailTab = tabId => {
     if (!currentGameDetail) return;
     const game = currentGameDetail.game;
@@ -2337,19 +2504,29 @@ const renderGameDetailTab = tabId => {
         panel.appendChild(renderPlatformsTab(game));
     } else if (tabId === "more") {
         panel.appendChild(renderMoreTab(game));
-    }
+    }else if (tabId === "prices") {
+    panel.appendChild(
+        renderPricesTab(game, gameDetailController)
+    );}
 
     document.querySelectorAll("#game-detail-tabs [role='tab']").forEach(tab => {
         const selected = tab.dataset.gameTab === tabId;
         tab.setAttribute("aria-selected", String(selected));
         tab.tabIndex = selected ? 0 : -1;
     });
-}
+};
+
+
 
 const renderGameDetailTabs = () => {
     const tabs = document.getElementById("game-detail-tabs");
     tabs.replaceChildren();
-    GAME_DETAIL_TABS.forEach(({ id, label }) => {
+    GAME_DETAIL_TABS
+    .filter(({ id }) =>
+        id !== "missions" ||
+        currentGameDetail?.gameMissionsEnabled
+    )
+    .forEach(({ id, label }) => {
         const tab = document.createElement("button");
         tab.classList.add("game-detail-tab");
         tab.type = "button";
@@ -2385,6 +2562,17 @@ const updateGameDetailLibraryControls = status => {
     removeButton.hidden = normalizedStatus === DEFAULT_GAME_STATUS;
 };
 
+const loadGameMissionsAvailability = async (gameId, controller) => {
+    const result = await requestJson(
+        `${API_URL}/api/games/${gameId}/missions`,
+        {
+            signal: controller.signal
+        }
+    );
+
+    return result?.disabled !== true;
+};
+
 const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => {
     gameDetailController?.abort();
     const controller = new AbortController();
@@ -2396,9 +2584,18 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
     showGameDetailMessage("Loading game details…");
 
     try {
-        const game = await requestJson(`${API_URL}/api/games/${gameId}`, {
-            signal: controller.signal
-        });
+        const [game, gameMissionsEnabled] = await Promise.all([
+            requestJson(
+                `${API_URL}/api/games/${gameId}`,
+                {
+                    signal: controller.signal
+                }
+            ),
+            loadGameMissionsAvailability(
+                gameId,
+                controller
+            )
+        ]);
         if (controller.signal.aborted) return;
         const returnState = !missionId && initialTabId
             ? loadGameDetailState(gameId)
@@ -2406,10 +2603,15 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
 
         currentGameDetail = {
             game,
+            gameMissionsEnabled,
             media: renderGameMedia(game),
             playtime: null,
             playtimeLoading: true,
             playtimeFailed: false,
+            prices: null,
+            pricesLoading: false,
+            pricesLoaded: false,
+            pricesFailed: false,
             checklists: [],
             checklistsLoading: false,
             checklistsLoaded: false,

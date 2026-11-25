@@ -70,9 +70,13 @@ const saveGames = async (supabase, games) => {
 const loadFullGames = async (supabase, requestIgdb, ids) => {
     const uniqueIds = [...new Set(ids.map(Number))];
     let rowsById = await getRowsByIds(supabase, uniqueIds);
-    const missingIds = uniqueIds.filter(id =>
-        !rowsById.get(id)?.details_loaded_at
-    );
+
+    const missingIds = uniqueIds.filter(id => {
+        const row = rowsById.get(id);
+
+        return !row?.details_loaded_at ||
+            !Array.isArray(row?.igdb_data?.external_games);
+    });
 
     for (let index = 0; index < missingIds.length; index += IGDB_BATCH_SIZE) {
         const batchIds = missingIds.slice(index, index + IGDB_BATCH_SIZE);

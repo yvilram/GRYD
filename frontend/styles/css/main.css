@@ -2169,6 +2169,97 @@ body {
   background: linear-gradient(145deg, rgba(24, 29, 43, 0.82), rgba(15, 18, 28, 0.76));
 }
 
+.game-detail-prices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.game-price-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(24, 29, 43, 0.82), rgba(15, 18, 28, 0.76));
+}
+
+.game-price-card__store {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+.game-price-card__store h3 {
+  margin: 2px 0 0;
+  color: var(--color-text);
+  font-size: 0.95rem;
+}
+
+.game-price-card__icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(215, 255, 0, 0.22);
+  border-radius: 10px;
+  background: rgba(215, 255, 0, 0.08);
+  color: var(--color-accent);
+  font-size: 1.15rem;
+}
+
+.game-price-card__label {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.game-price-card__pricing {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.game-price-card__price {
+  color: var(--color-text);
+  font-size: 1.35rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-price-card__regular-price {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-decoration: line-through;
+}
+
+.game-price-card__discount {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(215, 255, 0, 0.12);
+  color: var(--color-accent);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.game-price-card__action {
+  grid-column: 1/-1;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+}
+.game-price-card__action i:last-child {
+  margin-left: auto;
+}
+
 .game-detail-overview__row h3, .game-detail-platform-card__companies h4 {
   margin: 0 0 12px;
   color: #d7ff00;
@@ -3418,7 +3509,7 @@ body {
   .game-detail-panel {
     padding-top: 18px;
   }
-  .game-detail-overview, .game-detail-platforms {
+  .game-detail-overview, .game-detail-platforms, .game-detail-prices {
     grid-template-columns: minmax(0, 1fr);
   }
   .game-detail-missions {

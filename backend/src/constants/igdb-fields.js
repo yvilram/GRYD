@@ -19,7 +19,8 @@ const GAME_DETAILS_FIELDS = [
     "release_dates.region", "release_dates.status.name",
     "release_dates.platform.name",
     "involved_companies.company.name", "involved_companies.developer",
-    "involved_companies.publisher", "involved_companies.supporting"
+    "involved_companies.publisher", "involved_companies.supporting","external_games.uid",
+"external_games.external_game_source.name"
 ].join(", ");
 
 module.exports = { GAME_DETAILS_FIELDS };
