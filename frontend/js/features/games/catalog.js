@@ -1030,7 +1030,7 @@ const renderOverviewTab = game => {
         row.append(term, createNameList(items));
         details.appendChild(row);
     });
-        const controllerSupport =
+    const controllerSupport =
         currentGameDetail?.steamMetadata?.controllerSupport;
 
     if (
@@ -1061,7 +1061,7 @@ const renderOverviewTab = game => {
         details.appendChild(row);
     }
 
-        const supportedLanguages =
+    const supportedLanguages =
         currentGameDetail?.steamMetadata?.supportedLanguages;
 
     if (
@@ -1084,16 +1084,16 @@ const renderOverviewTab = game => {
             const item = document.createElement("span");
             item.classList.add("game-detail-language");
 
-        item.textContent = language.name;
+            item.textContent = language.name;
 
-        if (language.fullAudio) {
-            const audio = document.createElement("span");
-            audio.classList.add("game-detail-language__audio");
-            audio.textContent = "Audio";
-            audio.title = "Full audio support";
+            if (language.fullAudio) {
+                const audio = document.createElement("span");
+                audio.classList.add("game-detail-language__audio");
+                audio.textContent = "Audio";
+                audio.title = "Full audio support";
 
-            item.appendChild(audio);
-        }
+                item.appendChild(audio);
+            }
             list.appendChild(item);
         });
 
@@ -3348,13 +3348,11 @@ const createGameCard = (
                 credentials: "include"
             });
 
-            document.dispatchEvent(new CustomEvent("app:library-state-changed", {
-                detail: {
-                    gameId: game.id,
-                    gameName: game.name,
-                    status: DEFAULT_GAME_STATUS
-                }
-            }));
+            window.dispatchLibraryStateChange({
+                gameId: game.id,
+                gameName: game.name,
+                status: DEFAULT_GAME_STATUS
+            });
             window.showAppNotice(`${game.name} was removed from your library.`);
         } catch (error) {
             console.error(`Could not remove ${game.name} from the library:`, error);
@@ -3825,13 +3823,11 @@ const initializeCatalog = async () => {
                 await requestJson(`${API_URL}/api/remove-item?id=${game.id}`, {
                     credentials: "include"
                 });
-                document.dispatchEvent(new CustomEvent("app:library-state-changed", {
-                    detail: {
-                        gameId: game.id,
-                        gameName: game.name,
-                        status: DEFAULT_GAME_STATUS
-                    }
-                }));
+                window.dispatchLibraryStateChange({
+                    gameId: game.id,
+                    gameName: game.name,
+                    status: DEFAULT_GAME_STATUS
+                });
                 window.showAppNotice(`${game.name} was removed from your library.`);
             } catch (error) {
                 console.error(`Could not remove ${game.name} from the library:`, error);
@@ -3899,7 +3895,7 @@ const initializeCatalog = async () => {
         if (event.target.matches(".game-card__status")) refreshLibraryView();
     });
 
-    document.addEventListener("app:library-state-changed", ({ detail }) => {
+    document.addEventListener("app:library-state-changed", async ({ detail }) => {
         const gameId = Number(detail.gameId);
         const detailGame = currentGameDetail?.game;
         if (detailGame && Number(detailGame.id) === gameId) {
@@ -3934,6 +3930,54 @@ const initializeCatalog = async () => {
                 created_at: detail.savedAt || new Date().toISOString()
             });
         }
+        const nextStatus = normalizeGameStatus(detail.status);
+        const library = document.getElementById("game-library");
+        const existingLibraryCard = library.querySelector(
+            `.game-card[data-game-id="${gameId}"]`
+        );
+
+        if (
+            nextStatus !== DEFAULT_GAME_STATUS &&
+            !existingLibraryCard
+        ) {
+            try {
+                const games = await requestJson(
+                    `${API_URL}/api/library?ids=${gameId}`
+                );
+
+                const gameDetails =
+                    Array.isArray(games)
+                        ? games.find(game =>
+                            Number(game.id) === gameId
+                        )
+                        : null;
+
+                const game = {
+                    ...gameDetails,
+                    id: gameId,
+                    name:
+                        gameDetails?.name ||
+                        detail.gameName ||
+                        `Game ${gameId}`
+                };
+
+                library.appendChild(
+                    createGameCard(
+                        game,
+                        nextStatus,
+                        detail.savedAt ||
+                        new Date().toISOString(),
+                        "library"
+                    )
+                );
+            } catch (error) {
+                console.error(
+                    `Could not add game ${gameId} to the visible library:`,
+                    error
+                );
+            }
+        }
+
         refreshCatalogVisibility();
         refreshLibraryView();
     });

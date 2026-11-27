@@ -48,6 +48,9 @@ require("./routes/auth.routes")(app);
 require("./routes/catalog.routes")(app, requestIgdb);
 require("./routes/library.routes")(app, requestIgdb);
 require("./routes/retro.routes")(app);
-require("./routes/developer.routes")(app);
+require("./routes/developer.routes")(
+    app,
+    requestIgdb
+);
 
 module.exports = app;

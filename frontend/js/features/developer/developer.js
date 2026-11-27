@@ -13,7 +13,427 @@ const localUploadToggle =
 const gameMissionsToggle =
     document.getElementById("developer-game-missions");
 
+const homeCinematicToggle =
+    document.getElementById("developer-home-cinematic");
+
+const HOME_HERO_MODE_KEY = "gryd-home-hero-mode";
+
+const HOME_HERO_VIDEOS = [
+    "/assets/videos/home/hero-01.mp4",
+    "/assets/videos/home/hero-02.mp4",
+    "/assets/videos/home/hero-03.mp4",
+    "/assets/videos/home/hero-04.mp4"
+];
+
+const setHomeHeroMode = mode => {
+    const art = document.getElementById("home-hero-art");
+    const controller =
+        art?.querySelector(".home-hero-controller");
+    const cinematic =
+        art?.querySelector(".home-hero-cinematic");
+    const video =
+        document.getElementById("home-hero-video");
+
+    if (!art || !controller || !cinematic || !video) {
+        return;
+    }
+
+    const cinematicEnabled = mode === "cinematic";
+
+    const resolvedMode = cinematicEnabled
+        ? "cinematic"
+        : "controller";
+
+    art.dataset.homeHeroMode = resolvedMode;
+    document.documentElement.dataset.homeHeroMode =
+        resolvedMode;
+
+    if (!cinematicEnabled) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+        return;
+    }
+
+    let videoIndex = Number(
+        video.dataset.videoIndex || 0
+    );
+
+    if (
+        !Number.isSafeInteger(videoIndex) ||
+        videoIndex < 0 ||
+        videoIndex >= HOME_HERO_VIDEOS.length
+    ) {
+        videoIndex = 0;
+    }
+
+    video.dataset.videoIndex = String(videoIndex);
+
+    if (!video.getAttribute("src")) {
+        video.src = HOME_HERO_VIDEOS[videoIndex];
+    }
+
+    video.play().catch(error => {
+        console.warn(
+            "Could not autoplay home cinematic:",
+            error
+        );
+    });
+};
+
+const loadHomeHeroPreference = () => {
+    let mode = "controller";
+
+    try {
+        if (
+            window.localStorage.getItem(
+                HOME_HERO_MODE_KEY
+            ) === "cinematic"
+        ) {
+            mode = "cinematic";
+        }
+    } catch (error) {
+        console.warn(
+            "Could not read home hero preference:",
+            error
+        );
+    }
+
+    homeCinematicToggle.checked =
+        mode === "cinematic";
+
+    setHomeHeroMode(mode);
+};
+
 let developerAccess = false;
+let developerDashboardLoaded = false;
+let developerHealthInterval = null;
+let developerHealthLoading = false;
+
+const DEVELOPER_HEALTH_INTERVAL_KEY =
+    "gryd-developer-health-interval";
+
+const DEVELOPER_HEALTH_INTERVALS = [
+    10000,
+    30000,
+    60000
+];
+
+let developerHealthIntervalMs = 10000;
+
+const developerHealthIntervalSelect =
+    document.getElementById(
+        "developer-health-interval"
+    );
+
+const developerHealthRefreshButton =
+    document.getElementById(
+        "developer-health-refresh"
+    );
+
+try {
+    const storedInterval = Number(
+        window.localStorage.getItem(
+            DEVELOPER_HEALTH_INTERVAL_KEY
+        )
+    );
+
+    if (
+        DEVELOPER_HEALTH_INTERVALS.includes(
+            storedInterval
+        )
+    ) {
+        developerHealthIntervalMs =
+            storedInterval;
+    }
+} catch (error) {
+    console.warn(
+        "Could not load developer health interval:",
+        error
+    );
+}
+
+if (developerHealthIntervalSelect) {
+    developerHealthIntervalSelect.value =
+        String(developerHealthIntervalMs);
+}
+
+const getDeveloperHealthElements = () => ({
+    list: document.getElementById(
+        "developer-health-list"
+    ),
+    summary: document.getElementById(
+        "developer-health-summary"
+    ),
+    summaryDot: document.getElementById(
+        "developer-health-summary-dot"
+    ),
+    checkedAt: document.getElementById(
+        "developer-health-checked-at"
+    )
+});
+
+const renderDeveloperHealth = health => {
+    const {
+        list,
+        summary,
+        summaryDot,
+        checkedAt
+    } = getDeveloperHealthElements();
+
+    if (
+        !list ||
+        !summary ||
+        !summaryDot ||
+        !checkedAt
+    ) {
+        return;
+    }
+
+    const services = Array.isArray(
+        health?.services
+    )
+        ? health.services
+        : [];
+
+    list.replaceChildren();
+
+    services.forEach(service => {
+        const row = document.createElement("div");
+        row.classList.add("developer-health-row");
+
+        const serviceInfo =
+            document.createElement("div");
+
+        serviceInfo.classList.add(
+            "developer-health-row__service"
+        );
+
+        const dot = document.createElement("span");
+        dot.classList.add(
+            "developer-health-row__dot"
+        );
+        dot.dataset.status = service.status;
+
+        const label = document.createElement("span");
+        label.textContent = service.label;
+
+        serviceInfo.append(dot, label);
+
+        const status =
+            document.createElement("span");
+
+        status.classList.add(
+            "developer-health-row__status"
+        );
+        status.dataset.status = service.status;
+
+        status.textContent = {
+            online: "Online",
+            degraded: "Degraded",
+            offline: "Offline",
+            "not-configured": "Not configured",
+            disabled: "Disabled"
+        }[service.status] || service.status;
+
+        const latency =
+            document.createElement("span");
+
+        latency.classList.add(
+            "developer-health-row__latency"
+        );
+
+        latency.textContent =
+            Number.isFinite(service.latencyMs)
+                ? `${service.latencyMs} ms`
+                : "—";
+
+        row.append(
+            serviceInfo,
+            status,
+            latency
+        );
+
+        if (service.error) {
+            row.title = service.error;
+        }
+
+        list.appendChild(row);
+    });
+
+    const configuredServices = services.filter(
+        service =>
+            service.status !== "not-configured" &&
+            service.status !== "disabled"
+    );
+
+    const offlineCount =
+        configuredServices.filter(
+            service => service.status === "offline"
+        ).length;
+
+    const degradedCount =
+        configuredServices.filter(
+            service => service.status === "degraded"
+        ).length;
+
+    const overallStatus = offlineCount
+        ? "offline"
+        : degradedCount
+            ? "degraded"
+            : "online";
+
+    summaryDot.dataset.status = overallStatus;
+
+    summary.textContent = offlineCount
+        ? `${offlineCount} service${offlineCount === 1 ? "" : "s"} offline`
+        : degradedCount
+            ? `${degradedCount} service${degradedCount === 1 ? "" : "s"} degraded`
+            : "All configured services online";
+
+    checkedAt.textContent = health.checkedAt
+        ? new Date(
+            health.checkedAt
+        ).toLocaleTimeString()
+        : "—";
+};
+
+const loadDeveloperHealth = async () => {
+    if (developerHealthLoading) {
+        return;
+    }
+
+    developerHealthLoading = true;
+
+    try {
+        const response = await fetch(
+            `${API_URL}/api/developer/health`,
+            {
+                credentials: "include"
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `Developer health request failed (${response.status}).`
+            );
+        }
+
+        const health = await response.json();
+
+        renderDeveloperHealth(health);
+    } catch (error) {
+        console.error(
+            "Could not load developer health:",
+            error
+        );
+
+        const {
+            summary,
+            summaryDot
+        } = getDeveloperHealthElements();
+
+        if (summary && summaryDot) {
+            summary.textContent =
+                "Health check unavailable";
+
+            summaryDot.dataset.status =
+                "offline";
+        }
+    } finally {
+        developerHealthLoading = false;
+    }
+};
+
+const stopDeveloperHealthPolling = () => {
+    if (developerHealthInterval) {
+        window.clearInterval(
+            developerHealthInterval
+        );
+
+        developerHealthInterval = null;
+    }
+};
+
+const startDeveloperHealthPolling = () => {
+    stopDeveloperHealthPolling();
+
+    void loadDeveloperHealth();
+
+    developerHealthInterval =
+        window.setInterval(() => {
+            const developerView =
+                document.getElementById(
+                    "view-developer"
+                );
+
+            if (
+                !developerView ||
+                developerView.hidden
+            ) {
+                stopDeveloperHealthPolling();
+                return;
+            }
+
+            void loadDeveloperHealth();
+        }, developerHealthIntervalMs);
+};
+
+developerHealthRefreshButton?.addEventListener(
+    "click",
+    async () => {
+        developerHealthRefreshButton.disabled = true;
+
+        try {
+            await loadDeveloperHealth();
+        } finally {
+            developerHealthRefreshButton.disabled = false;
+        }
+    }
+);
+
+developerHealthIntervalSelect?.addEventListener(
+    "change",
+    () => {
+        const interval = Number(
+            developerHealthIntervalSelect.value
+        );
+
+        if (
+            !DEVELOPER_HEALTH_INTERVALS.includes(
+                interval
+            )
+        ) {
+            return;
+        }
+
+        developerHealthIntervalMs = interval;
+
+        try {
+            window.localStorage.setItem(
+                DEVELOPER_HEALTH_INTERVAL_KEY,
+                String(interval)
+            );
+        } catch (error) {
+            console.warn(
+                "Could not save developer health interval:",
+                error
+            );
+        }
+
+        const developerView =
+            document.getElementById(
+                "view-developer"
+            );
+
+        if (
+            developerView &&
+            !developerView.hidden
+        ) {
+            startDeveloperHealthPolling();
+        }
+    }
+);
 
 const checkDeveloperAccess = async () => {
     try {
@@ -76,9 +496,11 @@ const loadDeveloperSettings = async () => {
 };
 
 const loadDeveloperDashboard = async () => {
-    developerStatus.hidden = false;
+    
+    developerStatus.hidden = true;
     developerStatus.textContent = "Loading developer data…";
-    developerDashboard.hidden = true;
+    developerDashboard.hidden = false;
+
     localUploadToggle.disabled = true;
     gameMissionsToggle.disabled = true;
 
@@ -91,12 +513,14 @@ const loadDeveloperDashboard = async () => {
         );
 
         if (response.status === 401) {
+            developerDashboardLoaded = false;
             developerNavigation.hidden = true;
             navigateToRoute("login", { replace: true });
             return;
         }
 
         if (response.status === 403) {
+            developerDashboardLoaded = false;
             developerNavigation.hidden = true;
             navigateToRoute("home", { replace: true });
             return;
@@ -134,30 +558,18 @@ const loadDeveloperDashboard = async () => {
             "developer-ps1-status"
         ).textContent = result.retro.ps1;
 
-        const supabaseStatus =
-            document.getElementById("developer-supabase-status");
-
-        supabaseStatus.textContent = result.services.supabase;
-        supabaseStatus.dataset.status =
-            result.services.supabase.toLowerCase();
-
-        document.getElementById(
-            "developer-igdb-status"
-        ).textContent = result.services.igdb;
-
-        document.getElementById(
-            "developer-s3-status"
-        ).textContent = result.services.externalS3;
-
         await loadDeveloperSettings();
 
         developerStatus.hidden = true;
         developerDashboard.hidden = false;
+        developerDashboardLoaded = true;
     } catch (error) {
         console.error(
             "Could not load developer dashboard:",
             error
         );
+
+        developerDashboardLoaded = false;
 
         developerStatus.hidden = false;
         developerStatus.textContent =
@@ -336,12 +748,73 @@ gameMissionsToggle.addEventListener(
     }
 );
 
+const homeHeroVideo =
+    document.getElementById("home-hero-video");
+
+homeHeroVideo?.addEventListener("ended", () => {
+    const currentIndex = Number(
+        homeHeroVideo.dataset.videoIndex || 0
+    );
+
+    const nextIndex =
+        (currentIndex + 1) % HOME_HERO_VIDEOS.length;
+
+    homeHeroVideo.dataset.videoIndex =
+        String(nextIndex);
+
+    homeHeroVideo.src =
+        HOME_HERO_VIDEOS[nextIndex];
+
+    homeHeroVideo.play().catch(error => {
+        console.warn(
+            "Could not continue home cinematic:",
+            error
+        );
+    });
+});
+
+homeCinematicToggle?.addEventListener(
+    "change",
+    () => {
+        const mode = homeCinematicToggle.checked
+            ? "cinematic"
+            : "controller";
+
+        try {
+            window.localStorage.setItem(
+                HOME_HERO_MODE_KEY,
+                mode
+            );
+        } catch (error) {
+            console.warn(
+                "Could not save home hero preference:",
+                error
+            );
+        }
+
+        setHomeHeroMode(mode);
+
+        window.showAppNotice(
+            mode === "cinematic"
+                ? "Cinematic home hero enabled."
+                : "Controller home hero enabled."
+        );
+    }
+);
+
+loadHomeHeroPreference();
+
 window.addEventListener(
     "auth:changed",
     ({ detail: { authenticated } }) => {
         if (!authenticated) {
             developerAccess = false;
+            developerDashboardLoaded = false;
+
             developerNavigation.hidden = true;
+
+            stopDeveloperHealthPolling();
+
             return;
         }
 
@@ -353,6 +826,7 @@ document.addEventListener(
     "app:navigate",
     async ({ detail: { route } }) => {
         if (route !== "developer") {
+            stopDeveloperHealthPolling();
             return;
         }
 
@@ -364,6 +838,8 @@ document.addEventListener(
             await checkDeveloperAccess();
 
         if (!allowed) {
+            stopDeveloperHealthPolling();
+
             navigateToRoute(
                 "home",
                 { replace: true }
@@ -371,7 +847,16 @@ document.addEventListener(
             return;
         }
 
-        await loadDeveloperDashboard();
+        if (!developerDashboardLoaded) {
+            await loadDeveloperDashboard();
+        }
+
+        if (!developerDashboardLoaded) {
+            stopDeveloperHealthPolling();
+            return;
+        }
+
+        startDeveloperHealthPolling();
     }
 );
 

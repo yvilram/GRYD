@@ -1,3 +1,58 @@
+const LIBRARY_SYNC_CHANNEL = "gryd-library-state";
+const librarySyncChannel =
+    "BroadcastChannel" in window
+        ? new BroadcastChannel(LIBRARY_SYNC_CHANNEL)
+        : null;
+
+const dispatchLibraryStateChange = (
+    detail,
+    {
+        broadcast = true
+    } = {}
+) => {
+    document.dispatchEvent(
+        new CustomEvent(
+            "app:library-state-changed",
+            {
+                detail
+            }
+        )
+    );
+
+    if (broadcast) {
+        librarySyncChannel?.postMessage(detail);
+    }
+};
+
+librarySyncChannel?.addEventListener(
+    "message",
+    event => {
+        const detail = event.data;
+
+        if (
+            !detail ||
+            typeof detail !== "object" ||
+            !detail.gameId ||
+            typeof detail.status !== "string"
+        ) {
+            return;
+        }
+
+        dispatchLibraryStateChange(
+            {
+                ...detail,
+                external: true
+            },
+            {
+                broadcast: false
+            }
+        );
+    }
+);
+
+window.dispatchLibraryStateChange =
+    dispatchLibraryStateChange;
+
 const libraryGridIds = ["game-catalog", "game-library"];
 
 // Save the selected status for the game card that changed.
@@ -45,26 +100,28 @@ const saveGameStatus = async event => {
         }
 
         statusSelect.dataset.savedStatus = status;
-        document.dispatchEvent(new CustomEvent("app:library-state-changed", {
-            detail: {
-                gameId,
-                gameName,
-                status,
-                savedAt: new Date().toISOString()
-            }
-        }));
+        dispatchLibraryStateChange({
+            gameId,
+            gameName,
+            status,
+            savedAt: new Date().toISOString()
+        });
+
         const statusLabel = statusSelect.selectedOptions[0]?.textContent || status;
         window.showAppNotice(`${gameName} moved to ${statusLabel}.`);
     } catch (error) {
         console.error(`Could not save status for "${gameName}":`, error);
         statusSelect.value = previousStatus;
-        document.dispatchEvent(new CustomEvent("app:library-state-changed", {
-            detail: {
+        dispatchLibraryStateChange(
+            {
                 gameId,
                 gameName,
                 status: previousStatus
+            },
+            {
+                broadcast: false
             }
-        }));
+        );
         window.showAppNotice(
             error.status === 401
                 ? "Your session has expired. Log in again to manage your library."

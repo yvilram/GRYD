@@ -17,6 +17,7 @@ const navigationToggle = document.getElementById("site-header-toggle");
 const navigationMenu = document.getElementById("site-header-menu");
 const appNotice = document.getElementById("app-notice");
 let appNoticeTimer = 0;
+let currentRouteKey = null;
 
 window.showAppNotice = (message, type = "success") => {
     window.clearTimeout(appNoticeTimer);
@@ -55,6 +56,16 @@ const renderRoute = (route, game = null) => {
             ? route
             : "home";
     const activeViewId = activeRoute === "game" ? "view-game" : ROUTE_VIEWS[activeRoute];
+    const routeKey = activeRoute === "game"
+    ? [
+        "game",
+        game?.id || "",
+        game?.missionId || "",
+        game?.tabId || ""
+    ].join(":")
+    : activeRoute;
+
+    const isSameRoute = currentRouteKey === routeKey;
 
     document.querySelectorAll("[data-view]").forEach(view => {
         view.hidden = view.id !== activeViewId;
@@ -66,7 +77,7 @@ const renderRoute = (route, game = null) => {
         const hasReturnGame = Boolean(game.returnGameId && game.returnGameSlug);
         const returnGameRoute = hasReturnGame
             ? `#game/${game.returnGameId}/${game.returnGameSlug}` +
-                `?from=${returnRoute}&tab=${game.returnTab || "related"}`
+            `?from=${returnRoute}&tab=${game.returnTab || "related"}`
             : `#${returnRoute}`;
         backLink.hidden = Boolean(game.missionId);
         backLink.href = returnGameRoute;
@@ -87,6 +98,12 @@ const renderRoute = (route, game = null) => {
             button.removeAttribute("aria-current");
         }
     });
+    
+    if (isSameRoute) {
+        return;
+    }
+
+    currentRouteKey = routeKey;
 
     document.dispatchEvent(new CustomEvent("app:navigate", {
         detail: {
@@ -105,9 +122,28 @@ const renderRoute = (route, game = null) => {
 };
 
 // Change views through the URL so reloads and browser history keep working.
-const navigateToRoute = (route, { replace = false } = {}) => {
+const navigateToRoute = (
+    route,
+    {
+        replace = false,
+        force = false
+    } = {}
+) => {
     if (!isValidRoute(route)) {
-        throw new Error(`Unknown application route: ${route}`);
+        throw new Error(
+            `Unknown application route: ${route}`
+        );
+    }
+
+    const routeHash = `#${route}`;
+
+    if (
+        !force &&
+        currentRouteKey === route &&
+        window.location.hash === routeHash
+    ) {
+        setNavigationMenuOpen(false);
+        return;
     }
 
     const url = new URL(window.location.href);
@@ -115,7 +151,7 @@ const navigateToRoute = (route, { replace = false } = {}) => {
 
     if (replace) {
         window.history.replaceState(null, "", url);
-    } else if (window.location.hash !== `#${route}`) {
+    } else if (window.location.hash !== routeHash) {
         window.history.pushState(null, "", url);
     }
 

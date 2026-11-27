@@ -9,6 +9,36 @@
     <meta name="theme-color" content="#090b12">
     <title>GRYD</title>
     <script src="/js/app/theme.js"></script>
+    <script>
+        (() => {
+            const modeKey = "gryd-home-hero-mode";
+            let mode = "controller";
+
+            try {
+                if (window.localStorage.getItem(modeKey) === "cinematic") {
+                    mode = "cinematic";
+                }
+            } catch (error) {
+                console.warn(
+                    "Could not read home hero preference:",
+                    error
+                );
+            }
+
+            document.documentElement.dataset.homeHeroMode = mode;
+
+            if (mode === "cinematic") {
+                const preload = document.createElement("link");
+
+                preload.rel = "preload";
+                preload.as = "video";
+                preload.href = "/assets/videos/home/hero-01.mp4";
+                preload.type = "video/mp4";
+
+                document.head.appendChild(preload);
+            }
+        })();
+    </script>
     <link rel="icon" type="image/ico" href="/assets/images/favicon.ico">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/styles/css/main.css">
@@ -156,10 +186,20 @@
                     </ul>
                 </div>
 
-                <div class="home-view__art" aria-hidden="true">
-                    <span class="home-view__orb home-view__orb--one"></span>
-                    <span class="home-view__orb home-view__orb--two"></span>
-                    <i class="bi bi-controller"></i>
+                <div class="home-view__art" id="home-hero-art" data-home-hero-mode="controller" aria-hidden="true">
+                    <div class="home-hero-controller">
+                        <span class="home-view__orb home-view__orb--one"></span>
+                        <span class="home-view__orb home-view__orb--two"></span>
+                        <i class="bi bi-controller"></i>
+                    </div>
+
+                    <div class="home-hero-cinematic">
+                        <video class="home-hero-cinematic__video" id="home-hero-video" muted playsinline preload="auto"
+                            poster="/assets/images/background.png"></video>
+
+                        <div class="home-hero-cinematic__shade"></div>
+                        <div class="home-hero-cinematic__glow"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1094,6 +1134,140 @@
 
             <div class="developer-grid" id="developer-dashboard" hidden>
 
+                <article class="developer-card developer-card--wide">
+                    <div class="developer-card__header">
+                        <div class="developer-card__heading">
+                            <div class="developer-card__icon">
+                                <i class="bi bi-activity" aria-hidden="true"></i>
+                            </div>
+
+                            <div>
+                                <p class="developer-card__eyebrow">
+                                    Live diagnostics
+                                </p>
+                                <h2>System health</h2>
+                            </div>
+                        </div>
+
+                        <div class="developer-health-summary">
+                            <span class="developer-health-summary__dot" id="developer-health-summary-dot"></span>
+
+                            <span id="developer-health-summary">
+                                Waiting for health check
+                            </span>
+                        </div>
+
+                        <div class="developer-health-actions">
+                            <label for="developer-health-interval">
+                                Auto refresh
+                            </label>
+
+                            <select id="developer-health-interval" class="developer-health-interval"
+                                aria-label="System health automatic refresh interval">
+                                <option value="10000">10 s</option>
+                                <option value="30000">30 s</option>
+                                <option value="60000">1 min</option>
+                            </select>
+
+                            <button id="developer-health-refresh" class="developer-health-refresh" type="button"
+                                title="Refresh system health" aria-label="Refresh system health">
+                                <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="developer-health-list" id="developer-health-list" aria-live="polite">
+                        <p class="developer-health-loading">
+                            Checking services…
+                        </p>
+                    </div>
+
+                    <p class="developer-health-updated">
+                        Last checked:
+                        <time id="developer-health-checked-at">—</time>
+                    </p>
+                </article>
+
+                <article class="developer-card developer-card--wide">
+                    <div class="developer-card__header">
+                        <div class="developer-card__heading">
+                            <div class="developer-card__icon">
+                                <i class="bi bi-toggles" aria-hidden="true"></i>
+                            </div>
+
+                            <div>
+                                <p class="developer-card__eyebrow">
+                                    Configuration
+                                </p>
+                                <h2>Feature controls</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="developer-controls">
+                        <div class="developer-control">
+                            <div class="developer-control__content">
+                                <i class="bi bi-list-check" aria-hidden="true"></i>
+
+                                <div>
+                                    <label for="developer-game-missions">
+                                        Game Missions
+                                    </label>
+
+                                    <p>
+                                        Load, cache and display mission and
+                                        guide data.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <input id="developer-game-missions" class="developer-switch" type="checkbox" role="switch"
+                                disabled>
+                        </div>
+
+                        <div class="developer-control">
+                            <div class="developer-control__content">
+                                <i class="bi bi-upload" aria-hidden="true"></i>
+
+                                <div>
+                                    <label for="developer-local-upload">
+                                        Local game upload
+                                    </label>
+
+                                    <p>
+                                        Allow compatible local ROM files to
+                                        be opened in Retro Gaming.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <input id="developer-local-upload" class="developer-switch" type="checkbox" role="switch"
+                                disabled>
+                        </div>
+
+                        <div class="developer-control">
+                            <div class="developer-control__content">
+                                <i class="bi bi-film" aria-hidden="true"></i>
+
+                                <div>
+                                    <label for="developer-home-cinematic">
+                                        Cinematic home hero
+                                    </label>
+
+                                    <p id="developer-home-cinematic-help">
+                                        Replace the controller artwork with
+                                        consecutive background videos.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <input id="developer-home-cinematic" class="developer-switch" type="checkbox" role="switch"
+                                aria-describedby="developer-home-cinematic-help">
+                        </div>
+                    </div>
+                </article>
+
                 <article class="developer-card">
                     <div class="developer-card__header">
                         <div class="developer-card__icon">
@@ -1150,51 +1324,13 @@
                 <article class="developer-card">
                     <div class="developer-card__header">
                         <div class="developer-card__icon">
-                            <i class="bi bi-list-check" aria-hidden="true"></i>
-                        </div>
-                    </div>
-
-                    <h2>Game Missions</h2>
-
-                    <dl class="developer-values">
-                        <div class="developer-setting">
-                            <dt>
-                                <label for="developer-game-missions">
-                                    Load and store missions
-                                </label>
-                            </dt>
-
-                            <dd>
-                                <input id="developer-game-missions" class="developer-switch" type="checkbox"
-                                    role="switch" disabled>
-                            </dd>
-                        </div>
-                    </dl>
-                </article>
-
-                <article class="developer-card">
-                    <div class="developer-card__header">
-                        <div class="developer-card__icon">
                             <i class="bi bi-controller" aria-hidden="true"></i>
                         </div>
                     </div>
 
-                    <h2>Retro Gaming</h2>
+                    <h2>Runtime</h2>
 
                     <dl class="developer-values">
-                        <div class="developer-setting">
-                            <dt>
-                                <label for="developer-local-upload">
-                                    Local game upload
-                                </label>
-                            </dt>
-
-                            <dd>
-                                <input id="developer-local-upload" class="developer-switch" type="checkbox"
-                                    role="switch" disabled>
-                            </dd>
-                        </div>
-
                         <div>
                             <dt>External storage</dt>
                             <dd id="developer-external-storage">—</dd>
@@ -1208,33 +1344,6 @@
                         <div>
                             <dt>PS1</dt>
                             <dd id="developer-ps1-status">In progress</dd>
-                        </div>
-                    </dl>
-                </article>
-
-                <article class="developer-card">
-                    <div class="developer-card__header">
-                        <div class="developer-card__icon">
-                            <i class="bi bi-hdd-network" aria-hidden="true"></i>
-                        </div>
-                    </div>
-
-                    <h2>Services</h2>
-
-                    <dl class="developer-values">
-                        <div>
-                            <dt>Supabase</dt>
-                            <dd id="developer-supabase-status">—</dd>
-                        </div>
-
-                        <div>
-                            <dt>IGDB</dt>
-                            <dd id="developer-igdb-status">—</dd>
-                        </div>
-
-                        <div>
-                            <dt>External S3</dt>
-                            <dd id="developer-s3-status">—</dd>
                         </div>
                     </dl>
                 </article>
