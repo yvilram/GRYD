@@ -1,24 +1,26 @@
 {
-    echo "===== APP ROUTE REGISTRATION ====="
-    grep -nEi -C 35 \
-        'developer.routes|catalog.routes|requestIgdb|registerDeveloper' \
-        backend/src/app.js \
-        backend/worker.mjs || true
+    echo "===== GAME DETAIL STATE ====="
+    grep -nEi -C 20 \
+        'currentGameDetail|currentGameMediaIndex|currentGameTab' \
+        frontend/js/features/games/catalog.js \
+        | head -n 180
 
     echo
-    echo "===== DEVELOPER ROUTES COMPLETE ====="
-    cat backend/src/routes/developer.routes.js
+    echo "===== LOAD GAME DETAIL ====="
+    grep -nEi -A 220 \
+        'const loadGameDetail' \
+        frontend/js/features/games/catalog.js
 
     echo
-    echo "===== IGDB CLIENT COMPLETE ====="
-    cat backend/src/services/igdb.client.js
+    echo "===== RENDER GAME DETAIL ====="
+    grep -nEi -A 180 \
+        'const renderGameDetail' \
+        frontend/js/features/games/catalog.js
 
     echo
-    echo "===== GAME CACHE COMPLETE ====="
-    cat backend/src/services/game-cache.service.js
+    echo "===== CATALOG CACHE CHANGE ====="
+    grep -nEi -A 80 \
+        'const handleCatalogCacheChanged' \
+        frontend/js/features/games/catalog.js
 
-    echo
-    echo "===== DATABASE SQL GAMES ====="
-    cat supabase/create_games.sql 2>/dev/null || true
-
-} > igdb-cache-sync-context.txt
+} > game-detail-revalidation-context.txt

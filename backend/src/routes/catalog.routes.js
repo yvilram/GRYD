@@ -199,6 +199,183 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
         }
     );
 
+    app.post(
+        "/api/games/cache-state",
+        async (req, res) => {
+            try {
+                const rawIds = req.body?.ids;
+
+                if (
+                    !Array.isArray(rawIds) ||
+                    rawIds.length < 1 ||
+                    rawIds.length > 100
+                ) {
+                    throw invalidInput(
+                        "ids must contain between 1 and 100 game IDs."
+                    );
+                }
+
+                const ids = [
+                    ...new Set(
+                        rawIds.map(Number)
+                    )
+                ];
+
+                if (
+                    ids.some(id =>
+                        !Number.isSafeInteger(id) ||
+                        id < 1
+                    )
+                ) {
+                    throw invalidInput(
+                        "Every game ID must be a positive integer."
+                    );
+                }
+
+                const supabase =
+                    createSupabaseClient
+                        .createSupabaseAdminClient(
+                            req.env
+                        );
+
+                const {
+                    data,
+                    error
+                } = await supabase
+                    .from("games")
+                    .select(
+                        "igdb_game_id, updated_at"
+                    )
+                    .in("igdb_game_id", ids);
+
+                if (error) {
+                    throw error;
+                }
+
+                const rowsById = new Map(
+                    (data || []).map(row => [
+                        Number(row.igdb_game_id),
+                        row
+                    ])
+                );
+
+                return res.json({
+                    games: ids
+                        .map(id => {
+                            const row =
+                                rowsById.get(id);
+
+                            if (!row) {
+                                return null;
+                            }
+
+                            return {
+                                id,
+                                updatedAt:
+                                    row.updated_at ||
+                                    null
+                            };
+                        })
+                        .filter(Boolean)
+                });
+            } catch (error) {
+                if (error.status === 400) {
+                    return res.status(400).json({
+                        error: error.message
+                    });
+                }
+
+                console.error(
+                    "Could not load game cache state:",
+                    error
+                );
+
+                return res.status(500).json({
+                    error:
+                        "Could not load game cache state."
+                });
+            }
+        }
+    );
+
+        app.post(
+        "/api/games/cache-data",
+        async (req, res) => {
+            try {
+                const rawIds = req.body?.ids;
+
+                if (
+                    !Array.isArray(rawIds) ||
+                    rawIds.length < 1 ||
+                    rawIds.length > 100
+                ) {
+                    throw invalidInput(
+                        "ids must contain between 1 and 100 game IDs."
+                    );
+                }
+
+                const ids = [
+                    ...new Set(
+                        rawIds.map(Number)
+                    )
+                ];
+
+                if (
+                    ids.some(id =>
+                        !Number.isSafeInteger(id) ||
+                        id < 1
+                    )
+                ) {
+                    throw invalidInput(
+                        "Every game ID must be a positive integer."
+                    );
+                }
+
+                const supabase =
+                    createSupabaseClient
+                        .createSupabaseAdminClient(
+                            req.env
+                        );
+
+                const rowsById =
+                    await getRowsByIds(
+                        supabase,
+                        ids
+                    );
+
+                const games = ids
+                    .map(id =>
+                        rowsById.get(id)
+                    )
+                    .filter(row =>
+                        row?.details_loaded_at &&
+                        row?.igdb_data
+                    )
+                    .map(toPublicGame);
+
+                return res.json({
+                    games
+                });
+            } catch (error) {
+                if (error.status === 400) {
+                    return res.status(400).json({
+                        error: error.message
+                    });
+                }
+
+                console.error(
+                    "Could not load cached game data:",
+                    error
+                );
+
+                return res.status(500).json({
+                    error:
+                        "Could not load cached game data."
+                });
+            }
+        }
+    );
+
     app.get("/api/games/:id/ign-pages", async (req, res) => {
         const { id } = req.params;
         const { url } = req.query;
@@ -559,7 +736,7 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
         }
     });
 
-        app.get(
+    app.get(
         "/api/games/:id/steam/achievements",
         async (req, res) => {
             try {
@@ -603,7 +780,7 @@ module.exports = function registerCatalogRoutes(app, requestIgdb) {
                         platform =>
                             Number(platform?.id) === 6 ||
                             platform?.name ===
-                                "PC (Microsoft Windows)"
+                            "PC (Microsoft Windows)"
                     );
 
                 if (!hasPcPlatform) {

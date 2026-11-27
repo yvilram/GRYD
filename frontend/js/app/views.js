@@ -19,6 +19,27 @@ const appNotice = document.getElementById("app-notice");
 let appNoticeTimer = 0;
 let currentRouteKey = null;
 
+const routeScrollPositions = new Map();
+
+if ("scrollRestoration" in window.history) {
+    window.history.scrollRestoration = "manual";
+}
+
+const restoreRouteScroll = routeKey => {
+    const scrollY =
+        routeScrollPositions.get(routeKey) || 0;
+
+    window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+            window.scrollTo({
+                top: scrollY,
+                left: 0,
+                behavior: "instant"
+            });
+        });
+    });
+};
+
 window.showAppNotice = (message, type = "success") => {
     window.clearTimeout(appNoticeTimer);
     appNotice.textContent = message;
@@ -57,15 +78,25 @@ const renderRoute = (route, game = null) => {
             : "home";
     const activeViewId = activeRoute === "game" ? "view-game" : ROUTE_VIEWS[activeRoute];
     const routeKey = activeRoute === "game"
-    ? [
-        "game",
-        game?.id || "",
-        game?.missionId || "",
-        game?.tabId || ""
-    ].join(":")
-    : activeRoute;
+        ? [
+            "game",
+            game?.id || "",
+            game?.missionId || "",
+            game?.tabId || ""
+        ].join(":")
+        : activeRoute;
 
     const isSameRoute = currentRouteKey === routeKey;
+
+    if (
+        currentRouteKey &&
+        !isSameRoute
+    ) {
+        routeScrollPositions.set(
+            currentRouteKey,
+            window.scrollY
+        );
+    }
 
     document.querySelectorAll("[data-view]").forEach(view => {
         view.hidden = view.id !== activeViewId;
@@ -98,7 +129,7 @@ const renderRoute = (route, game = null) => {
             button.removeAttribute("aria-current");
         }
     });
-    
+
     if (isSameRoute) {
         return;
     }
@@ -119,6 +150,8 @@ const renderRoute = (route, game = null) => {
             returnTab: game?.returnTab || null
         }
     }));
+
+    restoreRouteScroll(routeKey);
 };
 
 // Change views through the URL so reloads and browser history keep working.

@@ -25,6 +25,16 @@ const HOME_HERO_VIDEOS = [
     "/assets/videos/home/hero-04.mp4"
 ];
 
+const CATALOG_SYNC_CHANNEL =
+    "gryd-catalog-state";
+
+const catalogSyncChannel =
+    "BroadcastChannel" in window
+        ? new BroadcastChannel(
+            CATALOG_SYNC_CHANNEL
+        )
+        : null;
+
 const setHomeHeroMode = mode => {
     const art = document.getElementById("home-hero-art");
     const controller =
@@ -496,7 +506,7 @@ const loadDeveloperSettings = async () => {
 };
 
 const loadDeveloperDashboard = async () => {
-    
+
     developerStatus.hidden = true;
     developerStatus.textContent = "Loading developer data…";
     developerDashboard.hidden = false;
@@ -747,6 +757,264 @@ gameMissionsToggle.addEventListener(
         }
     }
 );
+
+const igdbSyncButton =
+    document.getElementById("developer-igdb-sync");
+
+const igdbSyncProgress =
+    document.getElementById(
+        "developer-igdb-sync-progress"
+    );
+
+const igdbSyncStatus =
+    document.getElementById(
+        "developer-igdb-sync-status"
+    );
+
+const igdbSyncPercent =
+    document.getElementById(
+        "developer-igdb-sync-percent"
+    );
+
+const igdbSyncBar =
+    document.getElementById(
+        "developer-igdb-sync-bar"
+    );
+
+const igdbSyncProcessed =
+    document.getElementById(
+        "developer-igdb-sync-processed"
+    );
+
+const igdbSyncUpdated =
+    document.getElementById(
+        "developer-igdb-sync-updated"
+    );
+
+const igdbSyncUnavailable =
+    document.getElementById(
+        "developer-igdb-sync-unavailable"
+    );
+
+let igdbSyncRunning = false;
+
+const updateIgdbSyncProgress = ({
+    processed,
+    updated,
+    unavailable,
+    percent,
+    status
+}) => {
+    igdbSyncProcessed.textContent =
+        processed.toLocaleString();
+
+    igdbSyncUpdated.textContent =
+        updated.toLocaleString();
+
+    igdbSyncUnavailable.textContent =
+        unavailable.toLocaleString();
+
+    igdbSyncPercent.textContent =
+        `${percent}%`;
+
+    igdbSyncBar.style.width =
+        `${percent}%`;
+
+    igdbSyncStatus.textContent = status;
+};
+
+const runIgdbCacheSync = async () => {
+    if (igdbSyncRunning) {
+        return;
+    }
+
+    igdbSyncRunning = true;
+    igdbSyncButton.disabled = true;
+    igdbSyncProgress.hidden = false;
+
+    let afterId = 0;
+    let total = 0;
+    let processed = 0;
+    let updated = 0;
+    let unavailable = 0;
+    let complete = false;
+
+    updateIgdbSyncProgress({
+        processed: 0,
+        updated: 0,
+        unavailable: 0,
+        percent: 0,
+        status: "Synchronizing cached games…"
+    });
+
+    const catalogChangeDetail = {
+        type: "igdb-cache-synchronized",
+        updatedAt: new Date().toISOString()
+    };
+
+    document.dispatchEvent(
+        new CustomEvent(
+            "app:catalog-cache-changed",
+            {
+                detail: catalogChangeDetail
+            }
+        )
+    );
+
+    catalogSyncChannel?.postMessage(
+        catalogChangeDetail
+    );
+
+    try {
+        while (!complete) {
+            const response = await fetch(
+                `${API_URL}/api/developer/igdb-cache/sync`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        afterId
+                    })
+                }
+            );
+
+            if (response.status === 401) {
+                navigateToRoute(
+                    "login",
+                    { replace: true }
+                );
+                return;
+            }
+
+            if (response.status === 403) {
+                developerNavigation.hidden = true;
+
+                navigateToRoute(
+                    "home",
+                    { replace: true }
+                );
+
+                return;
+            }
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error ||
+                    "Could not synchronize IGDB cache."
+                );
+            }
+
+            total = Number(result.total || total || 0);
+
+            processed += Number(
+                result.processed || 0
+            );
+
+            updated += Number(
+                result.updated || 0
+            );
+
+            unavailable += Number(
+                result.unavailable || 0
+            );
+
+            complete =
+                result.complete === true;
+
+            if (
+                result.nextAfterId != null
+            ) {
+                afterId = Number(
+                    result.nextAfterId
+                );
+            }
+
+            const percent = total > 0
+                ? Math.min(
+                    99,
+                    Math.round(
+                        (processed / total) * 100
+                    )
+                )
+                : 0;
+
+            updateIgdbSyncProgress({
+                processed,
+                updated,
+                unavailable,
+                percent: complete ? 99 : percent,
+                status: complete
+                    ? "Finalizing…"
+                    : `Synchronizing… ${processed.toLocaleString()} / ${total.toLocaleString()}`
+            });
+        }
+
+        const finishResponse = await fetch(
+            `${API_URL}/api/developer/igdb-cache/finish`,
+            {
+                method: "POST",
+                credentials: "include"
+            }
+        );
+
+        const finishResult =
+            await finishResponse.json();
+
+        if (!finishResponse.ok) {
+            throw new Error(
+                finishResult.error ||
+                "Could not finalize IGDB cache synchronization."
+            );
+        }
+
+        updateIgdbSyncProgress({
+            processed,
+            updated,
+            unavailable,
+            percent: 100,
+            status: "Synchronization complete"
+        });
+
+        window.showAppNotice(
+            `IGDB cache synchronized: ${updated.toLocaleString()} games updated.`
+        );
+
+        /*
+         * Database counters may have changed, so force
+         * Development summary data to refresh next time.
+         */
+        developerDashboardLoaded = false;
+    } catch (error) {
+        console.error(
+            "Could not synchronize IGDB cache:",
+            error
+        );
+
+        igdbSyncStatus.textContent =
+            "Synchronization failed";
+
+        window.showAppNotice(
+            "Could not synchronize IGDB cache.",
+            "error"
+        );
+    } finally {
+        igdbSyncRunning = false;
+        igdbSyncButton.disabled = false;
+    }
+};
+
+igdbSyncButton?.addEventListener(
+    "click",
+    () => {
+        void runIgdbCacheSync();
+    }
+);
+
 
 const homeHeroVideo =
     document.getElementById("home-hero-video");

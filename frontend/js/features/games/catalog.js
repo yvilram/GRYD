@@ -46,10 +46,25 @@ const PLATFORM_FAMILIES = [
 ];
 
 let savedGames = [];
+let isLibraryLoaded = false;
 let catalogOffset = 0;
 let isCatalogLoading = false;
+let catalogScrollObserver = null;
 let hasMoreCatalogGames = true;
 let isCatalogLoaded = false;
+const catalogCacheVersions = new Map();
+let isCatalogRevalidating = false;
+const CATALOG_SYNC_CHANNEL =
+    "gryd-catalog-state";
+
+const catalogSyncChannel =
+    "BroadcastChannel" in window
+        ? new BroadcastChannel(
+            CATALOG_SYNC_CHANNEL
+        )
+        : null;
+
+let isCatalogCacheDirty = false;
 let catalogGeneration = 0;
 let catalogRequestController = null;
 let isAuthenticated = false;
@@ -3424,6 +3439,449 @@ const createGameCard = (
     return card;
 };
 
+const rememberCatalogCacheVersions = async ids => {
+    const normalizedIds = [
+        ...new Set(
+            ids
+                .map(Number)
+                .filter(id =>
+                    Number.isSafeInteger(id) &&
+                    id > 0
+                )
+        )
+    ];
+
+    if (!normalizedIds.length) {
+        return;
+    }
+
+    try {
+        const result = await requestJson(
+            `${API_URL}/api/games/cache-state`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    ids: normalizedIds
+                })
+            }
+        );
+
+        const games = Array.isArray(result?.games)
+            ? result.games
+            : [];
+
+        games.forEach(game => {
+            catalogCacheVersions.set(
+                Number(game.id),
+                game.updatedAt || null
+            );
+        });
+    } catch (error) {
+        console.error(
+            "Could not remember Explorer cache versions:",
+            error
+        );
+    }
+};
+
+const updateGameDetailFromCachedGame = game => {
+    if (
+        !currentGameDetail ||
+        Number(currentGameDetail.game.id) !==
+            Number(game.id)
+    ) {
+        return;
+    }
+
+    currentGameDetail.game = game;
+
+    const libraryControls =
+        document.getElementById(
+            "game-detail-library-controls"
+        );
+
+    libraryControls.dataset.gameId =
+        String(game.id);
+
+    libraryControls.dataset.gameName =
+        game.name;
+
+    document.getElementById(
+        "game-route-title"
+    ).textContent = game.name;
+
+    const totalRating =
+        Number(game.total_rating);
+
+    const hasRating =
+        game.total_rating !== null &&
+        game.total_rating !== undefined &&
+        Number.isFinite(totalRating);
+
+    const ratingOutOfTen =
+        hasRating
+            ? totalRating / 10
+            : null;
+
+    const formattedRating =
+        hasRating
+            ? Math.round(totalRating)
+            : "—";
+
+    const detailRating =
+        document.getElementById(
+            "game-detail-rating"
+        );
+
+    detailRating.textContent =
+        hasRating
+            ? `IGDB ${formattedRating}`
+            : "IGDB —";
+
+    detailRating.dataset.ratingLevel =
+        !hasRating
+            ? "none"
+            : ratingOutOfTen >= 10
+                ? "perfect"
+                : ratingOutOfTen >= 8
+                    ? "great"
+                    : ratingOutOfTen >= 6
+                        ? "good"
+                        : ratingOutOfTen >= 4
+                            ? "fair"
+                            : "low";
+
+    const ratingCount =
+        Number(game.total_rating_count);
+
+    const hasRatingCount =
+        Number.isFinite(ratingCount) &&
+        ratingCount > 0;
+
+    const formattedRatingCount =
+        hasRatingCount
+            ? new Intl.NumberFormat(
+                "en"
+            ).format(ratingCount)
+            : "";
+
+    detailRating.setAttribute(
+        "aria-label",
+        hasRating
+            ? `IGDB rating ${formattedRating} out of 100${
+                hasRatingCount
+                    ? ` from ${formattedRatingCount} votes`
+                    : ""
+            }`
+            : "No IGDB rating available"
+    );
+
+    detailRating.title =
+        detailRating.getAttribute(
+            "aria-label"
+        );
+
+    const publishers =
+        getGameCompaniesByRole(
+            game,
+            "publisher"
+        );
+
+    const releaseYear =
+        Number(game.first_release_date) > 0
+            ? new Date(
+                Number(
+                    game.first_release_date
+                ) * 1000
+            ).getUTCFullYear()
+            : null;
+
+    document.getElementById(
+        "game-detail-release"
+    ).textContent =
+        `${
+            publishers.join(", ") ||
+            "Publisher not listed"
+        } - ${
+            releaseYear ||
+            "Release date TBA"
+        }`;
+
+    const cover =
+        document.getElementById(
+            "game-detail-cover"
+        );
+
+    cover.src = game.cover?.image_id
+        ? `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`
+        : "/assets/images/no-cover.png";
+
+    cover.alt =
+        `${game.name} cover`;
+
+    cover.hidden = false;
+
+    currentGameDetail.media =
+        renderGameMedia(game);
+
+    renderGameDetailTabs();
+
+    if (
+        !currentGameDetail.activeChecklistTask
+    ) {
+        renderGameDetailTab(
+            activeGameDetailTab
+        );
+    }
+};
+
+const revalidateCatalogCards = async () => {
+    if (
+        isCatalogRevalidating ||
+        (
+            !isCatalogLoaded &&
+            !isLibraryLoaded &&
+            !currentGameDetail
+        )
+    ) {
+        return;
+    }
+
+    const cards = [
+        ...document.querySelectorAll(
+            "#game-catalog .game-card[data-game-id], " +
+            "#game-library .game-card[data-game-id]"
+        )
+    ];
+
+    const ids = [
+        ...new Set(
+            [
+                ...cards.map(card =>
+                    Number(card.dataset.gameId)
+                ),
+                currentGameDetail
+                    ? Number(currentGameDetail.game.id)
+                    : null
+            ].filter(id =>
+                Number.isSafeInteger(id) &&
+                id > 0
+            )
+        )
+    ];
+
+    if (!ids.length) {
+        return;
+    }
+
+    isCatalogRevalidating = true;
+
+    try {
+        const changedIds = [];
+
+        for (
+            let index = 0;
+            index < ids.length;
+            index += 100
+        ) {
+            const batch = ids.slice(
+                index,
+                index + 100
+            );
+
+            const result = await requestJson(
+                `${API_URL}/api/games/cache-state`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        ids: batch
+                    })
+                }
+            );
+
+            const games = Array.isArray(
+                result?.games
+            )
+                ? result.games
+                : [];
+
+            games.forEach(game => {
+                const id = Number(game.id);
+                const nextVersion =
+                    game.updatedAt || null;
+
+                if (
+                    catalogCacheVersions.has(id) &&
+                    catalogCacheVersions.get(id) !==
+                    nextVersion
+                ) {
+                    changedIds.push(id);
+                }
+
+                catalogCacheVersions.set(
+                    id,
+                    nextVersion
+                );
+            });
+        }
+
+        if (!changedIds.length) {
+            return;
+        }
+
+        for (
+            let index = 0;
+            index < changedIds.length;
+            index += 100
+        ) {
+            const batch = changedIds.slice(
+                index,
+                index + 100
+            );
+
+            const result = await requestJson(
+                `${API_URL}/api/games/cache-data`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        ids: batch
+                    })
+                }
+            );
+
+            const games = Array.isArray(
+                result?.games
+            )
+                ? result.games
+                : [];
+
+            games.forEach(game => {
+                const id = Number(game.id);
+
+                const savedGame = savedGames.find(
+                    item =>
+                        Number(item.id) === id
+                );
+
+                /*
+                 * A game may exist simultaneously in Explorer and Library.
+                 * Refresh each rendered representation independently.
+                 */
+                const explorerCard =
+                    document.querySelector(
+                        `#game-catalog .game-card[data-game-id="${id}"]`
+                    );
+
+                if (explorerCard) {
+                    const nextExplorerCard =
+                        createGameCard(
+                            game,
+                            savedGame?.status,
+                            "",
+                            "explore"
+                        );
+
+                    nextExplorerCard.hidden =
+                        explorerFilters.hideOwned &&
+                        Boolean(savedGame);
+
+                    explorerCard.replaceWith(
+                        nextExplorerCard
+                    );
+                }
+
+                const libraryCard =
+                    document.querySelector(
+                        `#game-library .game-card[data-game-id="${id}"]`
+                    );
+
+                if (libraryCard && savedGame) {
+                    const nextLibraryCard =
+                        createGameCard(
+                            game,
+                            savedGame.status,
+                            savedGame.created_at,
+                            "library"
+                        );
+
+                    libraryCard.replaceWith(
+                        nextLibraryCard
+                    );
+                }
+
+                updateGameDetailFromCachedGame(
+                    game
+                );
+            });
+        }
+
+        updateCatalogEmptyState();
+
+        if (isLibraryLoaded) {
+            refreshLibraryView();
+        }
+
+    } catch (error) {
+        console.error(
+            "Could not revalidate Explorer cards:",
+            error
+        );
+    } finally {
+        isCatalogRevalidating = false;
+    }
+};
+
+const handleCatalogCacheChanged = () => {
+    isCatalogCacheDirty = true;
+
+    const explorerView =
+        document.getElementById(
+            "view-explorer"
+        );
+
+    if (
+        !explorerView ||
+        explorerView.hidden
+    ) {
+        return;
+    }
+
+    void revalidateCatalogCards()
+        .finally(() => {
+            isCatalogCacheDirty = false;
+        });
+};
+
+document.addEventListener(
+    "app:catalog-cache-changed",
+    handleCatalogCacheChanged
+);
+
+catalogSyncChannel?.addEventListener(
+    "message",
+    event => {
+        if (
+            event.data?.type !==
+            "igdb-cache-synchronized"
+        ) {
+            return;
+        }
+
+        handleCatalogCacheChanged();
+    }
+);
+
 // Render the next page of games and their saved statuses.
 const loadCatalogPage = async () => {
     if (isCatalogLoading || !hasMoreCatalogGames) return;
@@ -3480,6 +3938,10 @@ const loadCatalogPage = async () => {
             catalog.appendChild(card);
         });
 
+        void rememberCatalogCacheVersions(
+            games.map(game => game.id)
+        );
+
         catalogOffset += games.length;
         hasMoreCatalogGames = games.length === PAGE_SIZE;
         updateCatalogEmptyState();
@@ -3530,19 +3992,54 @@ const syncCatalogWithSavedGames = async () => {
 
 // Show Explorer and load or refresh its game cards.
 const openExplorer = async () => {
-    try {
-        if (!isCatalogLoaded) {
-            isCatalogLoaded = true;
-            await loadCatalogPage();
-            return;
+
+    if (isCatalogLoaded) {
+        refreshCatalogVisibility();
+
+        const sentinel =
+            document.getElementById(
+                "catalog-scroll-sentinel"
+            );
+
+        if (
+            sentinel &&
+            catalogScrollObserver
+        ) {
+            catalogScrollObserver.unobserve(
+                sentinel
+            );
+
+            catalogScrollObserver.observe(
+                sentinel
+            );
         }
 
-        await syncCatalogWithSavedGames();
+        /*
+         * Keep the existing Explorer DOM visible immediately,
+         * then silently check Supabase for updated game data.
+         */
+        if (isCatalogCacheDirty) {
+            void revalidateCatalogCards()
+                .finally(() => {
+                    isCatalogCacheDirty = false;
+                });
+        } else {
+            void revalidateCatalogCards();
+        }
+
+        return;
+    }
+
+    isCatalogLoaded = true;
+
+    try {
+        await loadCatalogPage();
     } catch (error) {
-        console.error("Could not refresh the game catalog:", error);
-        window.showAppNotice(
-            "Could not refresh your library status. Please try again.",
-            "error"
+        isCatalogLoaded = false;
+
+        console.error(
+            "Could not load the game catalog:",
+            error
         );
     }
 };
@@ -3569,48 +4066,108 @@ const scheduleCatalogFilterApplication = (delay = 0) => {
 
 // Load a user's saved games and render the matching catalog entries.
 const openLibrary = async () => {
-    try {
-        savedGames = await fetchSavedGames();
-        const library = document.getElementById("game-library");
-        library.replaceChildren();
+    /*
+     * Library state changes are synchronized incrementally through
+     * app:library-state-changed. Reuse the existing DOM after the
+     * first successful load.
+     */
+    if (isLibraryLoaded) {
+        refreshLibraryView();
+        return;
+    }
 
-        if (!savedGames.length) {
+    try {
+        const nextSavedGames =
+            await fetchSavedGames();
+
+        const library =
+            document.getElementById(
+                "game-library"
+            );
+
+        const fragment =
+            document.createDocumentFragment();
+
+        if (!nextSavedGames.length) {
+            savedGames = [];
+            library.replaceChildren();
             refreshLibraryView();
+            isLibraryLoaded = true;
             return;
         }
 
         let gamesById = new Map();
+
         try {
             const games = await requestJson(
-                `${API_URL}/api/library?ids=${savedGames.map(game => game.id).join(",")}`
+                `${API_URL}/api/library?ids=${nextSavedGames
+                    .map(game => game.id)
+                    .join(",")
+                }`
             );
+
             if (!Array.isArray(games)) {
-                throw new Error("The server returned an invalid game details response.");
+                throw new Error(
+                    "The server returned an invalid game details response."
+                );
             }
-            gamesById = new Map(games.map(game => [Number(game.id), game]));
+
+            gamesById = new Map(
+                games.map(game => [
+                    Number(game.id),
+                    game
+                ])
+            );
         } catch (error) {
-            console.error("Could not load catalog details for saved games:", error);
+            console.error(
+                "Could not load catalog details for saved games:",
+                error
+            );
         }
 
-        savedGames.forEach(savedGame => {
-            const details = gamesById.get(Number(savedGame.id));
+        nextSavedGames.forEach(savedGame => {
+            const details = gamesById.get(
+                Number(savedGame.id)
+            );
+
             const game = {
                 ...details,
                 id: Number(savedGame.id),
-                name: details?.name || savedGame.game_name || `Game ${savedGame.id}`
+                name:
+                    details?.name ||
+                    savedGame.game_name ||
+                    `Game ${savedGame.id}`
             };
-            library.appendChild(
+
+            fragment.appendChild(
                 createGameCard(
                     game,
-                    normalizeGameStatus(savedGame.status),
+                    normalizeGameStatus(
+                        savedGame.status
+                    ),
                     savedGame.created_at,
                     "library"
                 )
             );
         });
+
+        /*
+         * Commit the new data and DOM only after the initial load
+         * has been prepared successfully.
+         */
+        savedGames = nextSavedGames;
+        library.replaceChildren(fragment);
+
         refreshLibraryView();
+        isLibraryLoaded = true;
     } catch (error) {
-        console.error("Could not load the game library:", error);
+        isLibraryLoaded = false;
+
+        console.error(
+            "Could not load the game library:",
+            error
+        );
+
         window.showAppNotice(
             "Could not load your library. Check your connection and try again.",
             "error"
@@ -4008,11 +4565,24 @@ const initializeCatalog = async () => {
     window.addEventListener("auth:changed", event => {
         isAuthenticated = event.detail.authenticated;
         isAuthenticationResolved = true;
+
         updateAuthenticationControls();
+
         if (!isAuthenticated) {
-            updateGameDetailLibraryControls(DEFAULT_GAME_STATUS);
+            isLibraryLoaded = false;
+            savedGames = [];
+
+            document.getElementById(
+                "game-library"
+            ).replaceChildren();
+
+            updateGameDetailLibraryControls(
+                DEFAULT_GAME_STATUS
+            );
         } else if (currentGameDetail) {
-            loadGameDetail(currentGameDetail.game.id);
+            loadGameDetail(
+                currentGameDetail.game.id
+            );
         }
     });
 
@@ -4020,11 +4590,40 @@ const initializeCatalog = async () => {
     isAuthenticationResolved = true;
     updateAuthenticationControls();
 
-    const sentinel = document.getElementById("catalog-scroll-sentinel");
-    if ("IntersectionObserver" in window) {
-        new IntersectionObserver(([entry]) => {
-            if (entry.isIntersecting) loadCatalogPage();
-        }).observe(sentinel);
+    const sentinel =
+        document.getElementById("catalog-scroll-sentinel");
+
+    if (
+        sentinel &&
+        "IntersectionObserver" in window
+    ) {
+        catalogScrollObserver =
+            new IntersectionObserver(
+                ([entry]) => {
+                    if (!entry?.isIntersecting) {
+                        return;
+                    }
+
+                    const explorerView =
+                        document.getElementById(
+                            "view-explorer"
+                        );
+
+                    if (
+                        !explorerView ||
+                        explorerView.hidden
+                    ) {
+                        return;
+                    }
+
+                    void loadCatalogPage();
+                },
+                {
+                    rootMargin: "600px 0px"
+                }
+            );
+
+        catalogScrollObserver.observe(sentinel);
     }
 
     restoreRouteFromUrl();

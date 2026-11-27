@@ -1265,6 +1265,61 @@
                             <input id="developer-home-cinematic" class="developer-switch" type="checkbox" role="switch"
                                 aria-describedby="developer-home-cinematic-help">
                         </div>
+
+                        <div class="developer-control developer-control--sync">
+                            <div class="developer-control__content">
+                                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+
+                                <div>
+                                    <span class="developer-control__label">
+                                        IGDB cache sync
+                                    </span>
+
+                                    <p>
+                                        Refresh IGDB data only for games already
+                                        cached in Supabase.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button id="developer-igdb-sync" class="developer-sync-button" type="button">
+                                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+                                <span>Sync cached games</span>
+                            </button>
+
+                            <div id="developer-igdb-sync-progress" class="developer-sync-progress" hidden>
+                                <div class="developer-sync-progress__header">
+                                    <span id="developer-igdb-sync-status">
+                                        Preparing…
+                                    </span>
+
+                                    <span id="developer-igdb-sync-percent">
+                                        0%
+                                    </span>
+                                </div>
+
+                                <div class="developer-sync-progress__track" aria-hidden="true">
+                                    <span id="developer-igdb-sync-bar" class="developer-sync-progress__bar"></span>
+                                </div>
+
+                                <dl class="developer-sync-progress__stats">
+                                    <div>
+                                        <dt>Processed</dt>
+                                        <dd id="developer-igdb-sync-processed">0</dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Updated</dt>
+                                        <dd id="developer-igdb-sync-updated">0</dd>
+                                    </div>
+
+                                    <div>
+                                        <dt>Unavailable</dt>
+                                        <dd id="developer-igdb-sync-unavailable">0</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
                     </div>
                 </article>
 

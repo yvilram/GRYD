@@ -404,10 +404,9 @@ module.exports = (
                 }
 
                 const supabase =
-                    createSupabaseClient
-                        .createSupabaseAdminClient(
-                            req.env
-                        );
+                    createSupabaseAdminClient(
+                        req.env
+                    );
 
                 const result =
                     await syncIgdbCacheBatch(
@@ -453,10 +452,9 @@ module.exports = (
                 }
 
                 const supabase =
-                    createSupabaseClient
-                        .createSupabaseAdminClient(
-                            req.env
-                        );
+                    createSupabaseAdminClient(
+                        req.env
+                    );
 
                 const result =
                     await finishIgdbCacheSync(

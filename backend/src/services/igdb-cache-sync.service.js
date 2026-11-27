@@ -28,6 +28,20 @@ const syncIgdbCacheBatch = async (
         throw error;
     }
 
+    const {
+        count: total,
+        error: countError
+    } = await supabase
+        .from("games")
+        .select("igdb_game_id", {
+            count: "exact",
+            head: true
+        });
+
+    if (countError) {
+        throw countError;
+    }
+
     const { data: rows, error: rowsError } =
         await supabase
             .from("games")
@@ -50,17 +64,8 @@ const syncIgdbCacheBatch = async (
         );
 
     if (!ids.length) {
-        const { error: clearPagesError } =
-            await supabase
-                .from("game_catalog_pages")
-                .delete()
-                .neq("query_hash", "");
-
-        if (clearPagesError) {
-            throw clearPagesError;
-        }
-
         return {
+            total: total || 0,
             processed: 0,
             updated: 0,
             unavailable: 0,
@@ -99,6 +104,7 @@ const syncIgdbCacheBatch = async (
     const nextAfterId = ids.at(-1);
 
     return {
+        total: total || 0,
         processed: ids.length,
         updated: fullGames.length,
         unavailable,
