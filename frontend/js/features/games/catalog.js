@@ -870,11 +870,24 @@ const setFeaturedGameMedia = (media, index = 0, total = 0, scrollThumbnail = tru
         });
 };
 
-const renderGameMedia = game => {
+const renderGameMedia = (game, initialIndex = 0) => {
     const media = getGameMedia(game);
     const featured = document.getElementById("game-detail-featured");
     const thumbnails = document.getElementById("game-detail-thumbnails");
-    currentGameMediaIndex = 0;
+    const normalizedInitialIndex = Number(initialIndex);
+
+    currentGameMediaIndex = media.length
+        ? Math.min(
+            Math.max(
+                Number.isSafeInteger(normalizedInitialIndex)
+                    ? normalizedInitialIndex
+                    : 0,
+                0
+            ),
+            media.length - 1
+        )
+        : 0;
+
     thumbnails.replaceChildren();
     media.forEach((item, index) => {
         item.index = index;
@@ -883,7 +896,7 @@ const renderGameMedia = game => {
         button.type = "button";
         button.dataset.mediaIndex = String(index);
         button.setAttribute("aria-label", `Show ${item.label}`);
-        button.setAttribute("aria-pressed", String(index === 0));
+        button.setAttribute("aria-pressed", String(index === currentGameMediaIndex));
 
         const image = document.createElement("img");
         image.src = item.type === "video" ? item.thumbnail : item.imageUrl;
@@ -906,7 +919,12 @@ const renderGameMedia = game => {
         thumbnails.appendChild(button);
     });
     featured.replaceChildren();
-    setFeaturedGameMedia(media[0], 0, media.length, false);
+    setFeaturedGameMedia(
+        media[currentGameMediaIndex],
+        currentGameMediaIndex,
+        media.length,
+        false
+    );
 
     return media;
 };
@@ -3056,6 +3074,11 @@ const loadGameDetail = async (gameId, missionId = null, initialTabId = null) => 
             ignPages: {},
             hasMissionRoute: Boolean(missionId)
         };
+
+        void rememberCatalogCacheVersions([
+            game.id
+        ]);
+
         const libraryControls = document.getElementById("game-detail-library-controls");
         libraryControls.dataset.gameId = String(game.id);
         libraryControls.dataset.gameName = game.name;
@@ -3624,8 +3647,14 @@ const updateGameDetailFromCachedGame = game => {
 
     cover.hidden = false;
 
+    const previousMediaIndex =
+        currentGameMediaIndex;
+
     currentGameDetail.media =
-        renderGameMedia(game);
+        renderGameMedia(
+            game,
+            previousMediaIndex
+        );
 
     renderGameDetailTabs();
 
@@ -3639,13 +3668,15 @@ const updateGameDetailFromCachedGame = game => {
 };
 
 const revalidateCatalogCards = async () => {
+    if (isCatalogRevalidating) {
+        isCatalogCacheDirty = true;
+        return;
+    }
+
     if (
-        isCatalogRevalidating ||
-        (
-            !isCatalogLoaded &&
-            !isLibraryLoaded &&
-            !currentGameDetail
-        )
+        !isCatalogLoaded &&
+        !isLibraryLoaded &&
+        !currentGameDetail
     ) {
         return;
     }
@@ -3677,10 +3708,13 @@ const revalidateCatalogCards = async () => {
         return;
     }
 
+    const forceRefresh = isCatalogCacheDirty;
+    isCatalogCacheDirty = false;
     isCatalogRevalidating = true;
 
     try {
         const changedIds = [];
+        const nextVersions = new Map();
 
         for (
             let index = 0;
@@ -3716,21 +3750,41 @@ const revalidateCatalogCards = async () => {
                 const id = Number(game.id);
                 const nextVersion =
                     game.updatedAt || null;
+                const hasKnownVersion =
+                    catalogCacheVersions.has(id);
+                const versionChanged =
+                    hasKnownVersion &&
+                    catalogCacheVersions.get(id) !==
+                        nextVersion;
 
                 if (
-                    catalogCacheVersions.has(id) &&
-                    catalogCacheVersions.get(id) !==
-                    nextVersion
+                    forceRefresh ||
+                    versionChanged
                 ) {
                     changedIds.push(id);
                 }
 
-                catalogCacheVersions.set(
+                nextVersions.set(
                     id,
                     nextVersion
                 );
             });
         }
+
+        const changedIdSet = new Set(
+            changedIds
+        );
+
+        nextVersions.forEach(
+            (version, id) => {
+                if (!changedIdSet.has(id)) {
+                    catalogCacheVersions.set(
+                        id,
+                        version
+                    );
+                }
+            }
+        );
 
         if (!changedIds.length) {
             return;
@@ -3774,10 +3828,6 @@ const revalidateCatalogCards = async () => {
                         Number(item.id) === id
                 );
 
-                /*
-                 * A game may exist simultaneously in Explorer and Library.
-                 * Refresh each rendered representation independently.
-                 */
                 const explorerCard =
                     document.querySelector(
                         `#game-catalog .game-card[data-game-id="${id}"]`
@@ -3823,6 +3873,11 @@ const revalidateCatalogCards = async () => {
                 updateGameDetailFromCachedGame(
                     game
                 );
+
+                catalogCacheVersions.set(
+                    id,
+                    nextVersions.get(id) || null
+                );
             });
         }
 
@@ -3831,38 +3886,40 @@ const revalidateCatalogCards = async () => {
         if (isLibraryLoaded) {
             refreshLibraryView();
         }
-
     } catch (error) {
         console.error(
-            "Could not revalidate Explorer cards:",
+            "Could not revalidate cached game data:",
             error
         );
     } finally {
         isCatalogRevalidating = false;
+
+        if (isCatalogCacheDirty) {
+            void revalidateCatalogCards();
+        }
     }
 };
-
 const handleCatalogCacheChanged = () => {
     isCatalogCacheDirty = true;
 
-    const explorerView =
-        document.getElementById(
-            "view-explorer"
+    const visibleCacheView = [
+        "view-explorer",
+        "view-library",
+        "view-game"
+    ].some(viewId => {
+        const view = document.getElementById(
+            viewId
         );
 
-    if (
-        !explorerView ||
-        explorerView.hidden
-    ) {
+        return view && !view.hidden;
+    });
+
+    if (!visibleCacheView) {
         return;
     }
 
-    void revalidateCatalogCards()
-        .finally(() => {
-            isCatalogCacheDirty = false;
-        });
+    void revalidateCatalogCards();
 };
-
 document.addEventListener(
     "app:catalog-cache-changed",
     handleCatalogCacheChanged
@@ -4018,14 +4075,7 @@ const openExplorer = async () => {
          * Keep the existing Explorer DOM visible immediately,
          * then silently check Supabase for updated game data.
          */
-        if (isCatalogCacheDirty) {
-            void revalidateCatalogCards()
-                .finally(() => {
-                    isCatalogCacheDirty = false;
-                });
-        } else {
-            void revalidateCatalogCards();
-        }
+        void revalidateCatalogCards();
 
         return;
     }
@@ -4073,6 +4123,7 @@ const openLibrary = async () => {
      */
     if (isLibraryLoaded) {
         refreshLibraryView();
+        void revalidateCatalogCards();
         return;
     }
 
@@ -4157,6 +4208,10 @@ const openLibrary = async () => {
          */
         savedGames = nextSavedGames;
         library.replaceChildren(fragment);
+
+        void rememberCatalogCacheVersions(
+            nextSavedGames.map(game => game.id)
+        );
 
         refreshLibraryView();
         isLibraryLoaded = true;

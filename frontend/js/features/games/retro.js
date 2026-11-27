@@ -261,6 +261,8 @@ const createPlayerDocument = (game, emulator) => `<!doctype html>
         window.EJS_core = ${escapeInlineJson(game.core)};
         window.EJS_gameUrl = ${escapeInlineJson(game.url)};
         window.EJS_pathtodata = ${escapeInlineJson(emulator.dataPath)};
+        window.EJS_language = "en-US";
+        window.EJS_disableAutoLang = false;
         window.EJS_startOnLoaded = true;
         window.EJS_onGameStart = () => {
             window.parent.postMessage({ type: "gryd-retro-started" }, "*");

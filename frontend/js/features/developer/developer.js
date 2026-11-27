@@ -25,15 +25,37 @@ const HOME_HERO_VIDEOS = [
     "/assets/videos/home/hero-04.mp4"
 ];
 
-const CATALOG_SYNC_CHANNEL =
+const DEVELOPER_CATALOG_SYNC_CHANNEL =
     "gryd-catalog-state";
 
-const catalogSyncChannel =
+const developerCatalogSyncChannel =
     "BroadcastChannel" in window
         ? new BroadcastChannel(
-            CATALOG_SYNC_CHANNEL
+            DEVELOPER_CATALOG_SYNC_CHANNEL
         )
         : null;
+
+const playHomeCinematicVideo = video => {
+    const playRequest = video.play();
+
+    if (!playRequest) {
+        return;
+    }
+
+    playRequest.catch(error => {
+        if (
+            error?.name === "AbortError" ||
+            error?.name === "NotAllowedError"
+        ) {
+            return;
+        }
+
+        console.warn(
+            "Could not play home cinematic:",
+            error
+        );
+    });
+};
 
 const setHomeHeroMode = mode => {
     const art = document.getElementById("home-hero-art");
@@ -83,12 +105,7 @@ const setHomeHeroMode = mode => {
         video.src = HOME_HERO_VIDEOS[videoIndex];
     }
 
-    video.play().catch(error => {
-        console.warn(
-            "Could not autoplay home cinematic:",
-            error
-        );
-    });
+    playHomeCinematicVideo(video);
 };
 
 const loadHomeHeroPreference = () => {
@@ -861,7 +878,7 @@ const runIgdbCacheSync = async () => {
         )
     );
 
-    catalogSyncChannel?.postMessage(
+    developerCatalogSyncChannel?.postMessage(
         catalogChangeDetail
     );
 
@@ -1128,4 +1145,22 @@ document.addEventListener(
     }
 );
 
-checkDeveloperAccess();
+const initializeDeveloperAccess = async () => {
+    if (!window.authStateReady) {
+        return;
+    }
+
+    const authenticated =
+        await window.authStateReady;
+
+    if (!authenticated) {
+        developerAccess = false;
+        developerDashboardLoaded = false;
+        developerNavigation.hidden = true;
+        return;
+    }
+
+    await checkDeveloperAccess();
+};
+
+void initializeDeveloperAccess();

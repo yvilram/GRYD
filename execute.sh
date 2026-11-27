@@ -1,26 +1,17 @@
 {
-    echo "===== GAME DETAIL STATE ====="
-    grep -nEi -C 20 \
-        'currentGameDetail|currentGameMediaIndex|currentGameTab' \
-        frontend/js/features/games/catalog.js \
-        | head -n 180
+    echo "===== EMULATOR CONFIG ====="
+    grep -RniE -C 20 \
+        'EJS_|EmulatorJS|emulatorjs|loader.js|dataPath|localization|language' \
+        frontend/js \
+        frontend/index.html \
+        backend/src/routes/retro.routes.js \
+        backend/src/services/retro-games.service.js \
+        2>/dev/null
 
     echo
-    echo "===== LOAD GAME DETAIL ====="
-    grep -nEi -A 220 \
-        'const loadGameDetail' \
-        frontend/js/features/games/catalog.js
-
-    echo
-    echo "===== RENDER GAME DETAIL ====="
-    grep -nEi -A 180 \
-        'const renderGameDetail' \
-        frontend/js/features/games/catalog.js
-
-    echo
-    echo "===== CATALOG CACHE CHANGE ====="
-    grep -nEi -A 80 \
-        'const handleCatalogCacheChanged' \
-        frontend/js/features/games/catalog.js
-
-} > game-detail-revalidation-context.txt
+    echo "===== PACKAGE ====="
+    grep -nEi \
+        'emulatorjs|version' \
+        package.json package-lock.json \
+        | head -n 80
+} > emulatorjs-current-context.txt
