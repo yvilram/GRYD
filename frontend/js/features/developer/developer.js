@@ -16,8 +16,6 @@ const gameMissionsToggle =
 const homeCinematicToggle =
     document.getElementById("developer-home-cinematic");
 
-const HOME_HERO_MODE_KEY = "gryd-home-hero-mode";
-
 const HOME_HERO_VIDEOS = [
     "/assets/videos/home/hero-01.mp4",
     "/assets/videos/home/hero-02.mp4",
@@ -108,28 +106,45 @@ const setHomeHeroMode = mode => {
     playHomeCinematicVideo(video);
 };
 
-const loadHomeHeroPreference = () => {
-    let mode = "controller";
-
+const loadHomeHeroSetting = async () => {
     try {
-        if (
-            window.localStorage.getItem(
-                HOME_HERO_MODE_KEY
-            ) === "cinematic"
-        ) {
-            mode = "cinematic";
+        const response = await fetch(
+            `${API_URL}/api/app-settings`
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Could not load application settings."
+            );
         }
+
+        const settings =
+            await response.json();
+
+        const enabled =
+            settings.homeCinematicEnabled === true;
+
+        homeCinematicToggle.checked =
+            enabled;
+
+        setHomeHeroMode(
+            enabled
+                ? "cinematic"
+                : "controller"
+        );
     } catch (error) {
-        console.warn(
-            "Could not read home hero preference:",
+        console.error(
+            "Could not load Home Cinematic setting:",
             error
         );
+
+        homeCinematicToggle.checked =
+            false;
+
+        setHomeHeroMode(
+            "controller"
+        );
     }
-
-    homeCinematicToggle.checked =
-        mode === "cinematic";
-
-    setHomeHeroMode(mode);
 };
 
 let developerAccess = false;
@@ -518,8 +533,18 @@ const loadDeveloperSettings = async () => {
     gameMissionsToggle.checked =
         settings.gameMissionsEnabled === true;
 
+    homeCinematicToggle.checked =
+        settings.homeCinematicEnabled === true;
+
+    setHomeHeroMode(
+        settings.homeCinematicEnabled === true
+            ? "cinematic"
+            : "controller"
+    );
+
     localUploadToggle.disabled = false;
     gameMissionsToggle.disabled = false;
+    homeCinematicToggle.disabled = false;
 };
 
 const loadDeveloperDashboard = async () => {
@@ -530,6 +555,7 @@ const loadDeveloperDashboard = async () => {
 
     localUploadToggle.disabled = true;
     gameMissionsToggle.disabled = true;
+    homeCinematicToggle.disabled = true;
 
     try {
         const response = await fetch(
@@ -864,23 +890,7 @@ const runIgdbCacheSync = async () => {
         status: "Synchronizing cached games…"
     });
 
-    const catalogChangeDetail = {
-        type: "igdb-cache-synchronized",
-        updatedAt: new Date().toISOString()
-    };
 
-    document.dispatchEvent(
-        new CustomEvent(
-            "app:catalog-cache-changed",
-            {
-                detail: catalogChangeDetail
-            }
-        )
-    );
-
-    developerCatalogSyncChannel?.postMessage(
-        catalogChangeDetail
-    );
 
     try {
         while (!complete) {
@@ -997,6 +1007,24 @@ const runIgdbCacheSync = async () => {
             status: "Synchronization complete"
         });
 
+        const catalogChangeDetail = {
+            type: "igdb-cache-synchronized",
+            updatedAt: new Date().toISOString()
+        };
+
+        document.dispatchEvent(
+            new CustomEvent(
+                "app:catalog-cache-changed",
+                {
+                    detail: catalogChangeDetail
+                }
+            )
+        );
+
+        developerCatalogSyncChannel?.postMessage(
+            catalogChangeDetail
+        );
+
         window.showAppNotice(
             `IGDB cache synchronized: ${updated.toLocaleString()} games updated.`
         );
@@ -1050,44 +1078,103 @@ homeHeroVideo?.addEventListener("ended", () => {
     homeHeroVideo.src =
         HOME_HERO_VIDEOS[nextIndex];
 
-    homeHeroVideo.play().catch(error => {
-        console.warn(
-            "Could not continue home cinematic:",
-            error
-        );
-    });
+    playHomeCinematicVideo(
+        homeHeroVideo
+    );
 });
 
 homeCinematicToggle?.addEventListener(
     "change",
-    () => {
-        const mode = homeCinematicToggle.checked
-            ? "cinematic"
-            : "controller";
+    async () => {
+        const enabled =
+            homeCinematicToggle.checked;
+
+        homeCinematicToggle.disabled = true;
 
         try {
-            window.localStorage.setItem(
-                HOME_HERO_MODE_KEY,
-                mode
+            const response = await fetch(
+                `${API_URL}/api/developer/settings/home-cinematic`,
+                {
+                    method: "PATCH",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        enabled
+                    })
+                }
+            );
+
+            const result =
+                await response.json();
+
+            if (response.status === 401) {
+                navigateToRoute(
+                    "login",
+                    { replace: true }
+                );
+                return;
+            }
+
+            if (response.status === 403) {
+                developerNavigation.hidden =
+                    true;
+
+                navigateToRoute(
+                    "home",
+                    { replace: true }
+                );
+
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error ||
+                    "Could not update Home Cinematic setting."
+                );
+            }
+
+            const savedEnabled =
+                result.homeCinematicEnabled ===
+                true;
+
+            homeCinematicToggle.checked =
+                savedEnabled;
+
+            setHomeHeroMode(
+                savedEnabled
+                    ? "cinematic"
+                    : "controller"
+            );
+
+            window.showAppNotice(
+                savedEnabled
+                    ? "Cinematic home hero enabled."
+                    : "Controller home hero enabled."
             );
         } catch (error) {
-            console.warn(
-                "Could not save home hero preference:",
+            console.error(
+                "Could not update Home Cinematic setting:",
                 error
             );
+
+            homeCinematicToggle.checked =
+                !enabled;
+
+            window.showAppNotice(
+                "Could not update Home Cinematic setting.",
+                "error"
+            );
+        } finally {
+            homeCinematicToggle.disabled =
+                false;
         }
-
-        setHomeHeroMode(mode);
-
-        window.showAppNotice(
-            mode === "cinematic"
-                ? "Cinematic home hero enabled."
-                : "Controller home hero enabled."
-        );
     }
 );
 
-loadHomeHeroPreference();
 
 window.addEventListener(
     "auth:changed",
@@ -1162,5 +1249,5 @@ const initializeDeveloperAccess = async () => {
 
     await checkDeveloperAccess();
 };
-
+void loadHomeHeroSetting();
 void initializeDeveloperAccess();

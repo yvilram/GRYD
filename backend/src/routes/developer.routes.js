@@ -177,7 +177,8 @@ module.exports = (
 
             const [
                 localUploadResult,
-                gameMissionsResult
+                gameMissionsResult,
+                homeCinematicResult
             ] = await Promise.all([
                 supabase
                     .from("app_settings")
@@ -189,6 +190,11 @@ module.exports = (
                     .from("app_settings")
                     .select("value, updated_at")
                     .eq("key", "game_missions_enabled")
+                    .maybeSingle(),
+                supabase
+                    .from("app_settings")
+                    .select("value, updated_at")
+                    .eq("key", "home_cinematic_enabled")
                     .maybeSingle()
             ]);
 
@@ -200,12 +206,19 @@ module.exports = (
                 throw gameMissionsResult.error;
             }
 
+            if (homeCinematicResult.error) {
+                throw homeCinematicResult.error;
+            }
+
             return res.json({
                 localRomUploadEnabled:
                     localUploadResult.data?.value === true,
 
                 gameMissionsEnabled:
-                    gameMissionsResult.data?.value !== false
+                    gameMissionsResult.data?.value !== false,
+
+                homeCinematicEnabled:
+                    homeCinematicResult.data?.value === true
             });
         } catch (error) {
             console.error(
@@ -285,16 +298,43 @@ module.exports = (
         try {
             const supabase = createSupabaseAdminClient();
 
-            const { data, error } = await supabase
-                .from("app_settings")
-                .select("value")
-                .eq("key", "retro_local_upload_enabled")
-                .maybeSingle();
+            const [
+                localUploadResult,
+                homeCinematicResult
+            ] = await Promise.all([
+                supabase
+                    .from("app_settings")
+                    .select("value")
+                    .eq(
+                        "key",
+                        "retro_local_upload_enabled"
+                    )
+                    .maybeSingle(),
 
-            if (error) throw error;
+                supabase
+                    .from("app_settings")
+                    .select("value")
+                    .eq(
+                        "key",
+                        "home_cinematic_enabled"
+                    )
+                    .maybeSingle()
+            ]);
+
+            if (localUploadResult.error) {
+                throw localUploadResult.error;
+            }
+
+            if (homeCinematicResult.error) {
+                throw homeCinematicResult.error;
+            }
 
             return res.json({
-                retroLocalUploadEnabled: data?.value === true
+                retroLocalUploadEnabled:
+                    localUploadResult.data?.value === true,
+
+                homeCinematicEnabled:
+                    homeCinematicResult.data?.value === true
             });
         } catch (error) {
             console.error(
@@ -303,7 +343,8 @@ module.exports = (
             );
 
             return res.json({
-                retroLocalUploadEnabled: false
+                retroLocalUploadEnabled: false,
+                homeCinematicEnabled: false
             });
         }
     });
@@ -365,6 +406,89 @@ module.exports = (
 
                 return res.status(500).json({
                     error: "Could not update Game Missions setting"
+                });
+            }
+        }
+    );
+
+    app.patch(
+        "/api/developer/settings/home-cinematic",
+        async (req, res) => {
+            try {
+                const session =
+                    await getSessionContext(req);
+
+                if (!session) {
+                    return res.status(401).json({
+                        error: "Not logged in"
+                    });
+                }
+
+                if (
+                    !isAdminEmail(
+                        session.user.email
+                    )
+                ) {
+                    return res.status(403).json({
+                        error:
+                            "Developer access required"
+                    });
+                }
+
+                const { enabled } = req.body;
+
+                if (
+                    typeof enabled !== "boolean"
+                ) {
+                    return res.status(400).json({
+                        error:
+                            "enabled must be a boolean"
+                    });
+                }
+
+                const supabase =
+                    createSupabaseAdminClient();
+
+                const { data, error } =
+                    await supabase
+                        .from("app_settings")
+                        .upsert(
+                            {
+                                key:
+                                    "home_cinematic_enabled",
+                                value: enabled,
+                                updated_at:
+                                    new Date()
+                                        .toISOString()
+                            },
+                            {
+                                onConflict: "key"
+                            }
+                        )
+                        .select(
+                            "value, updated_at"
+                        )
+                        .single();
+
+                if (error) {
+                    throw error;
+                }
+
+                return res.json({
+                    homeCinematicEnabled:
+                        data.value === true,
+                    updatedAt:
+                        data.updated_at
+                });
+            } catch (error) {
+                console.error(
+                    "Could not update Home Cinematic setting:",
+                    error
+                );
+
+                return res.status(500).json({
+                    error:
+                        "Could not update Home Cinematic setting"
                 });
             }
         }
