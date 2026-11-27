@@ -52,5 +52,6 @@ require("./routes/developer.routes")(
     app,
     requestIgdb
 );
+require("./routes/roadmap.routes")(app);
 
 module.exports = app;

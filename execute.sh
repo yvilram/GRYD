@@ -1,17 +1,34 @@
 {
-    echo "===== EMULATOR CONFIG ====="
-    grep -RniE -C 20 \
-        'EJS_|EmulatorJS|emulatorjs|loader.js|dataPath|localization|language' \
-        frontend/js \
-        frontend/index.html \
-        backend/src/routes/retro.routes.js \
-        backend/src/services/retro-games.service.js \
-        2>/dev/null
+    echo "===== ROADMAP HTML ====="
+    grep -nEi -C 120 \
+        'view-roadmap|roadmap' \
+        frontend/index.html || true
 
     echo
-    echo "===== PACKAGE ====="
-    grep -nEi \
-        'emulatorjs|version' \
-        package.json package-lock.json \
-        | head -n 80
-} > emulatorjs-current-context.txt
+    echo "===== ROADMAP SCSS ====="
+    grep -RniE -C 60 \
+        'roadmap' \
+        frontend/styles/scss || true
+
+    echo
+    echo "===== ROADMAP JS ====="
+    grep -RniE -C 50 \
+        'roadmap' \
+        frontend/js || true
+
+    echo
+    echo "===== ADMIN FRONTEND ====="
+    grep -RniE -C 35 \
+        'developerAccess|ADMIN|admin|developer/status|isAdmin' \
+        frontend/js \
+        | head -n 350 || true
+
+    echo
+    echo "===== ADMIN BACKEND ====="
+    grep -RniE -C 30 \
+        'isAdminEmail|getSessionContext' \
+        backend/src/routes \
+        backend/src/middleware \
+        | head -n 350 || true
+
+} > roadmap-current-context.txt
